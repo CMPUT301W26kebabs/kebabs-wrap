@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/edit_event_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Event Name" />
+
+    <EditText
+        android:id="@+id/edit_capacity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Max Capacity"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/btn_save_event"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Event &amp; Generate QR" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Unique QR Code:"
+        android:layout_marginTop="20dp" />
+
+    <ImageView
+        android:id="@+id/image_qr_preview"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_gravity="center"
+        android:scaleType="fitCenter"
+        android:background="#EEEEEE" />
+
+</LinearLayout>
