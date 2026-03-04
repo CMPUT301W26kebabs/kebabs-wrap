@@ -1,4 +1,4 @@
-package com.example.eventmanager;
+package com.example.eventmanager.models;
 import java.util.Date;
 
 /**
