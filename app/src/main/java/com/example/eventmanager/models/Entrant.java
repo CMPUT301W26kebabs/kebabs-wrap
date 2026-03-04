@@ -1,4 +1,4 @@
-package com.example.eventmanager;
+package com.example.eventmanager.models;
 
 /**
  * Represents a user of the application, encompassing both standard entrants and organizers/admins.
