@@ -17,6 +17,8 @@
             android:name=".ui.ProfileActivity"
             android:exported="false" />
 
+        <activity android:name=".ui.EventDetailsActivity" android:exported="false" />
+        <activity android:name=".ui.BrowseImagesActivity" android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
