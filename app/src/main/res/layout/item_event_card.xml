@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="#FFFFFF">
+
+        <ImageView
+            android:id="@+id/image_event_poster"
+            android:layout_width="70dp"
+            android:layout_height="90dp"
+            android:scaleType="centerCrop"
+            android:background="#E0E0E0" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/text_item_event_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tech Meetup 2026"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/text_item_event_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mar 15 • 42 entrants"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/text_item_event_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open"
+                android:textColor="#4E55E6"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"/>
+
+            <TextView
+                android:id="@+id/text_item_event_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="University of Alberta"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:layout_marginTop="4dp"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

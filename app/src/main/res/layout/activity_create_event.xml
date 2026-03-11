@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#FAFAFA">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create Event"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#000000" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set up a fair lottery-based registration for your event."
+            android:textSize="14sp"
+            android:textColor="#757575"
+            android:layout_marginBottom="24dp" />
+
+        <EditText
+            android:id="@+id/edit_event_name"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@android:drawable/editbox_background"
+            android:hint="Event Name"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/edit_description"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:background="@android:drawable/editbox_background"
+            android:hint="Description"
+            android:gravity="top|start"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <EditText
+                android:id="@+id/edit_start_date"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:background="@android:drawable/editbox_background"
+                android:hint="Start Date"
+                android:padding="12dp"
+                android:layout_marginEnd="8dp"/>
+
+            <EditText
+                android:id="@+id/edit_end_date"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:background="@android:drawable/editbox_background"
+                android:hint="End Date"
+                android:padding="12dp"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/edit_location"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@android:drawable/editbox_background"
+            android:hint="Location"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <EditText
+                android:id="@+id/edit_capacity"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:background="@android:drawable/editbox_background"
+                android:hint="Capacity"
+                android:inputType="number"
+                android:padding="12dp"
+                android:layout_marginEnd="8dp"/>
+
+            <EditText
+                android:id="@+id/edit_waitlist_limit"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:background="@android:drawable/editbox_background"
+                android:hint="Waitlist Limit"
+                android:inputType="number"
+                android:padding="12dp"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_upload_poster"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="Upload Poster Image"
+            android:backgroundTint="#F5F5F5"
+            android:textColor="#424242"
+            android:layout_marginBottom="32dp"
+            app:icon="@android:drawable/ic_menu_gallery"
+            app:iconTint="#424242"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btn_create_generate"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="CREATE &amp; GENERATE QR"
+            android:backgroundTint="#4E55E6"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+</ScrollView>

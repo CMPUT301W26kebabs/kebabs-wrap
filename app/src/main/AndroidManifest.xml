@@ -20,7 +20,14 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+        <activity android:name=".CreateEventActivity" />
+        <activity android:name=".ManagePosterActivity" />
+        <activity android:name=".EventQRActivity" />
+        <activity android:name=".MyEventsActivity" />
+
+
         <activity android:name=".EnrolledListActivity" android:exported="false"/>
         <activity android:name=".RunLotteryActivity" />
     </application>
