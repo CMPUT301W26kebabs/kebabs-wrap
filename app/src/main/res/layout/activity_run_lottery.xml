@@ -2,29 +2,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:gravity="center">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Main Testing Menu"
+        android:text="Run Event Lottery"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
-
-    <Button
-        android:id="@+id/btnTestRunLottery"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Test: Run Lottery Screen"
         android:layout_marginBottom="16dp"/>
 
-    <Button
-        android:id="@+id/btnTestEnrolledList"
+    <EditText
+        android:id="@+id/editTargetCount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Test: View Enrolled List" />
+        android:hint="Number of winners to draw"
+        android:inputType="number"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btnRunLottery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Draw Winners" />
 
 </LinearLayout>
