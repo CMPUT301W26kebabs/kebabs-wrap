@@ -1,10 +1,10 @@
 package com.example.eventmanager.adapter;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -14,9 +14,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventmanager.R;
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder> {
+public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int TYPE_HEADER = 0;
+    private static final int TYPE_PROFILE = 1;
 
     public interface OnProfileClickListener {
         void onProfileClick(DocumentSnapshot profileDoc);
@@ -24,101 +29,114 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
     }
 
     private final Context context;
-    private List<DocumentSnapshot> profiles;
     private final OnProfileClickListener listener;
+    private List<Object> items = new ArrayList<>();
+
+    private final int[] avatarColors = {
+            0xFF4A43EC, 0xFF8B5CF6, 0xFFEC4899, 0xFFF59E0B,
+            0xFF10B981, 0xFF3B82F6, 0xFFFF445D, 0xFF14B8A6
+    };
 
     public ProfileAdapter(Context context, List<DocumentSnapshot> profiles, OnProfileClickListener listener) {
         this.context = context;
-        this.profiles = profiles;
         this.listener = listener;
+        buildSectionedList(profiles);
     }
 
     public void updateList(List<DocumentSnapshot> newList) {
-        this.profiles = newList;
+        buildSectionedList(newList);
         notifyDataSetChanged();
     }
 
-    @NonNull
-    @Override
-    public ProfileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_profile_card, parent, false);
-        return new ProfileViewHolder(view);
+    private void buildSectionedList(List<DocumentSnapshot> profiles) {
+        items.clear();
+        List<DocumentSnapshot> sorted = new ArrayList<>(profiles);
+        Collections.sort(sorted, (a, b) -> {
+            String nameA = a.getString("name");
+            String nameB = b.getString("name");
+            if (nameA == null) nameA = "ZZZ";
+            if (nameB == null) nameB = "ZZZ";
+            return nameA.compareToIgnoreCase(nameB);
+        });
+
+        String lastLetter = "";
+        for (DocumentSnapshot doc : sorted) {
+            String name = doc.getString("name");
+            if (name != null && !name.isEmpty()) {
+                String firstLetter = name.substring(0, 1).toUpperCase();
+                if (!firstLetter.equals(lastLetter)) {
+                    items.add(firstLetter);
+                    lastLetter = firstLetter;
+                }
+            }
+            items.add(doc);
+        }
+    }
+
+    @Override public int getItemViewType(int position) {
+        return items.get(position) instanceof String ? TYPE_HEADER : TYPE_PROFILE;
+    }
+
+    @NonNull @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == TYPE_HEADER) {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_section_header, parent, false);
+            return new SectionVH(view);
+        } else {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_profile_card, parent, false);
+            return new ProfileVH(view);
+        }
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ProfileViewHolder holder, int position) {
-        DocumentSnapshot doc = profiles.get(position);
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if (holder instanceof SectionVH) {
+            ((SectionVH) holder).tvLetter.setText((String) items.get(position));
+        } else if (holder instanceof ProfileVH) {
+            DocumentSnapshot doc = (DocumentSnapshot) items.get(position);
+            ProfileVH h = (ProfileVH) holder;
 
-        String name = doc.getString("name");
-        holder.tvName.setText(name != null ? name : "No Name");
+            String name = doc.getString("name");
+            h.tvName.setText(name != null ? name : "No Name");
 
-        String email = doc.getString("email");
-        holder.tvEmail.setText(email != null ? email : "No email");
+            if (name != null && !name.isEmpty()) {
+                String[] parts = name.split(" ");
+                h.tvInitials.setText(parts.length >= 2
+                        ? ("" + parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+                        : ("" + parts[0].charAt(0)).toUpperCase());
+            } else { h.tvInitials.setText("?"); }
 
-        String deviceId = doc.getId();
-        holder.tvDeviceId.setText(deviceId.length() > 16 ? deviceId.substring(0, 16) + "..." : deviceId);
+            int ci = Math.abs((name != null ? name : "").hashCode()) % avatarColors.length;
+            h.tvInitials.setBackgroundTintList(ColorStateList.valueOf(avatarColors[ci]));
 
-        if (name != null && !name.isEmpty()) {
-            String[] parts = name.split(" ");
-            String initials = parts.length >= 2
-                    ? ("" + parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
-                    : ("" + parts[0].charAt(0)).toUpperCase();
-            holder.tvInitials.setText(initials);
-        } else {
-            holder.tvInitials.setText("?");
+            Boolean isDisabled = doc.getBoolean("isDisabled");
+            boolean disabled = (isDisabled != null && isDisabled);
+            h.btnRemove.setVisibility(disabled ? View.GONE : View.VISIBLE);
+            h.btnDone.setVisibility(disabled ? View.VISIBLE : View.GONE);
+            h.cardRoot.setAlpha(disabled ? 0.7f : 1.0f);
+
+            h.cardRoot.setOnClickListener(v -> listener.onProfileClick(doc));
+            h.btnRemove.setOnClickListener(v -> listener.onProfileRemoveClick(doc));
         }
-
-        Boolean isAdmin = doc.getBoolean("isAdmin");
-        Boolean isOrganizer = doc.getBoolean("isOrganizer");
-        if (isAdmin != null && isAdmin) {
-            holder.tvRole.setText("ADMIN");
-            holder.tvRole.setBackgroundResource(R.drawable.bg_chip_admin);
-            holder.tvRole.setVisibility(View.VISIBLE);
-        } else if (isOrganizer != null && isOrganizer) {
-            holder.tvRole.setText("ORGANIZER");
-            holder.tvRole.setBackgroundResource(R.drawable.bg_chip_organizer);
-            holder.tvRole.setVisibility(View.VISIBLE);
-        } else {
-            holder.tvRole.setVisibility(View.GONE);
-        }
-
-        Boolean isDisabled = doc.getBoolean("isDisabled");
-        boolean disabled = (isDisabled != null && isDisabled);
-        if (disabled) {
-            holder.statusBadge.setVisibility(View.VISIBLE);
-            holder.tvStatusText.setText("DISABLED");
-            holder.statusBadge.setBackgroundResource(R.drawable.bg_chip_danger);
-            holder.cardRoot.setAlpha(0.6f);
-        } else {
-            holder.statusBadge.setVisibility(View.GONE);
-            holder.cardRoot.setAlpha(1.0f);
-        }
-
-        holder.cardRoot.setOnClickListener(v -> listener.onProfileClick(doc));
-        holder.btnRemove.setOnClickListener(v -> listener.onProfileRemoveClick(doc));
-        holder.btnRemove.setVisibility(disabled ? View.GONE : View.VISIBLE);
     }
 
-    @Override
-    public int getItemCount() { return profiles.size(); }
+    @Override public int getItemCount() { return items.size(); }
 
-    static class ProfileViewHolder extends RecyclerView.ViewHolder {
+    static class SectionVH extends RecyclerView.ViewHolder {
+        TextView tvLetter;
+        SectionVH(View v) { super(v); tvLetter = v.findViewById(R.id.tv_section_letter); }
+    }
+
+    static class ProfileVH extends RecyclerView.ViewHolder {
         View cardRoot;
-        TextView tvInitials, tvName, tvEmail, tvDeviceId, tvRole, tvStatusText;
-        LinearLayout statusBadge;
-        ImageButton btnRemove;
-
-        ProfileViewHolder(@NonNull View itemView) {
-            super(itemView);
-            cardRoot = itemView.findViewById(R.id.card_root);
-            tvInitials = itemView.findViewById(R.id.tv_avatar_initials);
-            tvName = itemView.findViewById(R.id.tv_profile_name);
-            tvEmail = itemView.findViewById(R.id.tv_profile_email);
-            tvDeviceId = itemView.findViewById(R.id.tv_device_id);
-            tvRole = itemView.findViewById(R.id.tv_role_badge);
-            tvStatusText = itemView.findViewById(R.id.tv_status_text);
-            statusBadge = itemView.findViewById(R.id.status_badge);
-            btnRemove = itemView.findViewById(R.id.btn_remove);
+        TextView tvInitials, tvName, btnRemove, btnDone;
+        ProfileVH(View v) {
+            super(v);
+            cardRoot = v.findViewById(R.id.card_root);
+            tvInitials = v.findViewById(R.id.tv_avatar_initials);
+            tvName = v.findViewById(R.id.tv_profile_name);
+            btnRemove = v.findViewById(R.id.btn_remove);
+            btnDone = v.findViewById(R.id.btn_done);
         }
     }
 }
