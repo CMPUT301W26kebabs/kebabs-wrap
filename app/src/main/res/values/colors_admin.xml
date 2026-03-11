@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="admin_bg_primary">#0F1117</color>
+    <color name="admin_bg_card">#1A1D2E</color>
+    <color name="admin_primary">#6366F1</color>
+    <color name="admin_accent">#8B5CF6</color>
+    <color name="admin_text_primary">#FFFFFF</color>
+    <color name="admin_text_secondary">#8B8FA3</color>
+    <color name="admin_danger">#DC2626</color>
+    <color name="admin_success">#22C55E</color>
+</resources>
