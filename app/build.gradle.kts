@@ -47,4 +47,6 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.zxing:core:3.4.1")
 
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+
 }

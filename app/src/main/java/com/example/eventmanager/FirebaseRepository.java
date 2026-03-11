@@ -25,4 +25,13 @@ public class FirebaseRepository {
                 .addOnSuccessListener(onSuccess)
                 .addOnFailureListener(onFailure);
     }
+    public void getEventsByOrganizer(String organizerId,
+                                     OnSuccessListener<QuerySnapshot> onSuccess,
+                                     OnFailureListener onFailure) {
+        db.collection("events")
+                .whereEqualTo("organizerId", organizerId)
+                .get()
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
 }
