@@ -59,6 +59,7 @@
 
     <!-- Scrollable Content -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="148dp"
@@ -73,8 +74,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-60dp"
                 android:layout_marginStart="16dp"
+                android:layout_marginTop="-60dp"
                 android:layout_marginEnd="16dp"
                 android:orientation="vertical">
 
@@ -99,8 +100,8 @@
                         <ImageView
                             android:layout_width="28dp"
                             android:layout_height="28dp"
-                            android:src="@drawable/ic_schedule"
                             android:contentDescription="Waiting"
+                            android:src="@drawable/ic_schedule"
                             app:tint="#4B4BDB" />
 
                         <LinearLayout
@@ -112,20 +113,20 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
                                 android:text="Waiting"
                                 android:textColor="#AAAAAA"
-                                android:textSize="12sp"
-                                android:fontFamily="@font/poppins_regular" />
+                                android:textSize="12sp" />
 
                             <TextView
                                 android:id="@+id/tvWaitingCount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_bold"
                                 android:text="42"
                                 android:textColor="#2B2B8A"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
-                                android:fontFamily="@font/poppins_bold"
                                 tools:text="42" />
                         </LinearLayout>
                     </LinearLayout>
@@ -152,8 +153,8 @@
                         <ImageView
                             android:layout_width="28dp"
                             android:layout_height="28dp"
-                            android:src="@drawable/ic_check"
                             android:contentDescription="Chosen"
+                            android:src="@drawable/ic_check"
                             app:tint="#CCCCCC" />
 
                         <LinearLayout
@@ -165,20 +166,20 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
                                 android:text="Chosen"
                                 android:textColor="#CCCCCC"
-                                android:textSize="12sp"
-                                android:fontFamily="@font/poppins_regular" />
+                                android:textSize="12sp" />
 
                             <TextView
                                 android:id="@+id/tvChosenCount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_bold"
                                 android:text="10"
                                 android:textColor="#CCCCCC"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
-                                android:fontFamily="@font/poppins_bold"
                                 tools:text="10" />
                         </LinearLayout>
                     </LinearLayout>
@@ -205,8 +206,8 @@
                         <ImageView
                             android:layout_width="28dp"
                             android:layout_height="28dp"
-                            android:src="@drawable/ic_bell"
                             android:contentDescription="Enrolled"
+                            android:src="@drawable/ic_bell"
                             app:tint="#CCCCCC" />
 
                         <LinearLayout
@@ -218,20 +219,20 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_regular"
                                 android:text="Enrolled"
                                 android:textColor="#CCCCCC"
-                                android:textSize="12sp"
-                                android:fontFamily="@font/poppins_regular" />
+                                android:textSize="12sp" />
 
                             <TextView
                                 android:id="@+id/tvEnrolledCount"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="@font/poppins_bold"
                                 android:text="8"
                                 android:textColor="#CCCCCC"
                                 android:textSize="24sp"
                                 android:textStyle="bold"
-                                android:fontFamily="@font/poppins_bold"
                                 tools:text="8" />
                         </LinearLayout>
                     </LinearLayout>
@@ -245,10 +246,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:clipToPadding="false"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="100dp"
-                android:clipToPadding="false"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:itemCount="5"
                 tools:listitem="@layout/item_attendee" />
