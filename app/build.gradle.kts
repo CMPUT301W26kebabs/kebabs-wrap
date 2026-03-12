@@ -48,5 +48,6 @@ dependencies {
     implementation("com.google.zxing:core:3.4.1")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
 
 }
