@@ -1,40 +1,5 @@
 package com.example.eventmanager;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.FirebaseFirestore;
 
-public class FirebaseRepository {
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-    public void createEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
-        db.collection("events")
-                .document(event.getEventId())
-                .set(event)
-                .addOnSuccessListener(success)
-                .addOnFailureListener(failure);
-    }
-    /**
-     * Updates the posterUrl field for a specific Event document.
-     * Pass null for posterUrl to remove the reference.
-     */
-    public void updateEventPosterUrl(String eventId, String posterUrl,
-                                     OnSuccessListener<Void> onSuccess,
-                                     OnFailureListener onFailure) {
-        db.collection("events").document(eventId)
-                .update("posterUrl", posterUrl)
-                .addOnSuccessListener(onSuccess)
-                .addOnFailureListener(onFailure);
-    }
-    public void getEventsByOrganizer(String organizerId,
-                                     OnSuccessListener<QuerySnapshot> onSuccess,
-                                     OnFailureListener onFailure) {
-        db.collection("events")
-                .whereEqualTo("organizerId", organizerId)
-                .get()
-                .addOnSuccessListener(onSuccess)
-                .addOnFailureListener(onFailure);
-    }
-}
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.models.Event;
 import com.google.firebase.firestore.AggregateSource;
@@ -51,10 +16,11 @@ public class FirebaseRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     /**
-     * Attempts to add an entrant to an event's waiting list, respecting the optional capacity limit.
+     * Attempts to add an entrant to an event's waiting list, respecting the
+     * optional capacity limit.
      *
-     * @param eventId The ID of the event.
-     * @param entrant The entrant trying to join.
+     * @param eventId  The ID of the event.
+     * @param entrant  The entrant trying to join.
      * @param callback Handles the success or failure response.
      */
     public void joinWaitingList(String eventId, Entrant entrant, WaitlistCallback callback) {
@@ -109,6 +75,7 @@ public class FirebaseRepository {
                 .addOnSuccessListener(aVoid -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure("Failed to join waitlist: " + e.getMessage()));
     }
+
     /**
      * Fetches the final list of entrants who are fully enrolled in an event.
      *

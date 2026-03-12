@@ -1,35 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_run_lottery.xml
-    Replaces your existing bare-bones layout.
-    Uses drawables already in your project:
-      - bg_lottery_header.xml
-      - bg_illustration_circle.xml
-      - ic_arrow_back.xml
-      - ic_dice.xml
--->
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F4F6FF">
+    android:background="#F4F6FF"
+    tools:context=".organizer.LotteryDrawActivity">
 
-    <!-- ══════════════════════════════════════════════
-         BLUE CURVED HEADER  (uses your bg_lottery_header.xml)
-         ══════════════════════════════════════════════ -->
+    <!-- ===== BLUE HEADER BACKGROUND ===== -->
     <View
         android:id="@+id/headerBackground"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="320dp"
         android:background="@drawable/bg_lottery_header" />
 
-    <!-- Back arrow + "Lottery Draw" title sit on top of the header -->
+    <!-- ===== BACK ARROW + TITLE ===== -->
     <LinearLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="52dp"
+        android:paddingTop="48dp"
         android:paddingStart="24dp"
         android:paddingEnd="24dp">
 
@@ -39,13 +31,14 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            android:tint="#FFFFFF"
-            android:contentDescription="Back" />
+            android:contentDescription="Back"
+            app:tint="#FFFFFF" />
 
         <TextView
+            android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:text="Lottery Draw"
             android:textColor="#FFFFFF"
             android:textSize="34sp"
@@ -54,26 +47,22 @@
 
     </LinearLayout>
 
-    <!-- ══════════════════════════════════════════════
-         SCROLLABLE BODY  — sits below header
-         ══════════════════════════════════════════════ -->
+    <!-- ===== SCROLLABLE CONTENT ===== -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:clipToPadding="false"
-        android:paddingTop="155dp"
-        android:overScrollMode="never">
+        android:paddingTop="160dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="48dp">
+            android:paddingBottom="40dp">
 
-            <!-- ─────────────────────────────────────────
-                 MAIN DRAW CARD
-                 ───────────────────────────────────────── -->
+            <!-- ===== MAIN DRAW CARD ===== -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardDraw"
                 android:layout_width="match_parent"
@@ -81,60 +70,50 @@
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
                 app:cardCornerRadius="28dp"
-                app:cardElevation="18dp"
+                app:cardElevation="20dp"
                 app:cardBackgroundColor="#FFFFFF">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:gravity="center_horizontal"
+                    android:paddingTop="32dp"
+                    android:paddingBottom="32dp"
                     android:paddingStart="24dp"
                     android:paddingEnd="24dp"
-                    android:paddingTop="28dp"
-                    android:paddingBottom="28dp">
+                    android:gravity="center">
 
-                    <!-- Illustration + "Number of Winners" label -->
+                    <!-- Illustration + Number of Winners Title Row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
 
-                        <!-- Illustration circle — uses your bg_illustration_circle.xml -->
+                        <!-- Illustration Circle -->
                         <FrameLayout
-                            android:layout_width="96dp"
-                            android:layout_height="96dp"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
                             android:layout_marginEnd="16dp">
 
                             <View
-                                android:layout_width="96dp"
-                                android:layout_height="96dp"
+                                android:layout_width="100dp"
+                                android:layout_height="100dp"
                                 android:background="@drawable/bg_illustration_circle" />
 
-                            <!-- Dice icon from your existing drawable -->
-                            <ImageView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:layout_gravity="center"
-                                android:src="@drawable/ic_dice"
-                                android:contentDescription="Lottery dice"
-                                app:tint="#5C6BC0" />
-
-                            <!-- Decorative coloured dots -->
+                            <!-- Decorative dots -->
                             <View
                                 android:layout_width="10dp"
                                 android:layout_height="10dp"
                                 android:layout_gravity="top|end"
-                                android:layout_marginTop="6dp"
-                                android:layout_marginEnd="2dp"
+                                android:layout_marginTop="8dp"
                                 android:background="@drawable/dot_teal" />
 
                             <View
                                 android:layout_width="8dp"
                                 android:layout_height="8dp"
                                 android:layout_gravity="bottom|start"
-                                android:layout_marginBottom="8dp"
+                                android:layout_marginBottom="10dp"
                                 android:background="@drawable/dot_red" />
 
                             <View
@@ -143,8 +122,17 @@
                                 android:layout_gravity="center_vertical|end"
                                 android:background="@drawable/dot_green" />
 
+                            <!-- Trophy / lottery icon in center -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="🎰"
+                                android:textSize="38sp" />
+
                         </FrameLayout>
 
+                        <!-- Title -->
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -157,119 +145,120 @@
 
                     </LinearLayout>
 
-                    <!-- Thin divider -->
+                    <!-- Divider -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginTop="20dp"
                         android:layout_marginBottom="20dp"
-                        android:background="#EBEBF5" />
+                        android:background="#F0F0F5" />
 
-                    <!-- ── Counter row: [ − ]  10  [ + ] ── -->
+                    <!-- Counter Row: MINUS — NUMBER — PLUS -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:layout_gravity="center">
 
-                        <!-- Minus -->
+                        <!-- Minus Button -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnDecrement"
-                            style="@style/Widget.MaterialComponents.Button"
                             android:layout_width="52dp"
                             android:layout_height="52dp"
+                            android:text="−"
+                            android:textSize="26sp"
+                            android:textColor="#FFFFFF"
+                            app:backgroundTint="#5C6BC0"
+                            app:cornerRadius="26dp"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:padding="0dp"
-                            android:text="−"
-                            android:textColor="#FFFFFF"
-                            android:textSize="28sp"
-                            app:backgroundTint="#5C6BC0"
-                            app:cornerRadius="26dp" />
+                            style="@style/Widget.MaterialComponents.Button" />
 
-                        <!-- Counter number -->
+                        <!-- Number Display -->
                         <TextView
                             android:id="@+id/tvWinnerCount"
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="1"
+                            android:text="10"
                             android:textColor="#1A1A2E"
-                            android:textSize="50sp"
+                            android:textSize="48sp"
                             android:textStyle="bold"
+                            android:gravity="center"
                             android:fontFamily="sans-serif-black" />
 
-                        <!-- Plus -->
+                        <!-- Plus Button -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnIncrement"
-                            style="@style/Widget.MaterialComponents.Button"
                             android:layout_width="52dp"
                             android:layout_height="52dp"
+                            android:text="+"
+                            android:textSize="26sp"
+                            android:textColor="#FFFFFF"
+                            app:backgroundTint="#5C6BC0"
+                            app:cornerRadius="26dp"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:padding="0dp"
-                            android:text="+"
-                            android:textColor="#FFFFFF"
-                            android:textSize="28sp"
-                            app:backgroundTint="#5C6BC0"
-                            app:cornerRadius="26dp" />
+                            style="@style/Widget.MaterialComponents.Button" />
 
                     </LinearLayout>
 
-                    <!-- "from X waiting entrants" -->
+                    <!-- "from X waiting entrants" label -->
                     <TextView
                         android:id="@+id/tvWaitlistCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="loading waitlist…"
+                        android:text="from 42 waiting entrants"
                         android:textColor="#8A8AA0"
                         android:textSize="13sp"
                         android:gravity="center" />
 
-                    <!-- Progress indicator (hidden until draw starts) -->
+                    <!-- Progress bar for visual feedback -->
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progressBarDraw"
-                        style="@style/Widget.MaterialComponents.LinearProgressIndicator"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
+                        android:layout_marginBottom="4dp"
                         android:visibility="gone"
                         app:indicatorColor="#5C6BC0"
                         app:trackColor="#E8EAFF"
-                        app:trackCornerRadius="4dp" />
+                        app:trackCornerRadius="4dp"
+                        style="@style/Widget.MaterialComponents.LinearProgressIndicator" />
 
-                    <!-- Status / error message -->
+                    <!-- DRAW WINNERS Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDrawWinners"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="20dp"
+                        android:text="🎯  DRAW WINNERS"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08"
+                        app:backgroundTint="#5C6BC0"
+                        app:cornerRadius="28dp"
+                        style="@style/Widget.MaterialComponents.Button" />
+
+                    <!-- Error / status message -->
                     <TextView
                         android:id="@+id/tvStatusMessage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:gravity="center"
+                        android:visibility="gone"
                         android:textSize="13sp"
-                        android:visibility="gone" />
-
-                    <!-- DRAW WINNERS button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnDrawWinners"
-                        style="@style/Widget.MaterialComponents.Button"
-                        android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="18dp"
-                        android:text="🎯  DRAW WINNERS"
-                        android:textColor="#FFFFFF"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.07"
-                        app:backgroundTint="#5C6BC0"
-                        app:cornerRadius="28dp" />
+                        android:gravity="center"
+                        android:textColor="#E53935" />
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- ─────────────────────────────────────────
-                 "Or draw replacement" divider row
-                 ───────────────────────────────────────── -->
+            <!-- ===== DIVIDER WITH LABEL ===== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -288,11 +277,11 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
                     android:text="Or draw replacement:"
-                    android:textColor="#666688"
-                    android:textSize="13sp" />
+                    android:textColor="#555577"
+                    android:textSize="14sp" />
 
                 <View
                     android:layout_width="0dp"
@@ -302,14 +291,15 @@
 
             </LinearLayout>
 
-            <!-- DRAW 1 REPLACEMENT outlined button -->
+            <!-- ===== DRAW REPLACEMENT BUTTON ===== -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDrawReplacement"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="52dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="14dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
                 android:minWidth="220dp"
                 android:text="DRAW 1 REPLACEMENT"
                 android:textColor="#3D3D6B"
@@ -319,11 +309,10 @@
                 app:backgroundTint="#FFFFFF"
                 app:strokeColor="#5C6BC0"
                 app:strokeWidth="2dp"
-                app:cornerRadius="26dp" />
+                app:cornerRadius="26dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
-            <!-- ─────────────────────────────────────────
-                 RESULTS CARD  (hidden until draw completes)
-                 ───────────────────────────────────────── -->
+            <!-- ===== RESULTS SECTION (shown after draw) ===== -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardResults"
                 android:layout_width="match_parent"
@@ -342,7 +331,7 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <!-- Header row -->
+                    <!-- Results Header -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -358,7 +347,6 @@
                             android:textSize="17sp"
                             android:textStyle="bold" />
 
-                        <!-- Badge showing count -->
                         <TextView
                             android:id="@+id/tvResultCount"
                             android:layout_width="wrap_content"
@@ -374,7 +362,7 @@
 
                     </LinearLayout>
 
-                    <!-- Winner list -->
+                    <!-- Winner List RecyclerView -->
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvWinners"
                         android:layout_width="match_parent"

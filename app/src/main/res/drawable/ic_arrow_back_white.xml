@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/ic_arrow_back_white.xml -->
+<!--
+    This is just a white-tinted arrow back icon.
+    If you already have ic_arrow_back.xml as a vector, you can also just delete any
+    reference to ic_arrow_back_white and use:
+        android:src="@drawable/ic_arrow_back"
+        android:tint="#FFFFFF"
+    But this file resolves the linker error with zero other changes needed.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <bitmap
+            android:src="@drawable/ic_arrow_back"
+            android:tint="#FFFFFF" />
+    </item>
+</layer-list>
