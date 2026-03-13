@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Entrant activities -->
+        <!-- Entrant activities (Fahad) -->
         <activity
             android:name=".ui.EntrantSignUpActivity"
             android:exported="false" />
@@ -36,13 +36,16 @@
             android:name=".ui.QrAccessActivity"
             android:exported="false" />
 
-        <activity android:name=".NotificationsActivity"
+        <!-- Notification activities (Ammaar) -->
+        <activity
+            android:name=".NotificationsActivity"
             android:exported="false" />
 
-        <activity android:name=".AcceptDeclineActivity"
+        <activity
+            android:name=".AcceptDeclineActivity"
             android:exported="false" />
 
-        <!-- Organizer activities -->
+        <!-- Organizer activities (Huzaifa) -->
         <activity
             android:name=".CreateEventActivity"
             android:exported="false" />
@@ -59,6 +62,7 @@
             android:name=".MyEventsActivity"
             android:exported="false" />
 
+        <!-- Lottery activities (Umar) -->
         <activity
             android:name=".EnrolledListActivity"
             android:exported="false" />
@@ -66,6 +70,17 @@
         <activity
             android:name=".RunLotteryActivity"
             android:exported="false" />
+
+        <!-- Admin activities (Ibrahim) -->
+        <activity
+            android:name=".admin.AdminEventsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <activity
+            android:name=".admin.AdminProfilesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>
 
