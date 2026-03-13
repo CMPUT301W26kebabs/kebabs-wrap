@@ -12,6 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EventManager">
         <activity android:name=".NotificationsActivity" />
+        <activity android:name=".AcceptDeclineActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

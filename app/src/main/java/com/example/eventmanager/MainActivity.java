@@ -17,10 +17,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        // Hardcode the test event ID for now
+        String testEventId   = "Yx4SXWIOd64MvS2G6PmW";
+        String testEventName = "event1";
+
+        OrganizerNotificationManager manager = new OrganizerNotificationManager();
+
+        findViewById(R.id.btn_notify_waiting_list).setOnClickListener(v ->
+                manager.notifyWaitingList(testEventId, testEventName)
+        );
+
+        findViewById(R.id.btn_notify_winners).setOnClickListener(v ->
+                manager.notifyWinners(testEventId, testEventName)
+        );
+
+        findViewById(R.id.btn_open_notifications).setOnClickListener(v ->
+                startActivity(new Intent(this, NotificationsActivity.class))
+        );
+
         Log.d("DeviceID", "My device ID: " + new DeviceAuthManager().getDeviceId(this));
-        findViewById(R.id.btn_open_notifications).setOnClickListener(v -> {
-            startActivity(new Intent(this, NotificationsActivity.class));
-        });
 
         // Register the user in Firestore using their device ID on every launch.
         // SetOptions.merge() in saveUser() ensures we never overwrite existing data.

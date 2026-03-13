@@ -28,6 +28,21 @@ public class FirebaseRepository {
     public void saveUser(@NonNull String deviceId) {
         Map<String, Object> userData = new HashMap<>();
         userData.put("deviceId", deviceId);
+        if (deviceId.equals("5c7640b6f0f59181")) {
+            userData.put("name", "OrgName");
+        }
+        else {
+            userData.put("name", "UserName");
+        }
+        userData.put("email", "");
+        userData.put("phoneNumber", "");
+        if (deviceId.equals("5c7640b6f0f59181")) {
+            userData.put("isOrganizer", true);
+        }
+        else {
+            userData.put("isOrganizer", false);
+        }
+        userData.put("isAdmin", false);
 
         db.collection("users")
                 .document(deviceId)

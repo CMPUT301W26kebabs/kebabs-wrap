@@ -7,19 +7,33 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
     <Button
         android:id="@+id/btn_open_notifications"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Open Notifications"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_notify_winners"
         tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/btn_notify_waiting_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Notify Waiting List"
+        app:layout_constraintBottom_toTopOf="@+id/btn_notify_winners"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/btn_notify_winners"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Notify Winners"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

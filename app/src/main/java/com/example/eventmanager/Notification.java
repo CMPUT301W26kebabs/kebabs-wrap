@@ -6,8 +6,9 @@ import com.google.firebase.Timestamp;
  * Data model representing a single notification document in Firestore.
  * Maps to: users/{deviceId}/notifications/{notificationId}
  *
- * Follows the same POJO pattern as Entrant and Event so Firestore
- * can automatically serialize/deserialize it.
+ * eventId is nullable:
+ *   - null    → informational notification (waiting list message), tapping only marks as read
+ *   - non-null → winner notification, tapping launches AcceptDeclineActivity
  */
 public class Notification {
 
@@ -15,25 +16,37 @@ public class Notification {
     private String title;
     private String body;
     private String eventName;
+    private String eventId;       // null for waitingList notifications, populated for winner notifications
     private boolean isRead;
     private Timestamp timestamp;
 
-    /**
-     * Empty constructor required by Firestore for automatic data mapping.
-     */
+    /** Empty constructor required by Firestore for automatic data mapping. */
     public Notification() {}
 
     /**
-     * Constructs a new Notification with all required fields.
-     *
-     * @param title     The notification headline (e.g. "You've been selected!")
-     * @param body      The notification detail text.
-     * @param eventName The name of the event this notification is about.
+     * Constructor for informational notifications (e.g. waiting list messages).
+     * eventId is left null — tapping this notification only marks it as read.
      */
     public Notification(String title, String body, String eventName) {
         this.title = title;
         this.body = body;
         this.eventName = eventName;
+        this.eventId = null;
+        this.isRead = false;
+        this.timestamp = Timestamp.now();
+    }
+
+    /**
+     * Constructor for winner notifications.
+     * eventId is populated — tapping this notification launches AcceptDeclineActivity.
+     *
+     * @param eventId The Firestore document ID of the event the user won.
+     */
+    public Notification(String title, String body, String eventName, String eventId) {
+        this.title = title;
+        this.body = body;
+        this.eventName = eventName;
+        this.eventId = eventId;
         this.isRead = false;
         this.timestamp = Timestamp.now();
     }
@@ -49,6 +62,9 @@ public class Notification {
 
     public String getEventName() { return eventName; }
     public void setEventName(String eventName) { this.eventName = eventName; }
+
+    public String getEventId() { return eventId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
 
     public boolean isRead() { return isRead; }
     public void setRead(boolean read) { isRead = read; }

@@ -1,5 +1,6 @@
 package com.example.eventmanager;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -14,14 +15,9 @@ import java.util.List;
 
 /**
  * Displays the in-app notification panel for the current user.
- *
- * Responsibilities:
- * - Identifies the current user via DeviceAuthManager
- * - Attaches a real-time Firestore listener via NotificationRepository
- * - Passes live data to NotificationAdapter for rendering
- * - Switches between empty state and list depending on data
- * - Marks notifications as read when tapped
- * - Cleans up the Firestore listener when the Activity is destroyed
+ * On tap:
+ *   - Winner notifications (eventId != null) → launch AcceptDeclineActivity
+ *   - Informational notifications (eventId == null) → mark as read only
  */
 public class NotificationsActivity extends AppCompatActivity
         implements NotificationAdapter.OnNotificationClickListener {
@@ -31,7 +27,7 @@ public class NotificationsActivity extends AppCompatActivity
     private ListenerRegistration listenerRegistration;
 
     private RecyclerView recyclerView;
-    private LinearLayout emptyStateLayout;   // The "No Notifications" view
+    private LinearLayout emptyStateLayout;
 
     private String deviceId;
 
@@ -39,37 +35,26 @@ public class NotificationsActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notifications);
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
-        // --- Identify the current user ---
         deviceId = new DeviceAuthManager().getDeviceId(this);
 
-        // --- Wire up views ---
         recyclerView     = findViewById(R.id.recycler_notifications);
         emptyStateLayout = findViewById(R.id.layout_empty_state);
 
-        // --- Set up RecyclerView ---
+        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+
         adapter = new NotificationAdapter(this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
-        // --- Initialize repository ---
         notificationRepository = new NotificationRepository();
 
-        // --- Attach real-time Firestore listener ---
-        // Store the registration so we can remove it in onDestroy.
         listenerRegistration = notificationRepository.listenForNotifications(
                 deviceId,
-                this::onNotificationsUpdated   // method reference to the handler below
+                this::onNotificationsUpdated
         );
     }
 
-    /**
-     * Called automatically every time the Firestore notification list changes.
-     * Updates the adapter and toggles between empty state and list.
-     *
-     * @param notifications The current full list of notifications from Firestore.
-     */
     private void onNotificationsUpdated(List<Notification> notifications) {
         if (notifications.isEmpty()) {
             recyclerView.setVisibility(View.GONE);
@@ -82,24 +67,33 @@ public class NotificationsActivity extends AppCompatActivity
     }
 
     /**
-     * Called by NotificationAdapter when the user taps a notification card.
-     * Marks the notification as read in Firestore, which triggers the listener
-     * to refresh the list and update the envelope icon automatically.
+     * Called when a notification card is tapped.
      *
-     * @param notification The notification that was tapped.
+     * If the notification has an eventId, it is a winner notification —
+     * launch AcceptDeclineActivity so the user can respond.
+     *
+     * If eventId is null, it is an informational notification —
+     * just mark it as read.
      */
     @Override
     public void onNotificationClicked(Notification notification) {
+
+        // Always mark as read when tapped
         if (!notification.isRead()) {
             notificationRepository.markAsRead(deviceId, notification.getNotificationId());
         }
+
+        // Route winner notifications to the accept/decline screen
+        if (notification.getEventId() != null) {
+            Intent intent = new Intent(this, AcceptDeclineActivity.class);
+            intent.putExtra("eventId", notification.getEventId());
+            intent.putExtra("eventName", notification.getEventName());
+            intent.putExtra("deviceId", deviceId);
+            intent.putExtra("notificationId", notification.getNotificationId());
+            startActivity(intent);
+        }
     }
 
-    /**
-     * Removes the Firestore listener when the Activity is destroyed.
-     * This is critical — without this, the listener keeps running in the
-     * background and causes memory leaks.
-     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
