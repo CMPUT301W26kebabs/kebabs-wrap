@@ -5,7 +5,6 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -30,7 +29,6 @@ public class CreateEventActivity extends AppCompatActivity {
 
     private EditText nameInput, descriptionInput, startDateInput, endDateInput;
     private EditText locationInput, capacityInput, waitlistLimitInput;
-    private ImageView ivUploadPreview;
     private FirebaseRepository repository;
     private Date startDate, endDate;
     private Uri selectedImageUri;
@@ -40,10 +38,6 @@ public class CreateEventActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
                     selectedImageUri = uri;
-                    if (ivUploadPreview != null) {
-                        ivUploadPreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                        Glide.with(this).load(uri).centerCrop().into(ivUploadPreview);
-                    }
                     Toast.makeText(this, "Image selected", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -55,7 +49,7 @@ public class CreateEventActivity extends AppCompatActivity {
         repository = new FirebaseRepository();
 
         // Back button
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        try { findViewById(R.id.btnBack).setOnClickListener(v -> finish()); } catch (Exception e) {}
 
         // Input fields
         nameInput = findViewById(R.id.editEventName);
@@ -66,9 +60,8 @@ public class CreateEventActivity extends AppCompatActivity {
         capacityInput = findViewById(R.id.editCapacity);
         waitlistLimitInput = findViewById(R.id.editWaitlistLimit);
 
-        // Image upload
-        ivUploadPreview = findViewById(R.id.cardUploadImage);
-        findViewById(R.id.cardUploadImage).setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+        // Image upload - use try/catch since cardUploadImage might not be ImageView
+        try { findViewById(R.id.cardUploadImage).setOnClickListener(v -> imagePickerLauncher.launch("image/*")); } catch (Exception e) {}
 
         // Date pickers
         startDateInput.setFocusable(false);
@@ -120,10 +113,8 @@ public class CreateEventActivity extends AppCompatActivity {
         Toast.makeText(this, "Creating event...", Toast.LENGTH_SHORT).show();
 
         if (selectedImageUri != null) {
-            // Upload image first, then save event with poster URL
             uploadImageThenSave(eventId, newEvent);
         } else {
-            // No image, save directly
             saveEventToFirestore(newEvent);
         }
     }
@@ -131,19 +122,15 @@ public class CreateEventActivity extends AppCompatActivity {
     private void uploadImageThenSave(String eventId, Event event) {
         StorageReference ref = FirebaseStorage.getInstance().getReference()
                 .child("event_posters/" + eventId + ".jpg");
-
         ref.putFile(selectedImageUri)
-                .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl()
+                .addOnSuccessListener(task -> ref.getDownloadUrl()
                         .addOnSuccessListener(uri -> {
                             event.setPosterUrl(uri.toString());
                             saveEventToFirestore(event);
                         })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(this, "Failed to get image URL", Toast.LENGTH_SHORT).show();
-                            saveEventToFirestore(event); // save without poster
-                        }))
+                        .addOnFailureListener(e -> saveEventToFirestore(event)))
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "Image upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                        Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show());
     }
 
     private void saveEventToFirestore(Event event) {

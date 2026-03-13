@@ -18,12 +18,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/**
- * Espresso UI tests for Admin Profiles screen.
- *
- * US 03.05.01 - Browse Profiles screen loads and displays correctly
- * US 03.02.01 - Remove Profiles UI elements are present
- */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class AdminProfilesUITest {
@@ -32,25 +26,8 @@ public class AdminProfilesUITest {
     public ActivityScenarioRule<AdminProfilesActivity> profilesRule =
             new ActivityScenarioRule<>(AdminProfilesActivity.class);
 
-    @Test
-    public void browseProfiles_screenLoads() {
-        onView(withId(R.id.et_search)).check(matches(isDisplayed()));
-        onView(withId(R.id.rv_profiles)).check(matches(isDisplayed()));
-    }
-
-    @Test
-    public void browseProfiles_searchBarAcceptsInput() {
-        onView(withId(R.id.et_search))
-                .perform(typeText("alice"), closeSoftKeyboard());
-    }
-
-    @Test
-    public void browseProfiles_backButtonExists() {
-        onView(withId(R.id.btn_back)).check(matches(isDisplayed()));
-    }
-
-    @Test
-    public void browseProfiles_backButtonNavigatesBack() {
-        onView(withId(R.id.btn_back)).perform(click());
-    }
+    @Test public void browseProfiles_screenLoads() { onView(withId(R.id.et_search)).check(matches(isDisplayed())); }
+    @Test public void browseProfiles_searchBarAcceptsInput() { onView(withId(R.id.et_search)).perform(typeText("alice"), closeSoftKeyboard()); }
+    @Test public void browseProfiles_backButtonExists() { onView(withId(R.id.btn_back)).check(matches(isDisplayed())); }
+    @Test public void browseProfiles_backButtonWorks() { onView(withId(R.id.btn_back)).perform(click()); }
 }

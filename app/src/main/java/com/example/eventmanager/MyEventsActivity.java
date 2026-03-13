@@ -28,14 +28,16 @@ public class MyEventsActivity extends AppCompatActivity {
         repository = FirebaseRepository.getInstance();
         deviceId = new DeviceAuthManager().getDeviceId(this);
 
-        // FAB create event
-        findViewById(R.id.fab_add_event).setOnClickListener(v ->
-                startActivity(new Intent(this, CreateEventActivity.class)));
+        // Back button
+        findViewById(R.id.btn_back_my_events).setOnClickListener(v -> finish());
+
+        // FAB → Create Event
+        findViewById(R.id.fab_add_event).setOnClickListener(v -> {
+            startActivity(new Intent(this, CreateEventActivity.class));
+        });
 
         rvEvents = findViewById(R.id.recycler_my_events);
         rvEvents.setLayoutManager(new LinearLayoutManager(this));
-
-        loadMyEvents();
     }
 
     @Override
@@ -54,6 +56,12 @@ public class MyEventsActivity extends AppCompatActivity {
                             if (event != null) events.add(event);
                         }
                         EventAdapter adapter = new EventAdapter(events);
+                        adapter.setOnItemClickListener(event -> {
+                            Intent intent = new Intent(this, ManageEventActivity.class);
+                            intent.putExtra("EVENT_ID", event.getEventId());
+                            intent.putExtra("EVENT_NAME", event.getName());
+                            startActivity(intent);
+                        });
                         rvEvents.setAdapter(adapter);
                     }
                 },
