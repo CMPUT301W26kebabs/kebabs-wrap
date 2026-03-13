@@ -16,13 +16,13 @@ import java.util.Date;
  */
 public class EventTest {
 
-    private Event event;
+    private AnasEvent event;
     private Date futureDate;
     private Date pastDate;
 
     @Before
     public void setUp() {
-        event = new Event();
+        event = new AnasEvent();
         event.setCapacity(2);
         event.setWaitlistLimit(5);
 
