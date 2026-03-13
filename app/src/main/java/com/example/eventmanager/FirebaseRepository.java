@@ -1,10 +1,26 @@
 package com.example.eventmanager;
+
+import com.example.eventmanager.models.Entrant;
+import com.example.eventmanager.models.Event;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.AggregateSource;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FirebaseRepository {
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    // ==========================================
+    // YOUR METHODS (Events, QR, Posters)
+    // ==========================================
 
     public void createEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
         db.collection("events")
@@ -13,6 +29,7 @@ public class FirebaseRepository {
                 .addOnSuccessListener(success)
                 .addOnFailureListener(failure);
     }
+
     /**
      * Updates the posterUrl field for a specific Event document.
      * Pass null for posterUrl to remove the reference.
@@ -25,6 +42,7 @@ public class FirebaseRepository {
                 .addOnSuccessListener(onSuccess)
                 .addOnFailureListener(onFailure);
     }
+
     public void getEventsByOrganizer(String organizerId,
                                      OnSuccessListener<QuerySnapshot> onSuccess,
                                      OnFailureListener onFailure) {
@@ -34,28 +52,13 @@ public class FirebaseRepository {
                 .addOnSuccessListener(onSuccess)
                 .addOnFailureListener(onFailure);
     }
-}
-import com.example.eventmanager.models.Entrant;
-import com.example.eventmanager.models.Event;
-import com.google.firebase.firestore.AggregateSource;
-import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class FirebaseRepository {
-
-    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    // ==========================================
+    // TEAMMATES' METHODS (Lottery, Waitlist)
+    // ==========================================
 
     /**
      * Attempts to add an entrant to an event's waiting list, respecting the optional capacity limit.
-     *
-     * @param eventId The ID of the event.
-     * @param entrant The entrant trying to join.
-     * @param callback Handles the success or failure response.
      */
     public void joinWaitingList(String eventId, Entrant entrant, WaitlistCallback callback) {
         DocumentReference eventRef = db.collection("events").document(eventId);
@@ -71,7 +74,6 @@ public class FirebaseRepository {
 
                     // Step 2: Check if a limit exists (assuming > 0 means limited)
                     if (maxCapacity > 0) {
-
                         // Query the server for the current count of the sub-collection
                         waitlistRef.count().get(AggregateSource.SERVER).addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {
@@ -109,11 +111,9 @@ public class FirebaseRepository {
                 .addOnSuccessListener(aVoid -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure("Failed to join waitlist: " + e.getMessage()));
     }
+
     /**
      * Fetches the final list of entrants who are fully enrolled in an event.
-     *
-     * @param eventId  The ID of the event.
-     * @param callback Handles the response containing the list of entrants.
      */
     public void getEnrolledEntrants(String eventId, EntrantListCallback callback) {
         db.collection("events").document(eventId).collection("enrolled")
