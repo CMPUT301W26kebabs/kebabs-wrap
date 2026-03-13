@@ -22,4 +22,12 @@
     <string name="calendar_month">March 2026</string>
     <string name="calendar_event_one">10:30 am - 12:00 pm\nGala Music Festival</string>
     <string name="calendar_event_two">1:00 pm - 1:30 pm\nWomens Leadership</string>
+    <string name="name_required_error">Enter your name</string>
+    <string name="email_required_error">Enter your email</string>
+    <string name="email_invalid_error">Enter a valid email address</string>
+    <string name="password_required_error">Enter at least 8 characters</string>
+    <string name="profile_saved_message">Profile saved</string>
+    <string name="profile_save_error">Error saving profile</string>
+    <string name="profile_load_error">Failed to load profile</string>
+    <string name="profile_missing_error">No saved profile found for this device</string>
 </resources>
