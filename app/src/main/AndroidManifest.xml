@@ -35,6 +35,7 @@
 
         <!-- Huzaifa's activities -->
         <activity android:name=".CreateEventActivity" android:exported="false" />
+        <activity android:name=".ManageEventActivity" android:exported="false" />
         <activity android:name=".ManagePosterActivity" android:exported="false" />
         <activity android:name=".EventQRActivity" android:exported="false" />
         <activity android:name=".MyEventsActivity" android:exported="false" />

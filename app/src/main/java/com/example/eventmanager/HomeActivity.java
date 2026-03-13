@@ -35,7 +35,6 @@ public class HomeActivity extends AppCompatActivity {
         rvUpcoming = findViewById(R.id.rv_upcoming_events);
         rvNearby = findViewById(R.id.rv_nearby_events);
 
-        // Horizontal RecyclerViews
         upcomingAdapter = new HomeEventAdapter(this, new ArrayList<>());
         rvUpcoming.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         rvUpcoming.setAdapter(upcomingAdapter);
@@ -46,37 +45,37 @@ public class HomeActivity extends AppCompatActivity {
 
         // Role chips
         findViewById(R.id.chip_entrant).setOnClickListener(v ->
-                Toast.makeText(this, "Entrant mode active", Toast.LENGTH_SHORT).show());
+            Toast.makeText(this, "Entrant mode active", Toast.LENGTH_SHORT).show()
+        );
 
-        // Organizer → Create Event
-        findViewById(R.id.chip_organizer).setOnClickListener(v ->
-                startActivity(new Intent(this, CreateEventActivity.class)));
+        findViewById(R.id.chip_organizer).setOnClickListener(v -> {
+            startActivity(new Intent(this, MyEventsActivity.class));
+        });
 
-        // Admin → Admin Dashboard
-        findViewById(R.id.chip_admin).setOnClickListener(v ->
-                startActivity(new Intent(this, MainActivity.class)));
+        findViewById(R.id.chip_admin).setOnClickListener(v -> {
+            startActivity(new Intent(this, MainActivity.class));
+        });
 
         // Bottom nav
         findViewById(R.id.nav_explore).setOnClickListener(v -> { /* already here */ });
 
-        // Events → My Events
-        findViewById(R.id.nav_events).setOnClickListener(v ->
-                startActivity(new Intent(this, MyEventsActivity.class)));
+        findViewById(R.id.nav_events).setOnClickListener(v -> {
+            startActivity(new Intent(this, MyEventsActivity.class));
+        });
 
-        // Scan → QR Scanner (using ZXing)
         findViewById(R.id.nav_scan).setOnClickListener(v -> {
             try {
                 Intent intent = new Intent("com.google.zxing.client.android.SCAN");
                 intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
                 startActivityForResult(intent, 100);
             } catch (Exception e) {
-                Toast.makeText(this, "QR Scanner not available. Install a QR scanner app.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "QR Scanner not available", Toast.LENGTH_LONG).show();
             }
         });
 
-        // Profile
-        findViewById(R.id.nav_profile).setOnClickListener(v ->
-                startActivity(new Intent(this, EntrantSignUpActivity.class)));
+        findViewById(R.id.nav_profile).setOnClickListener(v -> {
+            startActivity(new Intent(this, EntrantSignUpActivity.class));
+        });
 
         loadUserName();
         loadEvents();
@@ -105,13 +104,13 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Entrant result) {
                 if (result != null && result.getName() != null) {
-                    tvWelcome.setText("Welcome back " + result.getName() + " 👋,");
+                    tvWelcome.setText("Welcome back " + result.getName() + " \uD83D\uDC4B,");
                 } else {
-                    tvWelcome.setText("Welcome 👋,");
+                    tvWelcome.setText("Welcome \uD83D\uDC4B,");
                 }
             }
             @Override
-            public void onError(Exception e) { tvWelcome.setText("Welcome 👋,"); }
+            public void onError(Exception e) { tvWelcome.setText("Welcome \uD83D\uDC4B,"); }
         });
     }
 
