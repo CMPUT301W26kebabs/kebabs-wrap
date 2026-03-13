@@ -3,46 +3,63 @@ package com.example.eventmanager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
-/**
- * Navigation hub for testing US1-US4 activities.
- * Provides buttons to launch EventActivity, EventListsViewActivity,
- * and InvitationActivity with a test EVENT_ID.
- */
+import com.example.eventmanager.admin.AdminEventsActivity;
+import com.example.eventmanager.admin.AdminProfilesActivity;
+import com.google.firebase.firestore.DocumentSnapshot;
+
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
-    // Use this test event ID — make sure this document exists in Firestore
-    private static final String TEST_EVENT_ID = "test_event_open";
+    private TextView tvEventCount, tvProfileCount, tvImageCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // US1: Join Waiting List
-        Button btnEventActivity = findViewById(R.id.btnGoToEventActivity);
-        btnEventActivity.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EventActivity.class);
-            intent.putExtra("EVENT_ID", TEST_EVENT_ID);
-            startActivity(intent);
-        });
+        tvEventCount   = findViewById(R.id.tv_event_count);
+        tvProfileCount = findViewById(R.id.tv_profile_count);
+        tvImageCount   = findViewById(R.id.tv_image_count);
 
-        // US2 & US3: Organizer view waiting + chosen lists
-        Button btnEventLists = findViewById(R.id.btnGoToEventLists);
-        btnEventLists.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EventListsViewActivity.class);
-            intent.putExtra("EVENT_ID", TEST_EVENT_ID);
-            startActivity(intent);
-        });
+        // Admin dashboard cards
+        findViewById(R.id.card_events).setOnClickListener(v ->
+                startActivity(new Intent(this, AdminEventsActivity.class)));
+        findViewById(R.id.card_profiles).setOnClickListener(v ->
+                startActivity(new Intent(this, AdminProfilesActivity.class)));
 
-        // US4: Accept / Decline Invitation
-        Button btnInvitation = findViewById(R.id.btnGoToInvitation);
-        btnInvitation.setOnClickListener(v -> {
-            Intent intent = new Intent(this, InvitationActivity.class);
-            intent.putExtra("EVENT_ID", TEST_EVENT_ID);
+        // Umar's test buttons
+        Button btnRunLottery = findViewById(R.id.btnTestRunLottery);
+        Button btnEnrolledList = findViewById(R.id.btnTestEnrolledList);
+
+        btnRunLottery.setOnClickListener(v ->
+                startActivity(new Intent(this, RunLotteryActivity.class)));
+        btnEnrolledList.setOnClickListener(v -> {
+            Intent intent = new Intent(this, EnrolledListActivity.class);
+            intent.putExtra("EVENT_ID", "test_event_123");
             startActivity(intent);
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FirebaseRepository repo = FirebaseRepository.getInstance();
+        try {
+            repo.fetchAllActiveEvents(new FirebaseRepository.OnDocumentsLoadedListener() {
+                public void onLoaded(List<DocumentSnapshot> docs) { tvEventCount.setText(docs.size() + " events"); }
+                public void onError(Exception e) { tvEventCount.setText("0 events"); }
+            });
+            repo.fetchAllActiveProfiles(new FirebaseRepository.OnDocumentsLoadedListener() {
+                public void onLoaded(List<DocumentSnapshot> docs) { tvProfileCount.setText(docs.size() + " users"); }
+                public void onError(Exception e) { tvProfileCount.setText("0 users"); }
+            });
+            tvImageCount.setText("0 posters");
+        } catch (Exception e) { /* ignore */ }
     }
 }

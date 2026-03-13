@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/bg_illustration_circle.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:startColor="#E8EAFF"
+        android:endColor="#C5CAF5"
+        android:angle="135" />
+</shape>
+
+    <!-- ─────────────────────────────────────────────
+         Also create these simple dot drawables:
+         ───────────────────────────────────────────── -->
+
+    <!-- dot_teal.xml -->
+    <!--
+    <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+        <solid android:color="#26C6DA" />
+    </shape>
+    -->
+
+    <!-- dot_red.xml -->
+    <!--
+    <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+        <solid android:color="#EF5350" />
+    </shape>
+    -->
+
+    <!-- dot_green.xml -->
+    <!--
+    <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+        <solid android:color="#66BB6A" />
+    </shape>
+    -->
+
+    <!-- bg_badge_indigo.xml -->
+    <!--
+    <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+        <solid android:color="#5C6BC0" />
+        <corners android:radius="12dp" />
+    </shape>
+    -->

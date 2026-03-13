@@ -1,120 +1,187 @@
 package com.example.eventmanager;
-
-import com.google.firebase.firestore.PropertyName;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
 
 /**
- * Represents an event in the lottery-based event management system.
- * Stores entrant lists (waiting, chosen, attendees) and registration window info.
+ * Represents an event within the lottery system.
+ * This class stores the configuration and details of an event but delegates
+ * the management of entrant lists (waiting list, selected, enrolled) to Firestore sub-collections.
  */
 public class Event {
 
     private String eventId;
     private String name;
     private String description;
-    private String location;
-
     private Date registrationStart;
     private Date registrationEnd;
-
     private int capacity;
-    private String organizerId;
-    private int waitlistLimit;
-
+    private int maxWaitlistCapacity;
     private String posterUrl;
+    private String organizerId;
+    private boolean isGeolocationRequired;
 
-    // Entrant lists — stored as device ID strings, mirroring Firestore arrays
-    private List<String> waitingList = new ArrayList<>();
-    private List<String> chosenList  = new ArrayList<>();
-    private List<String> attendees   = new ArrayList<>();
-    private List<String> declinedList = new ArrayList<>();
-
-    /** Required empty constructor for Firestore deserialization. */
-    public Event() {}
-
-    // Getters
-    public String getEventId() { return eventId; }
-
-    public Date getRegistrationStart() { return registrationStart; }
-
-    public Date getRegistrationEnd() { return registrationEnd; }
-
-    public String getName()              { return name; }
-    public String getDescription()       { return description; }
-    public String getLocation()          { return location; }
-    public int    getCapacity()          { return capacity; }
-    public String getOrganizerId()       { return organizerId; }
-    public String getPosterUrl()         { return posterUrl; }
-
-    public int getWaitlistLimit()        { return waitlistLimit; }
-
-    public List<String> getWaitingList()  { return waitingList; }
-    public List<String> getChosenList()   { return chosenList; }
-    public List<String> getAttendees()    { return attendees; }
-    public List<String> getDeclinedList() { return declinedList; }
-
-    // Setters
-    public void setEventId(String eventId)                   { this.eventId = eventId; }
-    public void setName(String name)                         { this.name = name; }
-    public void setDescription(String description)           { this.description = description; }
-    public void setLocation(String location)                 { this.location = location; }
-    public void setRegistrationStart(Date registrationStart) { this.registrationStart = registrationStart; }
-    public void setRegistrationEnd(Date registrationEnd)     { this.registrationEnd = registrationEnd; }
-    public void setCapacity(int capacity)                    { this.capacity = capacity; }
-    public void setOrganizerId(String organizerId)           { this.organizerId = organizerId; }
-    public void setPosterUrl(String posterUrl)               { this.posterUrl = posterUrl; }
-    public void setWaitlistLimit(int waitlistLimit)          { this.waitlistLimit = waitlistLimit; }
-    public void setWaitingList(List<String> waitingList)     { this.waitingList = waitingList; }
-    public void setChosenList(List<String> chosenList)       { this.chosenList = chosenList; }
-    public void setAttendees(List<String> attendees)         { this.attendees = attendees; }
-    public void setDeclinedList(List<String> declinedList)   { this.declinedList = declinedList; }
-
-    // Functionalities
     /**
-     * US1: Checks whether registration is currently open based on the time window.
-     * @return true if the current time is within [registrationStart, registrationEnd].
+     * Empty constructor required by Firebase Firestore for automatic data mapping.
      */
-    public boolean isRegistrationWindowActive() {
-        Date now = new Date();
-        if (registrationStart == null || registrationEnd == null) return false;
-        return now.after(registrationStart) && now.before(registrationEnd);
+    public Event() {
     }
 
     /**
-     * US1: Validates whether a user is permitted to join the waiting list.
-     * Checks registration window, duplicate join, and waitlist capacity.
-     *
-     * @param deviceId     The ID of the entrant attempting to join.
-     * @param waitlistLimit The max waitlist size (0 or null = unlimited).
-     * @return true if joining is permitted.
+     * Gets the unique identifier for the event.
+     * @return The event ID string.
      */
-    public boolean canUserJoin(String deviceId, Integer waitlistLimit) {
-        if (!isRegistrationWindowActive()) return false;
-        if (waitingList != null && waitingList.contains(deviceId)) return false;
-        if (waitlistLimit != null && waitlistLimit > 0) {
-            if (waitingList != null && waitingList.size() >= waitlistLimit) return false;
-        }
-        return true;
+    public String getEventId() {
+        return eventId;
     }
 
     /**
-     * US3 & US4: Checks if a user has been selected by the lottery.
-     * @param deviceId The device ID to check.
-     * @return true if the user is in the chosen list.
+     * Sets the unique identifier for the event.
+     * @param eventId The new event ID string.
      */
-    public boolean isUserChosen(String deviceId) {
-        return chosenList != null && chosenList.contains(deviceId);
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
     }
 
     /**
-     * US4: Checks whether there is still space in the attendees list.
-     * Ensures capacity is not exceeded when accepting an invitation.
-     * @return true if attendees count is below capacity.
+     * Gets the name of the event.
+     * @return The event name string.
      */
-    public boolean hasAttendeesSpace() {
-        return attendees != null && attendees.size() < capacity;
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Sets the name of the event.
+     * @param name The new event name string.
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Gets the detailed description of the event.
+     * @return The event description string.
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Sets the detailed description of the event.
+     * @param description The new event description string.
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * Gets the start date and time for event registration.
+     * @return The registration start Date object.
+     */
+    public Date getRegistrationStart() {
+        return registrationStart;
+    }
+
+    /**
+     * Sets the start date and time for event registration.
+     * @param registrationStart The new registration start Date object.
+     */
+    public void setRegistrationStart(Date registrationStart) {
+        this.registrationStart = registrationStart;
+    }
+
+    /**
+     * Gets the end date and time for event registration.
+     * @return The registration end Date object.
+     */
+    public Date getRegistrationEnd() {
+        return registrationEnd;
+    }
+
+    /**
+     * Sets the end date and time for event registration.
+     * @param registrationEnd The new registration end Date object.
+     */
+    public void setRegistrationEnd(Date registrationEnd) {
+        this.registrationEnd = registrationEnd;
+    }
+
+    /**
+     * Gets the maximum number of attendees allowed to enroll in the event.
+     * @return The event capacity integer.
+     */
+    public int getCapacity() {
+        return capacity;
+    }
+
+    /**
+     * Sets the maximum number of attendees allowed to enroll in the event.
+     * @param capacity The new event capacity integer.
+     */
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+    }
+
+    /**
+     * Gets the maximum number of entrants allowed on the waiting list.
+     * @return The max waitlist capacity integer.
+     */
+    public int getMaxWaitlistCapacity() {
+        return maxWaitlistCapacity;
+    }
+
+    /**
+     * Sets the maximum number of entrants allowed on the waiting list.
+     * @param maxWaitlistCapacity The new max waitlist capacity integer.
+     */
+    public void setMaxWaitlistCapacity(int maxWaitlistCapacity) {
+        this.maxWaitlistCapacity = maxWaitlistCapacity;
+    }
+
+    /**
+     * Gets the URL of the uploaded event poster image.
+     * @return The poster URL string.
+     */
+    public String getPosterUrl() {
+        return posterUrl;
+    }
+
+    /**
+     * Sets the URL of the uploaded event poster image.
+     * @param posterUrl The new poster URL string.
+     */
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl;
+    }
+
+    /**
+     * Gets the device ID of the user who organized the event.
+     * @return The organizer's device ID string.
+     */
+    public String getOrganizerId() {
+        return organizerId;
+    }
+
+    /**
+     * Sets the device ID of the user who organized the event.
+     * @param organizerId The new organizer's device ID string.
+     */
+    public void setOrganizerId(String organizerId) {
+        this.organizerId = organizerId;
+    }
+
+    /**
+     * Checks if geolocation verification is required to join the waiting list.
+     * @return True if geolocation is required, false otherwise.
+     */
+    public boolean isGeolocationRequired() {
+        return isGeolocationRequired;
+    }
+
+    /**
+     * Sets whether geolocation verification is required to join the waiting list.
+     * @param geolocationRequired True to require geolocation, false otherwise.
+     */
+    public void setGeolocationRequired(boolean geolocationRequired) {
+        isGeolocationRequired = geolocationRequired;
     }
 }

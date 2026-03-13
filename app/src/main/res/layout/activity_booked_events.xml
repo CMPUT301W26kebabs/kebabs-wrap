@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <View
+        android:layout_width="170dp"
+        android:layout_height="170dp"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="-42dp"
+        android:layout_marginTop="-12dp"
+        android:background="@drawable/bg_outline_arch" />
+
+    <View
+        android:layout_width="170dp"
+        android:layout_height="170dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-16dp"
+        android:layout_marginEnd="-36dp"
+        android:background="@drawable/bg_outline_arch" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/calendarPhoneCard"
+        android:layout_width="220dp"
+        android:layout_height="430dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="42dp"
+        app:cardBackgroundColor="@color/white"
+        app:cardCornerRadius="36dp"
+        app:cardElevation="8dp"
+        app:strokeColor="@color/phone_stroke"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingStart="18dp"
+            android:paddingTop="22dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="18dp">
+
+            <View
+                android:layout_width="72dp"
+                android:layout_height="6dp"
+                android:layout_gravity="center_horizontal"
+                android:background="@drawable/bg_social_button" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="@string/calendar_month"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView style="@style/CalendarDayHeader" android:text="Sun" />
+                <TextView style="@style/CalendarDayHeader" android:text="Mon" />
+                <TextView style="@style/CalendarDayHeader" android:text="Tue" />
+                <TextView style="@style/CalendarDayHeader" android:text="Wed" />
+                <TextView style="@style/CalendarDayHeader" android:text="Thu" />
+                <TextView style="@style/CalendarDayHeader" android:text="Fri" />
+                <TextView style="@style/CalendarDayHeader" android:text="Sat" />
+            </LinearLayout>
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:columnCount="7"
+                android:rowCount="2">
+
+                <TextView style="@style/CalendarDayValue" android:text="2" />
+                <TextView style="@style/CalendarDayValue" android:text="3" />
+                <TextView style="@style/CalendarDayValue" android:text="4" />
+                <TextView style="@style/CalendarDayValue" android:text="5" />
+                <TextView style="@style/CalendarDayValue" android:text="6" />
+                <TextView style="@style/CalendarDayValue" android:text="7" />
+                <TextView style="@style/CalendarDayValue" android:text="8" />
+                <TextView style="@style/CalendarDayValue" android:text="9" />
+                <TextView style="@style/CalendarDayValueBold" android:text="10" />
+                <TextView style="@style/CalendarDayValueBold" android:text="11" />
+                <TextView style="@style/CalendarDayValueBold" android:text="12" />
+                <TextView style="@style/CalendarDayValueBold" android:text="13" />
+                <TextView style="@style/CalendarDayValueBold" android:text="14" />
+                <TextView style="@style/CalendarDayValueBold" android:text="15" />
+            </GridLayout>
+
+            <View
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_calendar_dot" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:background="@drawable/bg_calendar_chip_orange"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <View
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_social_button" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/calendar_event_one"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_calendar_chip_purple"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="12dp">
+
+                <View
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_social_button" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/calendar_event_two"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="260dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_bottom_panel"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="28dp"
+        android:paddingTop="34dp"
+        android:paddingEnd="28dp"
+        android:paddingBottom="28dp">
+
+        <TextView
+            android:id="@+id/bookedEventsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/booked_events_title"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/bookedEventsSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@string/booked_events_subtitle"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="52dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/bookedEventsSkip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/skip"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_dot_inactive" />
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_dot_active" />
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_dot_inactive" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/bookedEventsNext"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/next"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>
