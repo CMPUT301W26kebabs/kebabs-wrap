@@ -1,50 +1,314 @@
 package com.example.eventmanager;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
+import android.view.View;
+import android.view.animation.OvershootInterpolator;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.eventmanager.adapters.WinnerAdapter;
 import com.example.eventmanager.models.Entrant;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * RunLotteryActivity
+ *
+ * Organizer UI screen for:
+ *   US 02.05.02 – Sample a specified number of attendees from the waiting list.
+ *   US 02.05.03 – Draw a replacement if someone cancels/declines.
+ *
+ * Delegates all business logic to the existing {@link LotteryManager}.
+ * Receives eventId + capacity via Intent extras.
+ */
 public class RunLotteryActivity extends AppCompatActivity {
 
-    private EditText editTargetCount;
-    private Button btnRunLottery;
-    private LotteryManager lotteryManager;
-    private String eventId = "SAMPLE_EVENT_ID"; // In the real app, pass this via Intent
+    // ── Intent extras ─────────────────────────────────────────────────────────
+    public static final String EXTRA_EVENT_ID  = "extra_event_id";
+    public static final String EXTRA_CAPACITY  = "extra_capacity";
 
+    // ── UI ────────────────────────────────────────────────────────────────────
+    private ImageButton             btnBack;
+    private MaterialButton          btnIncrement, btnDecrement;
+    private MaterialButton          btnDrawWinners, btnDrawReplacement;
+    private TextView                tvWinnerCount, tvWaitlistCount;
+    private TextView                tvStatusMessage, tvResultCount;
+    private LinearProgressIndicator progressBar;
+    private CardView                cardResults;
+    private RecyclerView            rvWinners;
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    private String        eventId;
+    private int           capacity     = Integer.MAX_VALUE;
+    private int           winnerCount  = 1;
+    private int           waitlistSize = 0;
+
+    // ── Collaborators ─────────────────────────────────────────────────────────
+    private LotteryManager      lotteryManager;
+    private WinnerAdapter       winnerAdapter;
+    private final List<Entrant> winnerList = new ArrayList<>();
+
+    // ─────────────────────────────────────────────────────────────────────────
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_run_lottery);
 
-        editTargetCount = findViewById(R.id.editTargetCount);
-        btnRunLottery = findViewById(R.id.btnRunLottery);
+        // Read extras passed from OrganizerEventDetailActivity (or wherever you launch from)
+        eventId  = getIntent().getStringExtra(EXTRA_EVENT_ID);
+        capacity = getIntent().getIntExtra(EXTRA_CAPACITY, Integer.MAX_VALUE);
+
+        // Fallback for testing without Intent (matches your existing hardcoded approach)
+        if (eventId == null) {
+            eventId = "SAMPLE_EVENT_ID";
+        }
+
         lotteryManager = new LotteryManager();
 
-        btnRunLottery.setOnClickListener(v -> {
-            String countStr = editTargetCount.getText().toString();
-            if (countStr.isEmpty()) {
-                Toast.makeText(this, "Please enter a number", Toast.LENGTH_SHORT).show();
-                return;
+        bindViews();
+        setupRecyclerView();
+        setupClickListeners();
+        loadWaitlistCount();
+    }
+
+    // ── Bind views ────────────────────────────────────────────────────────────
+    private void bindViews() {
+        btnBack            = findViewById(R.id.btnBack);
+        btnIncrement       = findViewById(R.id.btnIncrement);
+        btnDecrement       = findViewById(R.id.btnDecrement);
+        btnDrawWinners     = findViewById(R.id.btnDrawWinners);
+        btnDrawReplacement = findViewById(R.id.btnDrawReplacement);
+        tvWinnerCount      = findViewById(R.id.tvWinnerCount);
+        tvWaitlistCount    = findViewById(R.id.tvWaitlistCount);
+        tvStatusMessage    = findViewById(R.id.tvStatusMessage);
+        tvResultCount      = findViewById(R.id.tvResultCount);
+        progressBar        = findViewById(R.id.progressBarDraw);
+        cardResults        = findViewById(R.id.cardResults);
+        rvWinners          = findViewById(R.id.rvWinners);
+
+        tvWinnerCount.setText(String.valueOf(winnerCount));
+    }
+
+    // ── RecyclerView ──────────────────────────────────────────────────────────
+    private void setupRecyclerView() {
+        winnerAdapter = new WinnerAdapter(winnerList);
+        rvWinners.setLayoutManager(new LinearLayoutManager(this));
+        rvWinners.setAdapter(winnerAdapter);
+        rvWinners.setNestedScrollingEnabled(false);
+    }
+
+    // ── Click listeners ───────────────────────────────────────────────────────
+    private void setupClickListeners() {
+
+        btnBack.setOnClickListener(v -> finish());
+
+        // Decrement — floor at 1
+        btnDecrement.setOnClickListener(v -> {
+            if (winnerCount > 1) {
+                winnerCount--;
+                animateCounter(tvWinnerCount, String.valueOf(winnerCount));
+                refreshDrawButton();
+            }
+        });
+
+        // Increment — cap at min(waitlistSize, capacity)
+        btnIncrement.setOnClickListener(v -> {
+            int max = Math.min(waitlistSize, capacity);
+            if (winnerCount < max) {
+                winnerCount++;
+                animateCounter(tvWinnerCount, String.valueOf(winnerCount));
+                refreshDrawButton();
+            } else {
+                showStatus("Max is " + max + " (waitlist / capacity limit)", true);
+            }
+        });
+
+        // US 02.05.02 – Draw N winners
+        btnDrawWinners.setOnClickListener(v -> confirmDraw());
+
+        // US 02.05.03 – Draw 1 replacement
+        btnDrawReplacement.setOnClickListener(v -> confirmReplacement());
+    }
+
+    // ── Load live waitlist count from Firestore ───────────────────────────────
+    private void loadWaitlistCount() {
+        FirebaseFirestore.getInstance()
+                .collection("events").document(eventId)
+                .collection("waitingList")
+                .get()
+                .addOnSuccessListener(snap -> {
+                    waitlistSize = snap.size();
+                    tvWaitlistCount.setText("from " + waitlistSize + " waiting entrants");
+                    // Clamp current winnerCount to new size
+                    winnerCount = Math.max(1, Math.min(winnerCount, waitlistSize));
+                    tvWinnerCount.setText(String.valueOf(winnerCount));
+                    refreshDrawButton();
+                })
+                .addOnFailureListener(e ->
+                        showStatus("Could not load waitlist: " + e.getMessage(), true));
+    }
+
+    // ── US 02.05.02 ───────────────────────────────────────────────────────────
+    private void confirmDraw() {
+        if (waitlistSize == 0) {
+            showStatus("Waiting list is empty — nothing to draw!", true);
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm Draw")
+                .setMessage("Draw " + winnerCount + " winner(s) from "
+                        + waitlistSize + " waiting entrants?\n\nThis cannot be undone.")
+                .setPositiveButton("Draw", (d, w) -> executeDraw())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void executeDraw() {
+        setLoading(true);
+        hideStatus();
+
+        // Uses your existing LotteryManager.drawWinners() + LotteryCallback exactly
+        lotteryManager.drawWinners(eventId, winnerCount, new LotteryCallback() {
+            @Override
+            public void onSuccess(List<Entrant> selectedWinners) {
+                setLoading(false);
+
+                winnerList.clear();
+                winnerList.addAll(selectedWinners);
+                winnerAdapter.notifyDataSetChanged();
+
+                tvResultCount.setText(selectedWinners.size() + " drawn");
+                cardResults.setVisibility(View.VISIBLE);
+                animateCardIn(cardResults);
+
+                showStatus("✓ " + selectedWinners.size() + " winner(s) selected!", false);
+                loadWaitlistCount(); // Refresh count after draw
             }
 
-            int targetCount = Integer.parseInt(countStr);
-
-            // Call the engine you built!
-            lotteryManager.drawWinners(eventId, targetCount, new LotteryCallback() {
-                @Override
-                public void onSuccess(List<Entrant> selectedWinners) {
-                    Toast.makeText(RunLotteryActivity.this, "Successfully drew " + selectedWinners.size() + " winners!", Toast.LENGTH_LONG).show();
-                }
-
-                @Override
-                public void onFailure(String errorMessage) {
-                    Toast.makeText(RunLotteryActivity.this, "Error: " + errorMessage, Toast.LENGTH_LONG).show();
-                }
-            });
+            @Override
+            public void onFailure(String errorMessage) {
+                setLoading(false);
+                showStatus("Draw failed: " + errorMessage, true);
+            }
         });
+    }
+
+    // ── US 02.05.03 ───────────────────────────────────────────────────────────
+    private void confirmReplacement() {
+        new AlertDialog.Builder(this)
+                .setTitle("Draw Replacement")
+                .setMessage("Randomly select 1 replacement from the remaining waiting list?")
+                .setPositiveButton("Draw", (d, w) -> executeReplacement())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void executeReplacement() {
+        setLoading(true);
+        hideStatus();
+
+        // Uses your existing LotteryManager.drawReplacement() which calls drawWinners(eventId, 1, ...)
+        lotteryManager.drawReplacement(eventId, new LotteryCallback() {
+            @Override
+            public void onSuccess(List<Entrant> selectedWinners) {
+                setLoading(false);
+
+                if (!selectedWinners.isEmpty()) {
+                    Entrant replacement = selectedWinners.get(0);
+                    showStatus("✓ Replacement drawn: "
+                                    + (replacement.getName() != null ? replacement.getName() : replacement.getDeviceId()),
+                            false);
+
+                    // Append to results card if already visible
+                    if (cardResults.getVisibility() == View.VISIBLE) {
+                        winnerList.addAll(selectedWinners);
+                        winnerAdapter.notifyItemInserted(winnerList.size() - 1);
+                        tvResultCount.setText(winnerList.size() + " drawn");
+                    } else {
+                        winnerList.addAll(selectedWinners);
+                        winnerAdapter.notifyDataSetChanged();
+                        tvResultCount.setText(winnerList.size() + " drawn");
+                        cardResults.setVisibility(View.VISIBLE);
+                        animateCardIn(cardResults);
+                    }
+                    loadWaitlistCount();
+                }
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                setLoading(false);
+                showStatus("Replacement failed: " + errorMessage, true);
+            }
+        });
+    }
+
+    // ── UI Helpers ────────────────────────────────────────────────────────────
+
+    /** Enable/disable draw button based on waitlist availability. */
+    private void refreshDrawButton() {
+        boolean canDraw = waitlistSize > 0;
+        btnDrawWinners.setEnabled(canDraw);
+        btnDrawWinners.setAlpha(canDraw ? 1f : 0.45f);
+        btnDrawReplacement.setEnabled(canDraw);
+        btnDrawReplacement.setAlpha(canDraw ? 1f : 0.45f);
+    }
+
+    /** Show/hide progress bar and lock controls during async operation. */
+    private void setLoading(boolean loading) {
+        progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
+        btnDrawWinners.setEnabled(!loading);
+        btnDrawReplacement.setEnabled(!loading);
+        btnIncrement.setEnabled(!loading);
+        btnDecrement.setEnabled(!loading);
+    }
+
+    private void showStatus(String msg, boolean isError) {
+        tvStatusMessage.setText(msg);
+        tvStatusMessage.setTextColor(isError ? 0xFFE53935 : 0xFF43A047);
+        tvStatusMessage.setVisibility(View.VISIBLE);
+    }
+
+    private void hideStatus() {
+        tvStatusMessage.setVisibility(View.GONE);
+    }
+
+    /** Bounce animation on the counter TextView when value changes. */
+    private void animateCounter(TextView tv, String newValue) {
+        tv.setText(newValue);
+        ObjectAnimator sx = ObjectAnimator.ofFloat(tv, "scaleX", 1f, 1.35f, 1f);
+        ObjectAnimator sy = ObjectAnimator.ofFloat(tv, "scaleY", 1f, 1.35f, 1f);
+        sx.setDuration(260);
+        sy.setDuration(260);
+        sx.setInterpolator(new OvershootInterpolator(2f));
+        sy.setInterpolator(new OvershootInterpolator(2f));
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(sx, sy);
+        set.start();
+    }
+
+    /** Slide-up + fade-in entrance for the results card. */
+    private void animateCardIn(View view) {
+        view.setTranslationY(50f);
+        view.setAlpha(0f);
+        view.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(380)
+                .setInterpolator(new OvershootInterpolator(0.9f))
+                .start();
     }
 }

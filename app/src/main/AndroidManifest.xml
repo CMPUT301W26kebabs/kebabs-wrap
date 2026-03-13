@@ -11,25 +11,77 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.EventManager"
-        >
+        tools:targetApi="31">
+
+        <!-- Main entry point -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
-        <activity android:name=".CreateEventActivity" />
-        <activity android:name=".ManagePosterActivity" />
-        <activity android:name=".EventQRActivity" />
-        <activity android:name=".MyEventsActivity" />
 
+        <!-- Entrant activities (Fahad) -->
+        <activity
+            android:name=".ui.EntrantSignUpActivity"
+            android:exported="false" />
 
-        <activity android:name=".EnrolledListActivity" android:exported="false"/>
-        <activity android:name=".RunLotteryActivity" />
+        <activity
+            android:name=".ui.BookedEventsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.QrAccessActivity"
+            android:exported="false" />
+
+        <!-- Notification activities (Ammaar) -->
+        <activity
+            android:name=".NotificationsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".AcceptDeclineActivity"
+            android:exported="false" />
+
+        <!-- Organizer activities (Huzaifa) -->
+        <activity
+            android:name=".CreateEventActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ManagePosterActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".EventQRActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".MyEventsActivity"
+            android:exported="false" />
+
+        <!-- Lottery activities (Umar) -->
+        <activity
+            android:name=".EnrolledListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".RunLotteryActivity"
+            android:exported="false" />
+
+        <!-- Admin activities (Ibrahim) -->
+        <activity
+            android:name=".admin.AdminEventsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <activity
+            android:name=".admin.AdminProfilesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
     </application>
 
 </manifest>
