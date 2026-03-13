@@ -1,61 +1,26 @@
 package com.example.eventmanager;
 
-/**
- * This is a class that represents a user of the system.
- * Can act as an Entrant, Organizer, or Admin depending on the role flag given.
- */
 public class AnasEntrant {
     private String deviceId;
     private String name;
     private String email;
-    private String phoneNumber;
-    private boolean isAdmin;
-    private boolean isOrganizer;
-    public Entrant() {}
+    private String status;
 
-    public Entrant(String deviceId, String name, String email,
-                   String phoneNumber, boolean isAdmin, boolean isOrganizer) {
+    public AnasEntrant() {}
+
+    public AnasEntrant(String deviceId, String name, String email, String status) {
         this.deviceId = deviceId;
         this.name = name;
         this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.isAdmin = isAdmin;
-        this.isOrganizer = isOrganizer;
+        this.status = status;
     }
 
-    // Getters
-    public String getDeviceId() {
-        return deviceId;
-    }
-    public String getName() {
-        return name;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-    public boolean isAdmin() {
-        return isAdmin;
-    }
-    public boolean isOrganizer() {
-        return isOrganizer;
-    }
-    // Setters
-    public void setName(String name) {
-        this.name = name;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-    public void setAdmin(boolean admin) {
-        this.isAdmin = admin;
-    }
-    public void setOrganizer(boolean organizer) {
-        this.isOrganizer = organizer;
-    }
+    public String getDeviceId() { return deviceId; }
+    public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

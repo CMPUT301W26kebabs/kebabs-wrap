@@ -1,215 +1,76 @@
-import com.example.eventmanager.Entrant;
-import com.example.eventmanager.Event;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
+package com.example.eventmanager;
+
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.android.gms.tasks.Task;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Handles all Firestore database operations.
- * Separates backend connectivity from UI logic.
- */
-public class FirebaseRepository {
+public class AnasFirebaseRepo {
 
-    private final FirebaseFirestore db;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    public FirebaseRepository() {
-        this.db = FirebaseFirestore.getInstance();
+    public interface StatusCallback {
+        void onSuccess(String message);
+        void onFailure(String error);
     }
 
-    // US1: Join Waiting List
-    /**
-     * Atomically adds a user to the event's waiting list.
-     * Checks: event exists, user not already joined, waitlist not full.
-     *
-     * @param eventId  The Firestore document ID of the event.
-     * @param deviceId The device ID of the entrant joining.
-     * @return A Task that completes on success or fails with a descriptive exception.
-     */
-    public Task<Void> joinWaitingList(String eventId, String deviceId) {
-        DocumentReference eventRef = db.collection("events").document(eventId);
-
-        return db.runTransaction(transaction -> {
-            Event event = transaction.get(eventRef).toObject(Event.class);
-
-            if (event == null) {
-                throw new FirebaseFirestoreException("Event not found",
-                        FirebaseFirestoreException.Code.NOT_FOUND);
-            }
-
-            if (event.getWaitingList().contains(deviceId)
-                    || event.getAttendees().contains(deviceId)) {
-                throw new FirebaseFirestoreException("User already registered",
-                        FirebaseFirestoreException.Code.ALREADY_EXISTS);
-            }
-
-            int limit = event.getWaitlistLimit();
-            if (limit > 0 && event.getWaitingList().size() >= limit) {
-                throw new FirebaseFirestoreException("Waitlist is full",
-                        FirebaseFirestoreException.Code.ABORTED);
-            }
-
-            if (!event.isRegistrationWindowActive()) {
-                throw new FirebaseFirestoreException("Registration is currently closed",
-                        FirebaseFirestoreException.Code.FAILED_PRECONDITION);
-            }
-
-            transaction.update(eventRef, "waitingList", FieldValue.arrayUnion(deviceId));
-            return null;
-        });
+    public interface EventListener {
+        void onEvent(AnasEvent event);
     }
 
-
-    // US2 & US3: Real-time event listener (used by organizer screens)
-    /**
-     * Attaches a real-time Firestore listener to an event document.
-     * Calls the provided callback whenever the event data changes.
-     *
-     * @param eventId  The Firestore document ID of the event.
-     * @param callback A callback that receives the updated Event object.
-     * @return A ListenerRegistration that should be removed when the Activity is destroyed.
-     */
-    public ListenerRegistration listenToEvent(String eventId, EventCallback callback) {
+    public ListenerRegistration listenToEvent(String eventId, EventListener listener) {
         return db.collection("events").document(eventId)
-                .addSnapshotListener((snapshot, error) -> {
-                    if (error != null || snapshot == null || !snapshot.exists()) return;
-                    Event event = snapshot.toObject(Event.class);
-                    if (event != null) {
-                        callback.onEvent(event);
-                    }
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null || !snapshot.exists()) return;
+                    AnasEvent event = snapshot.toObject(AnasEvent.class);
+                    if (event != null) listener.onEvent(event);
                 });
     }
 
-    /**
-     * Callback interface for real-time event updates.
-     */
-    public interface EventCallback {
-        void onEvent(Event event);
+    public Task<Void> joinWaitingList(String eventId, String deviceId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("deviceId", deviceId);
+        data.put("timestamp", FieldValue.serverTimestamp());
+        return db.collection("events").document(eventId)
+                .collection("waitingList").document(deviceId).set(data);
     }
 
-    // US2 & US3: Fetch entrant profiles by device ID list
-    /**
-     * Fetches full Entrant profiles from Firestore for a list of device IDs.
-     * Used by the organizer to display names/emails in the waiting and chosen lists.
-     * Note: Firestore 'whereIn' is limited to 10 items; batch for larger lists in Part 4.
-     *
-     * @param deviceIds List of device IDs to look up.
-     * @return A Task resolving to a list of Entrant objects.
-     */
-    public Task<List<Entrant>> getEntrantProfiles(List<String> deviceIds) {
-        if (deviceIds == null || deviceIds.isEmpty()) {
-            return Tasks.forResult(new ArrayList<>());
-        }
-
-        // Firestore 'in' queries support max 10 items
-        List<String> safeIds = deviceIds.size() > 10 ? deviceIds.subList(0, 10) : deviceIds;
-
-        return db.collection("users")
-                .whereIn("deviceId", safeIds)
-                .get()
-                .continueWith(task -> {
-                    List<Entrant> entrants = new ArrayList<>();
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        for (DocumentSnapshot doc : task.getResult()) {
-                            Entrant e = doc.toObject(Entrant.class);
-                            if (e != null) entrants.add(e);
-                        }
-                    }
-                    return entrants;
-                });
+    public Task<DocumentSnapshot> getEvent(String eventId) {
+        return db.collection("events").document(eventId).get();
     }
 
-
-    // US4: Accept Invitation
-    /**
-     * Atomically moves a user from the chosenList to attendees.
-     * Checks: event exists, user is in chosen list, capacity not exceeded.
-     *
-     * @param eventId  The Firestore document ID of the event.
-     * @param deviceId The device ID of the entrant accepting the invitation.
-     * @return A Task that completes on success or fails with a descriptive exception.
-     */
     public Task<Void> acceptInvitation(String eventId, String deviceId) {
         DocumentReference eventRef = db.collection("events").document(eventId);
-
-        return db.runTransaction(transaction -> {
-            DocumentSnapshot snapshot = transaction.get(eventRef);
-            Event event = snapshot.toObject(Event.class);
-
-            if (event == null) {
-                throw new FirebaseFirestoreException("Event not found",
-                        FirebaseFirestoreException.Code.NOT_FOUND);
-            }
-
-            if (!event.isUserChosen(deviceId)) {
-                throw new FirebaseFirestoreException("User not in chosen list",
-                        FirebaseFirestoreException.Code.PERMISSION_DENIED);
-            }
-
-            if (!event.hasAttendeesSpace()) {
-                throw new FirebaseFirestoreException("Event is at maximum capacity",
-                        FirebaseFirestoreException.Code.ABORTED);
-            }
-
-            transaction.update(eventRef, "chosenList", FieldValue.arrayRemove(deviceId));
-            transaction.update(eventRef, "attendees", FieldValue.arrayUnion(deviceId));
-            return null;
-        });
+        Map<String, Object> data = new HashMap<>();
+        data.put("deviceId", deviceId);
+        data.put("acceptedAt", FieldValue.serverTimestamp());
+        return eventRef.collection("enrolled").document(deviceId).set(data)
+                .continueWithTask(task -> eventRef.collection("selected").document(deviceId).delete());
     }
 
-    /**
-     * Atomically moves a user from the chosenList back to the waiting list (decline).
-     * Used alongside US4 — declining triggers replacement draw eligibility.
-     *
-     * @param eventId  The Firestore document ID of the event.
-     * @param deviceId The device ID of the entrant declining the invitation.
-     * @return A Task that completes on success or fails with a descriptive exception.
-     */
     public Task<Void> declineInvitation(String eventId, String deviceId) {
         DocumentReference eventRef = db.collection("events").document(eventId);
-
-        return db.runTransaction(transaction -> {
-            DocumentSnapshot snapshot = transaction.get(eventRef);
-            Event event = snapshot.toObject(Event.class);
-
-            if (event == null) {
-                throw new FirebaseFirestoreException("Event not found",
-                        FirebaseFirestoreException.Code.NOT_FOUND);
-            }
-
-            if (!event.isUserChosen(deviceId)) {
-                throw new FirebaseFirestoreException("User not in chosen list",
-                        FirebaseFirestoreException.Code.PERMISSION_DENIED);
-            }
-
-            transaction.update(eventRef, "chosenList", FieldValue.arrayRemove(deviceId));
-            transaction.update(eventRef, "declinedList", FieldValue.arrayUnion(deviceId));
-            return null;
-        });
+        Map<String, Object> data = new HashMap<>();
+        data.put("deviceId", deviceId);
+        data.put("declinedAt", FieldValue.serverTimestamp());
+        return eventRef.collection("cancelled").document(deviceId).set(data)
+                .continueWithTask(task -> eventRef.collection("selected").document(deviceId).delete());
     }
 
+    public void getWaitingList(String eventId, StatusCallback callback) {
+        db.collection("events").document(eventId).collection("waitingList").get()
+                .addOnSuccessListener(qs -> callback.onSuccess("Loaded " + qs.size() + " entrants"))
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
 
-    // Utility
-    /**
-     * Fetches a single event document once (non-realtime).
-     *
-     * @param eventId The Firestore document ID of the event.
-     * @return A Task resolving to the Event object, or null if not found.
-     */
-    public Task<Event> getEvent(String eventId) {
-        return db.collection("events").document(eventId).get()
-                .continueWith(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        return task.getResult().toObject(Event.class);
-                    }
-                    return null;
-                });
+    public void getChosenEntrants(String eventId, StatusCallback callback) {
+        db.collection("events").document(eventId).collection("selected").get()
+                .addOnSuccessListener(qs -> callback.onSuccess("Loaded " + qs.size() + " chosen"))
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 }
