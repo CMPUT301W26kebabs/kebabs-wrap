@@ -6,22 +6,37 @@ import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import android.util.Log;
+import androidx.annotation.NonNull;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * Handles core Firestore operations for users and events.
+ * Notification-specific operations are handled by NotificationRepository.
+ */
 public class FirebaseRepository {
 
+    private static final String TAG = "FirebaseRepository";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     /**
      * Attempts to add an entrant to an event's waiting list, respecting the
      * optional capacity limit.
+     * Saves or updates a user document in Firestore using their device ID.
+     * Called on first launch to register the user in the database.
      *
      * @param eventId  The ID of the event.
      * @param entrant  The entrant trying to join.
      * @param callback Handles the success or failure response.
+     * Firestore path: users/{deviceId}
+     *
+     * @param deviceId The unique hardware ID of the user's device.
      */
     public void joinWaitingList(String eventId, Entrant entrant, WaitlistCallback callback) {
         DocumentReference eventRef = db.collection("events").document(eventId);
@@ -75,6 +90,24 @@ public class FirebaseRepository {
                 .addOnSuccessListener(aVoid -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure("Failed to join waitlist: " + e.getMessage()));
     }
+    public void saveUser(@NonNull String deviceId) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("deviceId", deviceId);
+        if (deviceId.equals("5c7640b6f0f59181")) {
+            userData.put("name", "OrgName");
+        }
+        else {
+            userData.put("name", "UserName");
+        }
+        userData.put("email", "");
+        userData.put("phoneNumber", "");
+        if (deviceId.equals("5c7640b6f0f59181")) {
+            userData.put("isOrganizer", true);
+        }
+        else {
+            userData.put("isOrganizer", false);
+        }
+        userData.put("isAdmin", false);
 
     /**
      * Fetches the final list of entrants who are fully enrolled in an event.
@@ -96,5 +129,12 @@ public class FirebaseRepository {
                     callback.onSuccess(enrolledList);
                 })
                 .addOnFailureListener(e -> callback.onFailure("Failed to load enrolled list: " + e.getMessage()));
+        db.collection("users")
+                .document(deviceId)
+                .set(userData, SetOptions.merge())
+                .addOnSuccessListener(unused ->
+                        Log.d(TAG, "User saved for deviceId: " + deviceId))
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Failed to save user: " + deviceId, e));
     }
 }
