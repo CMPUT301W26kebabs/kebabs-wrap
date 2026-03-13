@@ -28,15 +28,10 @@ public class FirebaseRepository {
     /**
      * Attempts to add an entrant to an event's waiting list, respecting the
      * optional capacity limit.
-     * Saves or updates a user document in Firestore using their device ID.
-     * Called on first launch to register the user in the database.
      *
      * @param eventId  The ID of the event.
      * @param entrant  The entrant trying to join.
      * @param callback Handles the success or failure response.
-     * Firestore path: users/{deviceId}
-     *
-     * @param deviceId The unique hardware ID of the user's device.
      */
     public void joinWaitingList(String eventId, Entrant entrant, WaitlistCallback callback) {
         DocumentReference eventRef = db.collection("events").document(eventId);
@@ -62,7 +57,6 @@ public class FirebaseRepository {
                                 if (currentSize >= maxCapacity) {
                                     callback.onFailure("The waiting list is currently full.");
                                 } else {
-                                    // There is room, add the user
                                     executeAddUser(waitlistRef, entrant, callback);
                                 }
                             } else {
@@ -71,7 +65,7 @@ public class FirebaseRepository {
                         });
 
                     } else {
-                        // No limit is set (e.g., maxCapacity is 0), add the user immediately
+                        // No limit set, add the user immediately
                         executeAddUser(waitlistRef, entrant, callback);
                     }
                 }
@@ -82,32 +76,47 @@ public class FirebaseRepository {
     }
 
     /**
-     * Helper method to perform the actual database write.
+     * Helper method to perform the actual database write for joining the waiting list.
      */
     private void executeAddUser(CollectionReference waitlistRef, Entrant entrant, WaitlistCallback callback) {
-        // Use the user's Device ID as the document ID in the sub-collection
         waitlistRef.document(entrant.getDeviceId()).set(entrant)
                 .addOnSuccessListener(aVoid -> callback.onSuccess())
                 .addOnFailureListener(e -> callback.onFailure("Failed to join waitlist: " + e.getMessage()));
     }
+
+    /**
+     * Saves or updates a user document in Firestore using their device ID.
+     * Called on first launch to register the user in the database.
+     *
+     * Firestore path: users/{deviceId}
+     *
+     * @param deviceId The unique hardware ID of the user's device.
+     */
     public void saveUser(@NonNull String deviceId) {
         Map<String, Object> userData = new HashMap<>();
         userData.put("deviceId", deviceId);
         if (deviceId.equals("5c7640b6f0f59181")) {
             userData.put("name", "OrgName");
-        }
-        else {
+        } else {
             userData.put("name", "UserName");
         }
         userData.put("email", "");
         userData.put("phoneNumber", "");
         if (deviceId.equals("5c7640b6f0f59181")) {
             userData.put("isOrganizer", true);
-        }
-        else {
+        } else {
             userData.put("isOrganizer", false);
         }
         userData.put("isAdmin", false);
+
+        db.collection("users")
+                .document(deviceId)
+                .set(userData, SetOptions.merge())
+                .addOnSuccessListener(unused ->
+                        Log.d(TAG, "User saved for deviceId: " + deviceId))
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Failed to save user: " + deviceId, e));
+    }
 
     /**
      * Fetches the final list of entrants who are fully enrolled in an event.
@@ -128,13 +137,7 @@ public class FirebaseRepository {
                     }
                     callback.onSuccess(enrolledList);
                 })
-                .addOnFailureListener(e -> callback.onFailure("Failed to load enrolled list: " + e.getMessage()));
-        db.collection("users")
-                .document(deviceId)
-                .set(userData, SetOptions.merge())
-                .addOnSuccessListener(unused ->
-                        Log.d(TAG, "User saved for deviceId: " + deviceId))
                 .addOnFailureListener(e ->
-                        Log.e(TAG, "Failed to save user: " + deviceId, e));
+                        callback.onFailure("Failed to load enrolled list: " + e.getMessage()));
     }
 }
