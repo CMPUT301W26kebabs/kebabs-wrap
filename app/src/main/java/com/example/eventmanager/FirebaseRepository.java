@@ -211,5 +211,31 @@ public class FirebaseRepository {
                 .addOnFailureListener(listener::onError);
     }
 
+    public void updateEventPosterUrl(String eventId, String posterUrl, com.google.android.gms.tasks.OnSuccessListener<Void> onSuccess, com.google.android.gms.tasks.OnFailureListener onFailure) {
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("posterUrl", posterUrl);
+        db.collection("events").document(eventId).update(updates)
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
+
+    public void saveEvent(Event event, com.google.android.gms.tasks.OnSuccessListener<Void> onSuccess, com.google.android.gms.tasks.OnFailureListener onFailure) {
+        db.collection("events").document(event.getEventId()).set(event)
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
+
+    public void getEventsByOrganizer(String organizerId, com.google.android.gms.tasks.OnSuccessListener<com.google.firebase.firestore.QuerySnapshot> onSuccess, com.google.android.gms.tasks.OnFailureListener onFailure) {
+        db.collection("events").whereEqualTo("organizerId", organizerId).get()
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
+
+    public void createEvent(Event event, com.google.android.gms.tasks.OnSuccessListener<Void> onSuccess, com.google.android.gms.tasks.OnFailureListener onFailure) {
+        db.collection("events").document(event.getEventId()).set(event)
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
+
     public FirebaseFirestore getDb() { return db; }
 }

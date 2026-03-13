@@ -6,7 +6,6 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 
 import com.example.eventmanager.admin.AdminEventsActivity;
 import com.example.eventmanager.admin.AdminProfilesActivity;
@@ -61,5 +60,11 @@ public class MainActivity extends AppCompatActivity {
             });
             tvImageCount.setText("0 posters");
         } catch (Exception e) { /* ignore */ }
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Go back to sign up screen
+        super.onBackPressed();
     }
 }
