@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -20,12 +21,16 @@
             </intent-filter>
         </activity>
 
-        <!-- Fahad's onboarding flow -->
+        <!-- Fahad's onboarding -->
         <activity android:name=".ui.BookedEventsActivity" android:exported="false" />
         <activity android:name=".ui.QrAccessActivity" android:exported="false" />
 
         <!-- Admin Dashboard (Ibrahim) -->
         <activity android:name=".MainActivity" android:exported="false" />
+
+        <!-- Ammaar's activities -->
+        <activity android:name=".NotificationsActivity" android:exported="false" />
+        <activity android:name=".AcceptDeclineActivity" android:exported="false" />
 
         <!-- Huzaifa's activities -->
         <activity android:name=".CreateEventActivity" android:exported="false" />
@@ -39,6 +44,7 @@
 
         <!-- Ibrahim's admin screens -->
         <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".admin.AdminImagesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminProfilesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>

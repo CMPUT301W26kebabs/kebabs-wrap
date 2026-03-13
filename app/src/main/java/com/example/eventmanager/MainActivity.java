@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventmanager.admin.AdminEventsActivity;
+import com.example.eventmanager.admin.AdminImagesActivity;
 import com.example.eventmanager.admin.AdminProfilesActivity;
 import com.google.firebase.firestore.DocumentSnapshot;
 
@@ -31,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, AdminEventsActivity.class)));
         findViewById(R.id.card_profiles).setOnClickListener(v ->
                 startActivity(new Intent(this, AdminProfilesActivity.class)));
+        findViewById(R.id.card_images).setOnClickListener(v ->
+                startActivity(new Intent(this, AdminImagesActivity.class)));
 
         // Umar's test buttons
         Button btnRunLottery = findViewById(R.id.btnTestRunLottery);
@@ -58,13 +61,17 @@ public class MainActivity extends AppCompatActivity {
                 public void onLoaded(List<DocumentSnapshot> docs) { tvProfileCount.setText(docs.size() + " users"); }
                 public void onError(Exception e) { tvProfileCount.setText("0 users"); }
             });
-            tvImageCount.setText("0 posters");
+            repo.fetchAllEvents(new FirebaseRepository.OnDocumentsLoadedListener() {
+                public void onLoaded(List<DocumentSnapshot> docs) {
+                    int count = 0;
+                    for (DocumentSnapshot d : docs) {
+                        String url = d.getString("posterUrl");
+                        if (url != null && !url.isEmpty()) count++;
+                    }
+                    tvImageCount.setText(count + " posters");
+                }
+                public void onError(Exception e) { tvImageCount.setText("0 posters"); }
+            });
         } catch (Exception e) { /* ignore */ }
-    }
-
-    @Override
-    public void onBackPressed() {
-        // Go back to sign up screen
-        super.onBackPressed();
     }
 }
