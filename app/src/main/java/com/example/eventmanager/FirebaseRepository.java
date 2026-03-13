@@ -1,31 +1,61 @@
 package com.example.eventmanager;
 
-import android.util.Log;
-import androidx.annotation.NonNull;
-
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.models.Event;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.AggregateSource;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Handles core Firestore operations for users and events.
- * Notification-specific operations are handled by NotificationRepository.
- */
 public class FirebaseRepository {
 
-    private static final String TAG = "FirebaseRepository";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    // ==========================================
+    // YOUR METHODS (Events, QR, Posters)
+    // ==========================================
+
+    public void createEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
+        db.collection("events")
+                .document(event.getEventId())
+                .set(event)
+                .addOnSuccessListener(success)
+                .addOnFailureListener(failure);
+    }
+
+    /**
+     * Updates the posterUrl field for a specific Event document.
+     * Pass null for posterUrl to remove the reference.
+     */
+    public void updateEventPosterUrl(String eventId, String posterUrl,
+                                     OnSuccessListener<Void> onSuccess,
+                                     OnFailureListener onFailure) {
+        db.collection("events").document(eventId)
+                .update("posterUrl", posterUrl)
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
+
+    public void getEventsByOrganizer(String organizerId,
+                                     OnSuccessListener<QuerySnapshot> onSuccess,
+                                     OnFailureListener onFailure) {
+        db.collection("events")
+                .whereEqualTo("organizerId", organizerId)
+                .get()
+                .addOnSuccessListener(onSuccess)
+                .addOnFailureListener(onFailure);
+    }
+
+    // ==========================================
+    // TEAMMATES' METHODS (Lottery, Waitlist)
+    // ==========================================
 
     private static FirebaseRepository instance;
 
@@ -93,12 +123,7 @@ public class FirebaseRepository {
     // ══════════════════════════════════════════════════════════════
 
     /**
-     * Attempts to add an entrant to an event's waiting list, respecting the
-     * optional capacity limit.
-     *
-     * @param eventId  The ID of the event.
-     * @param entrant  The entrant trying to join.
-     * @param callback Handles the success or failure response.
+     * Attempts to add an entrant to an event's waiting list, respecting the optional capacity limit.
      */
     public void joinWaitingList(String eventId, Entrant entrant, WaitlistCallback callback) {
         DocumentReference eventRef = db.collection("events").document(eventId);
@@ -110,6 +135,7 @@ public class FirebaseRepository {
                 if (event != null) {
                     int maxCapacity = event.getMaxWaitlistCapacity();
                     if (maxCapacity > 0) {
+                        // Query the server for the current count of the sub-collection
                         waitlistRef.count().get(AggregateSource.SERVER).addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {
                                 long currentSize = task.getResult().getCount();
@@ -143,9 +169,6 @@ public class FirebaseRepository {
 
     /**
      * Fetches the final list of entrants who are fully enrolled in an event.
-     *
-     * @param eventId  The ID of the event.
-     * @param callback Handles the response containing the list of entrants.
      */
     public void getEnrolledEntrants(String eventId, EntrantListCallback callback) {
         db.collection("events").document(eventId).collection("enrolled")
