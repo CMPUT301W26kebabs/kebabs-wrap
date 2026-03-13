@@ -27,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
         tvProfileCount = findViewById(R.id.tv_profile_count);
         tvImageCount   = findViewById(R.id.tv_image_count);
 
+        // Back button to Home Screen
+        findViewById(R.id.btn_back_home).setOnClickListener(v -> finish());
+
         // Admin dashboard cards
         findViewById(R.id.card_events).setOnClickListener(v ->
                 startActivity(new Intent(this, AdminEventsActivity.class)));

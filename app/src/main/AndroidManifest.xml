@@ -26,6 +26,7 @@
         <activity android:name=".ui.QrAccessActivity" android:exported="false" />
 
         <!-- Admin Dashboard (Ibrahim) -->
+        <activity android:name=".HomeActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
 
         <!-- Ammaar's activities -->

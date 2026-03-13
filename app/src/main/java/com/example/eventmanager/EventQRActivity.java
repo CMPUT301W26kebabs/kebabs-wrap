@@ -1,65 +1,93 @@
 package com.example.eventmanager;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.eventmanager.QRCodeManager;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
 
 public class EventQRActivity extends AppCompatActivity {
 
-    private ImageView qrImageView;
-    private TextView eventNameTextView;
-    private QRCodeManager qrManager;
-    private Bitmap currentQrBitmap;
+    private ImageView ivQrCode;
+    private TextView tvEventName, tvEventId;
+    private String eventId, eventName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_event_qr); // The XML we made earlier
+        setContentView(R.layout.activity_event_qr);
 
-        qrManager = new QRCodeManager();
+        eventId = getIntent().getStringExtra("EVENT_ID");
+        eventName = getIntent().getStringExtra("EVENT_NAME");
 
-        qrImageView = findViewById(R.id.image_generated_qr);
-        eventNameTextView = findViewById(R.id.text_qr_event_name);
-        Button btnSave = findViewById(R.id.btn_save_qr);
-        Button btnShare = findViewById(R.id.btn_share_qr);
+        ivQrCode = findViewById(R.id.ivQrCode);
+        tvEventName = findViewById(R.id.tvEventName);
+        tvEventId = findViewById(R.id.tvEventId);
 
-        // 1. Retrieve the Event data passed from CreateEventActivity
-        String eventId = getIntent().getStringExtra("EVENT_ID");
-        String eventName = getIntent().getStringExtra("EVENT_NAME");
+        if (tvEventName != null) tvEventName.setText(eventName != null ? eventName : "Event");
+        if (tvEventId != null) tvEventId.setText("ID: " + (eventId != null ? eventId : "N/A"));
 
-        // 2. Update the UI with the Event Name
-        if (eventName != null) {
-            eventNameTextView.setText(eventName);
-        }
-
-        // 3. Generate the actual QR Code graphic using your Manager
+        // Generate REAL QR code with event data
         if (eventId != null) {
-            currentQrBitmap = qrManager.generateEventQR(eventId);
-            if (currentQrBitmap != null) {
-                qrImageView.setImageBitmap(currentQrBitmap);
-            } else {
-                Toast.makeText(this, "Error generating QR Code", Toast.LENGTH_SHORT).show();
-            }
+            String qrContent = "eventmanager://event/" + eventId;
+            generateQRCode(qrContent);
         }
 
-        // 4. Hook up the action buttons
-        btnSave.setOnClickListener(v -> saveQrToGallery());
-        btnShare.setOnClickListener(v -> shareQrCode());
+        // Back button
+        try {
+            findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        } catch (Exception e) { /* no back button in layout */ }
+
+        // Done / Go to My Events button
+        try {
+            Button btnDone = findViewById(R.id.btnDone);
+            if (btnDone != null) {
+                btnDone.setOnClickListener(v -> {
+                    startActivity(new Intent(this, MyEventsActivity.class));
+                    finish();
+                });
+            }
+        } catch (Exception e) { /* no done button */ }
+
+        // Share button
+        try {
+            findViewById(R.id.btnShare).setOnClickListener(v -> {
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, "Join my event \"" + eventName + "\" on Event Manager!\n\nEvent ID: " + eventId);
+                startActivity(Intent.createChooser(shareIntent, "Share Event"));
+            });
+        } catch (Exception e) { /* no share button */ }
     }
 
-    private void saveQrToGallery() {
-        // TODO: Implement Android MediaStore logic to save currentQrBitmap to photos
-        Toast.makeText(this, "Save feature coming soon!", Toast.LENGTH_SHORT).show();
+    private void generateQRCode(String content) {
+        try {
+            int size = 800;
+            BitMatrix bitMatrix = new MultiFormatWriter().encode(content, BarcodeFormat.QR_CODE, size, size);
+            Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565);
+            for (int x = 0; x < size; x++) {
+                for (int y = 0; y < size; y++) {
+                    bitmap.setPixel(x, y, bitMatrix.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+                }
+            }
+            ivQrCode.setImageBitmap(bitmap);
+        } catch (WriterException e) {
+            Toast.makeText(this, "Failed to generate QR code", Toast.LENGTH_SHORT).show();
+        }
     }
 
-    private void shareQrCode() {
-        // TODO: Implement Android FileProvider logic to open the share sheet
-        Toast.makeText(this, "Share feature coming soon!", Toast.LENGTH_SHORT).show();
+    @Override
+    public void onBackPressed() {
+        startActivity(new Intent(this, MyEventsActivity.class));
+        finish();
     }
 }

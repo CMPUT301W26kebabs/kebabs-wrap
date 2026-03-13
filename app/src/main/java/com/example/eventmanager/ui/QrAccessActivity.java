@@ -6,7 +6,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.eventmanager.MainActivity;
+import com.example.eventmanager.HomeActivity;
 import com.example.eventmanager.R;
 
 public class QrAccessActivity extends AppCompatActivity {
@@ -24,7 +24,7 @@ public class QrAccessActivity extends AppCompatActivity {
     }
 
     private void goToMain() {
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, HomeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
     }

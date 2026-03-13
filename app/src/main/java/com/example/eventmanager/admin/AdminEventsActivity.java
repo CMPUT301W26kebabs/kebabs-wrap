@@ -52,6 +52,7 @@ public class AdminEventsActivity extends AppCompatActivity implements EventAdapt
         chipActive = findViewById(R.id.chip_active);
         chipDeleted = findViewById(R.id.chip_deleted);
 
+        // Back button — finish activity so Android goes back
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
         adapter = new EventAdapter(this, new ArrayList<>(), this);
