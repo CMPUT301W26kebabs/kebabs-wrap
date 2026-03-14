@@ -1,27 +1,38 @@
-package com.example.eventmanager; // Ensure this matches your package name!
+package com.example.eventmanager;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
+
 import java.util.List;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
+    public interface OnItemClickListener {
+        void onItemClick(Event event);
+    }
+
     private List<Event> eventList;
+    private OnItemClickListener clickListener;
 
     public EventAdapter(List<Event> eventList) {
         this.eventList = eventList;
     }
 
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.clickListener = listener;
+    }
+
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Inflate your item_event_card.xml layout
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_event_card, parent, false);
         return new EventViewHolder(view);
     }
@@ -30,53 +41,42 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = eventList.get(position);
 
-        // Bind the text data
-        holder.eventName.setText(event.getName());
+        holder.eventName.setText(event.getName() != null ? event.getName() : "Unnamed Event");
 
-        // Mocking date formatting for now. You can format actual dates based on your Event model.
-        holder.eventDate.setText("Capacity: " + event.getCapacity());
-        holder.eventLocation.setText("Tap for details"); // Replace with event.getLocation() if you added it
+        String date = "";
+        if (event.getRegistrationStart() != null) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault());
+            date = sdf.format(event.getRegistrationStart());
+        }
+        Long cap = (long) event.getCapacity();
+        holder.eventDate.setText(date + " • " + cap + " entrants");
+
         holder.eventStatus.setText("Open");
 
-        // Use Glide to load the poster image smoothly
-        if (event.getPosterUrl() != null && !event.getPosterUrl().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(event.getPosterUrl())
-                    .placeholder(R.drawable.placeholder_image)
-                    .centerCrop()
-                    .into(holder.eventPoster);
-        } else {
-            // Fallback if no poster is uploaded
-            holder.eventPoster.setImageResource(R.drawable.placeholder_image);
+        String posterUrl = event.getPosterUrl();
+        if (posterUrl != null && !posterUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext()).load(posterUrl).centerCrop().into(holder.eventPoster);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) clickListener.onItemClick(event);
+        });
     }
 
     @Override
-    public int getItemCount() {
-        return eventList.size();
-    }
+    public int getItemCount() { return eventList != null ? eventList.size() : 0; }
 
-    /**
-     * Updates the list and refreshes the RecyclerView.
-     */
-    public void updateData(List<Event> newEventList) {
-        this.eventList.clear();
-        this.eventList.addAll(newEventList);
-        notifyDataSetChanged();
-    }
-
-    // ViewHolder class holds the UI elements for a single list item
-    public static class EventViewHolder extends RecyclerView.ViewHolder {
+    static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView eventName, eventDate, eventStatus, eventLocation;
         ImageView eventPoster;
 
-        public EventViewHolder(@NonNull View itemView) {
-            super(itemView);
-            eventName = itemView.findViewById(R.id.text_item_event_name);
-            eventDate = itemView.findViewById(R.id.text_item_event_date);
-            eventStatus = itemView.findViewById(R.id.text_item_event_status);
-            eventLocation = itemView.findViewById(R.id.text_item_event_location);
-            eventPoster = itemView.findViewById(R.id.image_event_poster);
+        EventViewHolder(View v) {
+            super(v);
+            eventName = v.findViewById(R.id.text_item_event_name);
+            eventDate = v.findViewById(R.id.text_item_event_date);
+            eventStatus = v.findViewById(R.id.text_item_event_status);
+            eventLocation = v.findViewById(R.id.text_item_event_location);
+            eventPoster = v.findViewById(R.id.image_event_poster);
         }
     }
 }

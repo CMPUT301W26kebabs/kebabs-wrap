@@ -2,8 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:background="#FFFFFF">
+    android:orientation="vertical" android:background="#F5F5F5">
 
+    <!-- Purple header -->
     <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content"
         android:background="#4A43EC" android:paddingTop="48dp" android:paddingBottom="24dp" android:paddingHorizontal="20dp">
         <ImageButton android:id="@+id/btn_back" android:layout_width="40dp" android:layout_height="40dp"
@@ -19,6 +20,7 @@
         </LinearLayout>
     </RelativeLayout>
 
+    <!-- Search bar -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginHorizontal="20dp"
         android:layout_marginTop="16dp" android:layout_marginBottom="8dp" android:background="@drawable/bg_search_bar_white"
         android:gravity="center_vertical" android:paddingHorizontal="16dp" android:orientation="horizontal">
@@ -30,8 +32,9 @@
     </LinearLayout>
 
     <TextView android:id="@+id/tv_event_count" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:textColor="#9CA3AF" android:textSize="12sp" android:paddingHorizontal="24dp" android:paddingVertical="8dp" android:visibility="gone" />
+        android:textColor="#9CA3AF" android:textSize="12sp" android:paddingHorizontal="24dp" android:paddingVertical="4dp" android:visibility="gone" />
 
+    <!-- Filter chips -->
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
         android:paddingHorizontal="20dp" android:paddingBottom="8dp">
         <com.google.android.material.chip.Chip android:id="@+id/chip_active" style="@style/Widget.MaterialComponents.Chip.Choice"
@@ -48,11 +51,16 @@
             app:chipCornerRadius="16dp" app:chipStrokeColor="#E5E7EB" app:chipStrokeWidth="1dp" app:checkedIconVisible="false" />
     </LinearLayout>
 
-    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+    <!-- Event list -->
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:paddingHorizontal="16dp">
+
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_events" android:layout_width="match_parent"
             android:layout_height="match_parent" android:clipToPadding="false" android:paddingTop="4dp" android:paddingBottom="24dp" />
+
         <ProgressBar android:id="@+id/progress_bar" android:layout_width="48dp" android:layout_height="48dp"
             android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#4A43EC" />
+
         <LinearLayout android:id="@+id/empty_state" android:layout_width="match_parent" android:layout_height="match_parent"
             android:gravity="center" android:orientation="vertical" android:visibility="gone" android:padding="48dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📅" android:textSize="48sp" />
