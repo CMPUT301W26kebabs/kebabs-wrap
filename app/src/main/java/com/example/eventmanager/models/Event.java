@@ -11,6 +11,7 @@ public class Event {
     private String eventId;
     private String name;
     private String description;
+    private String location;
     private Date registrationStart;
     private Date registrationEnd;
     private int capacity;
@@ -71,6 +72,22 @@ public class Event {
      */
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    /**
+     * Gets the event location/address.
+     * @return The location string.
+     */
+    public String getLocation() {
+        return location;
+    }
+
+    /**
+     * Sets the event location/address.
+     * @param location The new location string.
+     */
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     /**

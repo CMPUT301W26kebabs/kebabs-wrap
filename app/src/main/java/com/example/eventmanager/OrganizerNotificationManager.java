@@ -22,6 +22,11 @@ public class OrganizerNotificationManager {
     private final EventRepository eventRepository;
     private final NotificationRepository notificationRepository;
 
+    public interface NotificationDispatchCallback {
+        void onSuccess(int recipientCount);
+        void onFailure(@NonNull String message);
+    }
+
     public OrganizerNotificationManager() {
         this.eventRepository = new EventRepository();
         this.notificationRepository = new NotificationRepository();
@@ -38,11 +43,14 @@ public class OrganizerNotificationManager {
      * @param eventId   The Firestore document ID of the event.
      * @param eventName The human-readable event name shown in the notification.
      */
-    public void notifyWaitingList(@NonNull String eventId, @NonNull String eventName) {
+    public void notifyWaitingList(@NonNull String eventId,
+                                  @NonNull String eventName,
+                                  @NonNull NotificationDispatchCallback callback) {
         eventRepository.getWaitingList(eventId, deviceIds -> {
 
             if (deviceIds.isEmpty()) {
                 Log.d(TAG, "No entrants on waiting list for event: " + eventId);
+                callback.onFailure("No entrants on the waiting list.");
                 return;
             }
 
@@ -57,6 +65,17 @@ public class OrganizerNotificationManager {
             }
 
             Log.d(TAG, "Waiting list notified: " + deviceIds.size() + " entrants");
+            callback.onSuccess(deviceIds.size());
+        });
+    }
+
+    public void notifyWaitingList(@NonNull String eventId, @NonNull String eventName) {
+        notifyWaitingList(eventId, eventName, new NotificationDispatchCallback() {
+            @Override
+            public void onSuccess(int recipientCount) { }
+
+            @Override
+            public void onFailure(@NonNull String message) { }
         });
     }
 
@@ -71,11 +90,14 @@ public class OrganizerNotificationManager {
      * @param eventId   The Firestore document ID of the event.
      * @param eventName The human-readable event name shown in the notification.
      */
-    public void notifyWinners(@NonNull String eventId, @NonNull String eventName) {
-        eventRepository.getWinners(eventId, deviceIds -> {
+    public void notifySelected(@NonNull String eventId,
+                               @NonNull String eventName,
+                               @NonNull NotificationDispatchCallback callback) {
+        eventRepository.getSelected(eventId, deviceIds -> {
 
             if (deviceIds.isEmpty()) {
-                Log.d(TAG, "No winners found for event: " + eventId);
+                Log.d(TAG, "No selected entrants found for event: " + eventId);
+                callback.onFailure("No selected entrants to notify.");
                 return;
             }
 
@@ -90,7 +112,48 @@ public class OrganizerNotificationManager {
                 notificationRepository.addNotification(deviceId, notification);
             }
 
-            Log.d(TAG, "Winners notified: " + deviceIds.size() + " entrants");
+            Log.d(TAG, "Selected entrants notified: " + deviceIds.size() + " entrants");
+            callback.onSuccess(deviceIds.size());
+        });
+    }
+
+    public void notifyWinners(@NonNull String eventId,
+                              @NonNull String eventName,
+                              @NonNull NotificationDispatchCallback callback) {
+        notifySelected(eventId, eventName, callback);
+    }
+
+    public void notifyWinners(@NonNull String eventId, @NonNull String eventName) {
+        notifySelected(eventId, eventName, new NotificationDispatchCallback() {
+            @Override
+            public void onSuccess(int recipientCount) { }
+
+            @Override
+            public void onFailure(@NonNull String message) { }
+        });
+    }
+
+    public void notifyEnrolled(@NonNull String eventId,
+                               @NonNull String eventName,
+                               @NonNull NotificationDispatchCallback callback) {
+        eventRepository.getEnrolled(eventId, deviceIds -> {
+            if (deviceIds.isEmpty()) {
+                Log.d(TAG, "No enrolled entrants found for event: " + eventId);
+                callback.onFailure("No enrolled entrants to notify.");
+                return;
+            }
+
+            for (String deviceId : deviceIds) {
+                Notification notification = new Notification(
+                        "Event update from " + eventName,
+                        "The organizer has shared an update for enrolled attendees.",
+                        eventName
+                );
+                notificationRepository.addNotification(deviceId, notification);
+            }
+
+            Log.d(TAG, "Enrolled entrants notified: " + deviceIds.size() + " entrants");
+            callback.onSuccess(deviceIds.size());
         });
     }
 }

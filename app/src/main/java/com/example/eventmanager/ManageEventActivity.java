@@ -2,32 +2,39 @@ package com.example.eventmanager;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.widget.ImageButton;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.eventmanager.models.Entrant;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 public class ManageEventActivity extends AppCompatActivity {
 
     private String eventId, eventName;
-    private TextView tvEventTitle, tvSubtitle;
+    private TextView tvEventTitle, tvSubtitle, tvActiveSectionLabel;
     private TextView tvWaitingCount, tvChosenCount, tvEnrolledCount;
     private RecyclerView rvAttendees;
     private Button btnRunLottery, btnNotify;
     private CardView cardWaiting, cardChosen, cardEnrolled;
     private FirebaseFirestore db;
+    private OrganizerNotificationManager organizerNotificationManager;
     private String currentTab = "waiting";
+    private int eventCapacity = Integer.MAX_VALUE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,15 +42,24 @@ public class ManageEventActivity extends AppCompatActivity {
         setContentView(R.layout.activity_manage_event);
 
         db = FirebaseFirestore.getInstance();
+        organizerNotificationManager = new OrganizerNotificationManager();
         eventId = getIntent().getStringExtra("EVENT_ID");
         eventName = getIntent().getStringExtra("EVENT_NAME");
 
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(this, "Missing event information.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         // Back button
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnViewQr).setOnClickListener(v -> openEventQr());
 
         // Header
         tvEventTitle = findViewById(R.id.tvEventTitle);
         tvSubtitle = findViewById(R.id.tvSubtitle);
+        tvActiveSectionLabel = findViewById(R.id.tvActiveSectionLabel);
         tvEventTitle.setText(eventName != null ? eventName : "Event");
         tvSubtitle.setText("Manage Event");
 
@@ -70,16 +86,17 @@ public class ManageEventActivity extends AppCompatActivity {
         btnRunLottery = findViewById(R.id.btnRunLottery);
         btnRunLottery.setOnClickListener(v -> {
             Intent intent = new Intent(this, RunLotteryActivity.class);
-            intent.putExtra("EVENT_ID", eventId);
-            intent.putExtra("EVENT_NAME", eventName);
+            intent.putExtra(RunLotteryActivity.EXTRA_EVENT_ID, eventId);
+            intent.putExtra(RunLotteryActivity.EXTRA_EVENT_NAME, eventName);
+            intent.putExtra(RunLotteryActivity.EXTRA_CAPACITY, eventCapacity);
             startActivity(intent);
         });
 
         // Notify button
         btnNotify = findViewById(R.id.btnNotify);
-        btnNotify.setOnClickListener(v ->
-                Toast.makeText(this, "Notifications sent!", Toast.LENGTH_SHORT).show());
+        btnNotify.setOnClickListener(v -> showNotifyAudienceChooser());
 
+        loadEventMeta();
         loadCounts();
         loadAttendees();
         highlightTab();
@@ -90,6 +107,24 @@ public class ManageEventActivity extends AppCompatActivity {
         super.onResume();
         loadCounts();
         loadAttendees();
+    }
+
+    private void loadEventMeta() {
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        return;
+                    }
+                    String loadedName = doc.getString("name");
+                    if (!TextUtils.isEmpty(loadedName)) {
+                        eventName = loadedName;
+                        tvEventTitle.setText(loadedName);
+                    }
+                    Long cap = doc.getLong("capacity");
+                    if (cap != null && cap > 0) {
+                        eventCapacity = cap.intValue();
+                    }
+                });
     }
 
     private void loadCounts() {
@@ -113,18 +148,25 @@ public class ManageEventActivity extends AppCompatActivity {
 
         db.collection("events").document(eventId).collection(collection).get()
                 .addOnSuccessListener(qs -> {
-                    List<AnasEntrant> entrants = new ArrayList<>();
+                    List<AnasEntrant> attendeeRows = new ArrayList<>();
                     for (DocumentSnapshot doc : qs.getDocuments()) {
                         String name = doc.getString("name");
                         String email = doc.getString("email");
-                        String deviceId = doc.getId();
+                        String deviceId = doc.getString("deviceId");
+                        if (deviceId == null || deviceId.trim().isEmpty()) {
+                            deviceId = doc.getId();
+                        }
                         AnasEntrant e = new AnasEntrant(deviceId,
                                 name != null ? name : deviceId,
                                 email != null ? email : "",
                                 currentTab);
-                        entrants.add(e);
+                        attendeeRows.add(e);
                     }
-                    EntrantAdapter adapter = new EntrantAdapter(entrants);
+                    Collections.sort(attendeeRows, Comparator.comparing(
+                            entrant -> entrant.getName() == null ? "" : entrant.getName().toLowerCase(Locale.getDefault())
+                    ));
+                    List<AnasEntrant> groupedEntrants = buildGroupedEntrants(attendeeRows);
+                    EntrantAdapter adapter = new EntrantAdapter(groupedEntrants);
                     rvAttendees.setAdapter(adapter);
                 })
                 .addOnFailureListener(e ->
@@ -137,5 +179,84 @@ public class ManageEventActivity extends AppCompatActivity {
         cardWaiting.setAlpha(currentTab.equals("waiting") ? activeAlpha : inactiveAlpha);
         cardChosen.setAlpha(currentTab.equals("selected") ? activeAlpha : inactiveAlpha);
         cardEnrolled.setAlpha(currentTab.equals("enrolled") ? activeAlpha : inactiveAlpha);
+        tvActiveSectionLabel.setText(currentTab.equals("waiting")
+                ? "Waiting List"
+                : currentTab.equals("selected")
+                ? "Chosen Entrants"
+                : "Enrolled Entrants");
+    }
+
+    private List<AnasEntrant> buildGroupedEntrants(List<AnasEntrant> attendees) {
+        List<AnasEntrant> grouped = new ArrayList<>();
+        String currentHeader = "";
+        for (AnasEntrant attendee : attendees) {
+            String displayName = attendee.getName() == null ? "" : attendee.getName().trim();
+            String letter = displayName.isEmpty()
+                    ? "#"
+                    : String.valueOf(Character.toUpperCase(displayName.charAt(0)));
+            if (!letter.equals(currentHeader)) {
+                currentHeader = letter;
+                AnasEntrant header = new AnasEntrant("", letter, "", "header");
+                header.setSectionHeader(true);
+                grouped.add(header);
+            }
+            grouped.add(attendee);
+        }
+        return grouped;
+    }
+
+    private void showNotifyAudienceChooser() {
+        String[] options = {"Waiting List", "Chosen", "Enrolled"};
+        new AlertDialog.Builder(this)
+                .setTitle("Send notification")
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            organizerNotificationManager.notifyWaitingList(
+                                    eventId,
+                                    eventName != null ? eventName : "Event",
+                                    createNotificationCallback("waiting list")
+                            );
+                            break;
+                        case 1:
+                            organizerNotificationManager.notifySelected(
+                                    eventId,
+                                    eventName != null ? eventName : "Event",
+                                    createNotificationCallback("chosen entrants")
+                            );
+                            break;
+                        default:
+                            organizerNotificationManager.notifyEnrolled(
+                                    eventId,
+                                    eventName != null ? eventName : "Event",
+                                    createNotificationCallback("enrolled entrants")
+                            );
+                            break;
+                    }
+                })
+                .show();
+    }
+
+    private OrganizerNotificationManager.NotificationDispatchCallback createNotificationCallback(String audienceLabel) {
+        return new OrganizerNotificationManager.NotificationDispatchCallback() {
+            @Override
+            public void onSuccess(int recipientCount) {
+                Toast.makeText(ManageEventActivity.this,
+                        "Notification sent to " + recipientCount + " " + audienceLabel + ".",
+                        Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                Toast.makeText(ManageEventActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        };
+    }
+
+    private void openEventQr() {
+        Intent intent = new Intent(this, EventQRActivity.class);
+        intent.putExtra("EVENT_ID", eventId);
+        intent.putExtra("EVENT_NAME", eventName);
+        startActivity(intent);
     }
 }

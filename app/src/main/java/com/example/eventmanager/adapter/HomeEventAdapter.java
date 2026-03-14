@@ -23,6 +23,11 @@ public class HomeEventAdapter extends RecyclerView.Adapter<HomeEventAdapter.Home
 
     private final Context context;
     private List<DocumentSnapshot> events;
+    private OnEventClickListener onEventClickListener;
+
+    public interface OnEventClickListener {
+        void onEventClick(DocumentSnapshot eventDoc);
+    }
 
     public HomeEventAdapter(Context context, List<DocumentSnapshot> events) {
         this.context = context;
@@ -32,6 +37,10 @@ public class HomeEventAdapter extends RecyclerView.Adapter<HomeEventAdapter.Home
     public void updateList(List<DocumentSnapshot> newList) {
         this.events = newList;
         notifyDataSetChanged();
+    }
+
+    public void setOnEventClickListener(OnEventClickListener onEventClickListener) {
+        this.onEventClickListener = onEventClickListener;
     }
 
     @NonNull @Override
@@ -58,12 +67,23 @@ public class HomeEventAdapter extends RecyclerView.Adapter<HomeEventAdapter.Home
         }
 
         h.tvGoing.setText("+20 Going");
-        h.tvLocation.setText("University of Alberta");
+        String location = doc.getString("location");
+        h.tvLocation.setText(location != null && !location.trim().isEmpty()
+                ? location
+                : "University of Alberta");
 
         String posterUrl = doc.getString("posterUrl");
         if (posterUrl != null && !posterUrl.isEmpty()) {
-            Glide.with(context).load(posterUrl).centerCrop().into(h.ivImage);
+            Glide.with(context).load(posterUrl).placeholder(R.drawable.ic_event_placeholder).centerCrop().into(h.ivImage);
+        } else {
+            h.ivImage.setImageResource(R.drawable.ic_event_placeholder);
         }
+
+        h.itemView.setOnClickListener(v -> {
+            if (onEventClickListener != null) {
+                onEventClickListener.onEventClick(doc);
+            }
+        });
     }
 
     @Override public int getItemCount() { return events.size(); }

@@ -100,6 +100,7 @@
                         android:inputType="text" />
 
                     <TextView
+                        android:id="@+id/btn_filters"
                         android:layout_width="wrap_content"
                         android:layout_height="28dp"
                         android:gravity="center"
@@ -188,6 +189,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/see_all_upcoming"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
@@ -265,6 +267,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/see_all_nearby"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"

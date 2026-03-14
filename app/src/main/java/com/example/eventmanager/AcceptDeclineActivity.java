@@ -1,9 +1,9 @@
 package com.example.eventmanager;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -48,30 +48,42 @@ public class AcceptDeclineActivity extends AppCompatActivity {
 
         // ── Accept ──────────────────────────────────────────────────────────
         btnAccept.setOnClickListener(v -> {
-
-            // Disable both buttons immediately to prevent double-taps
             btnAccept.setEnabled(false);
             btnDecline.setEnabled(false);
+            eventRepository.enrollUser(eventId, deviceId, new EventRepository.OperationCallback() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(AcceptDeclineActivity.this, "Invitation accepted.", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
 
-            // Add to enrolled, remove from winners
-            eventRepository.enrollUser(eventId, deviceId);
-            eventRepository.removeFromWinners(eventId, deviceId);
-
-            // Return to the notification panel
-            finish();
+                @Override
+                public void onFailure(String message) {
+                    btnAccept.setEnabled(true);
+                    btnDecline.setEnabled(true);
+                    Toast.makeText(AcceptDeclineActivity.this, message, Toast.LENGTH_LONG).show();
+                }
+            });
         });
 
         // ── Decline ─────────────────────────────────────────────────────────
         btnDecline.setOnClickListener(v -> {
-
             btnAccept.setEnabled(false);
             btnDecline.setEnabled(false);
+            eventRepository.declineInvitation(eventId, deviceId, new EventRepository.OperationCallback() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(AcceptDeclineActivity.this, "Invitation declined.", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
 
-            // Remove from both winners and waitingList entirely
-            eventRepository.removeFromWinners(eventId, deviceId);
-            eventRepository.removeFromWaitingList(eventId, deviceId);
-
-            finish();
+                @Override
+                public void onFailure(String message) {
+                    btnAccept.setEnabled(true);
+                    btnDecline.setEnabled(true);
+                    Toast.makeText(AcceptDeclineActivity.this, message, Toast.LENGTH_LONG).show();
+                }
+            });
         });
     }
 }

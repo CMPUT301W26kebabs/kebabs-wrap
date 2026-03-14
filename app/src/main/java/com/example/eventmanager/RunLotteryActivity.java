@@ -39,6 +39,7 @@ public class RunLotteryActivity extends AppCompatActivity {
     // ── Intent extras ─────────────────────────────────────────────────────────
     public static final String EXTRA_EVENT_ID  = "extra_event_id";
     public static final String EXTRA_CAPACITY  = "extra_capacity";
+    public static final String EXTRA_EVENT_NAME = "extra_event_name";
 
     // ── UI ────────────────────────────────────────────────────────────────────
     private ImageButton             btnBack;
@@ -52,6 +53,7 @@ public class RunLotteryActivity extends AppCompatActivity {
 
     // ── State ─────────────────────────────────────────────────────────────────
     private String        eventId;
+    private String        eventName;
     private int           capacity     = Integer.MAX_VALUE;
     private int           winnerCount  = 1;
     private int           waitlistSize = 0;
@@ -67,13 +69,21 @@ public class RunLotteryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_run_lottery);
 
-        // Read extras passed from OrganizerEventDetailActivity (or wherever you launch from)
+        // Accept both the normalized extras and the legacy keys used elsewhere in the app.
         eventId  = getIntent().getStringExtra(EXTRA_EVENT_ID);
-        capacity = getIntent().getIntExtra(EXTRA_CAPACITY, Integer.MAX_VALUE);
-
-        // Fallback for testing without Intent (matches your existing hardcoded approach)
         if (eventId == null) {
-            eventId = "SAMPLE_EVENT_ID";
+            eventId = getIntent().getStringExtra("EVENT_ID");
+        }
+        capacity = getIntent().getIntExtra(EXTRA_CAPACITY, Integer.MAX_VALUE);
+        eventName = getIntent().getStringExtra(EXTRA_EVENT_NAME);
+        if (eventName == null) {
+            eventName = getIntent().getStringExtra("EVENT_NAME");
+        }
+
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(this, "Missing event information for lottery.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
         }
 
         lotteryManager = new LotteryManager();

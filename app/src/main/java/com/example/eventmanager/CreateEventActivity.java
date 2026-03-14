@@ -104,6 +104,8 @@ public class CreateEventActivity extends AppCompatActivity {
 
         String desc = descriptionInput.getText().toString().trim();
         if (!desc.isEmpty()) newEvent.setDescription(desc);
+        String loc = locationInput.getText().toString().trim();
+        if (!loc.isEmpty()) newEvent.setLocation(loc);
         if (startDate != null) newEvent.setRegistrationStart(startDate);
         if (endDate != null) newEvent.setRegistrationEnd(endDate);
 

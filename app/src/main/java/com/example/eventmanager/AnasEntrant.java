@@ -5,6 +5,7 @@ public class AnasEntrant {
     private String name;
     private String email;
     private String status;
+    private boolean sectionHeader;
 
     public AnasEntrant() {}
 
@@ -13,6 +14,7 @@ public class AnasEntrant {
         this.name = name;
         this.email = email;
         this.status = status;
+        this.sectionHeader = false;
     }
 
     public String getDeviceId() { return deviceId; }
@@ -23,4 +25,6 @@ public class AnasEntrant {
     public void setEmail(String email) { this.email = email; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public boolean isSectionHeader() { return sectionHeader; }
+    public void setSectionHeader(boolean sectionHeader) { this.sectionHeader = sectionHeader; }
 }

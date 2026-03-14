@@ -198,6 +198,7 @@
                     app:cornerRadius="18dp" />
 
                 <LinearLayout
+                    android:id="@+id/orSignUpWithDivider"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
@@ -227,6 +228,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/socialButtonsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="18dp"
@@ -270,6 +272,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/loginLinkContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
