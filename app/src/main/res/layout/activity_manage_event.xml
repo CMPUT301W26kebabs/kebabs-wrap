@@ -1,26 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
+    android:background="#FBFAFF"
     tools:context=".ManageEventActivity">
 
-    <!-- Header / Hero Section -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineStatsTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="176dp" />
+
     <LinearLayout
         android:id="@+id/headerSection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#4B4BDB"
+        android:layout_width="0dp"
+        android:layout_height="220dp"
+        android:background="#4A43EC"
         android:orientation="vertical"
         android:paddingStart="20dp"
+        android:paddingTop="50dp"
         android:paddingEnd="20dp"
-        android:paddingTop="48dp"
-        android:paddingBottom="60dp">
+        android:paddingBottom="88dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Back Button -->
         <ImageButton
             android:id="@+id/btnBack"
             android:layout_width="36dp"
@@ -30,7 +38,6 @@
             android:src="@drawable/ic_arrow_back"
             app:tint="#FFFFFF" />
 
-        <!-- Event Title -->
         <TextView
             android:id="@+id/tvEventTitle"
             android:layout_width="wrap_content"
@@ -43,7 +50,6 @@
             android:textStyle="bold"
             tools:text="Tech Meetup 2026" />
 
-        <!-- Subtitle -->
         <TextView
             android:id="@+id/tvSubtitle"
             android:layout_width="wrap_content"
@@ -54,252 +60,272 @@
             android:textColor="#C8C8FF"
             android:textSize="14sp"
             tools:text="Manage Event" />
-
     </LinearLayout>
 
-    <!-- Scrollable Content -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nestedScrollView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="148dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    <LinearLayout
+        android:id="@+id/statsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/guidelineStatsTop">
 
-        <LinearLayout
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardWaiting"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="76dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="10dp">
 
-            <!-- Stats Cards Section (overlapping header) -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="-60dp"
-                android:layout_marginEnd="16dp"
-                android:orientation="vertical">
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
 
-                <!-- Waiting Tab Card (Active) -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/cardWaiting"
-                    android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginBottom="8dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="6dp">
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:contentDescription="Waiting"
+                    android:src="@drawable/ic_schedule"
+                    app:tint="#4A43EC" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="20dp"
-                        android:paddingEnd="20dp">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
 
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:contentDescription="Waiting"
-                            android:src="@drawable/ic_schedule"
-                            app:tint="#4B4BDB" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Waiting"
+                        android:textColor="#A9A5BC"
+                        android:textSize="12sp" />
 
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_regular"
-                                android:text="Waiting"
-                                android:textColor="#AAAAAA"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvWaitingCount"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_bold"
-                                android:text="42"
-                                android:textColor="#2B2B8A"
-                                android:textSize="24sp"
-                                android:textStyle="bold"
-                                tools:text="42" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Chosen Tab Card (Inactive) -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/cardChosen"
-                    android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginBottom="8dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="20dp"
-                        android:paddingEnd="20dp">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:contentDescription="Chosen"
-                            android:src="@drawable/ic_check"
-                            app:tint="#CCCCCC" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_regular"
-                                android:text="Chosen"
-                                android:textColor="#CCCCCC"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvChosenCount"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_bold"
-                                android:text="10"
-                                android:textColor="#CCCCCC"
-                                android:textSize="24sp"
-                                android:textStyle="bold"
-                                tools:text="10" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Enrolled Tab Card (Inactive) -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/cardEnrolled"
-                    android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginBottom="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingStart="20dp"
-                        android:paddingEnd="20dp">
-
-                        <ImageView
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:contentDescription="Enrolled"
-                            android:src="@drawable/ic_bell"
-                            app:tint="#CCCCCC" />
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_regular"
-                                android:text="Enrolled"
-                                android:textColor="#CCCCCC"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:id="@+id/tvEnrolledCount"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/poppins_bold"
-                                android:text="8"
-                                android:textColor="#CCCCCC"
-                                android:textSize="24sp"
-                                android:textStyle="bold"
-                                tools:text="8" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
+                    <TextView
+                        android:id="@+id/tvWaitingCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:text="42"
+                        android:textColor="#2A214A"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        tools:text="42" />
+                </LinearLayout>
             </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-            <!-- Attendee List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvAttendees"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardChosen"
+            android:layout_width="match_parent"
+            android:layout_height="76dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:clipToPadding="false"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="100dp"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:itemCount="5"
-                tools:listitem="@layout/item_attendee" />
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
 
-        </LinearLayout>
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:contentDescription="Chosen"
+                    android:src="@drawable/ic_check"
+                    app:tint="#CFC9E0" />
 
-    </androidx.core.widget.NestedScrollView>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
 
-    <!-- Bottom Action Buttons (fixed) -->
-    <LinearLayout
-        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Chosen"
+                        android:textColor="#C0BACF"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvChosenCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:text="10"
+                        android:textColor="#C0BACF"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        tools:text="10" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardEnrolled"
+            android:layout_width="match_parent"
+            android:layout_height="76dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:contentDescription="Enrolled"
+                    android:src="@drawable/ic_bell"
+                    app:tint="#D6D1E3" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_regular"
+                        android:text="Enrolled"
+                        android:textColor="#C8C2D7"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tvEnrolledCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/poppins_bold"
+                        android:text="8"
+                        android:textColor="#C8C2D7"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        tools:text="8" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvPreviewHint"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="#F5F5F5"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="24dp"
+        android:gravity="center"
+        android:text="Long press Waiting to preview sample people."
+        android:textColor="#8E86A8"
+        android:textSize="13sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statsContainer" />
+
+    <TextView
+        android:id="@+id/tvEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        android:gravity="center"
+        android:text="No people are in this section yet."
+        android:textColor="#8E86A8"
+        android:textSize="15sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvPreviewHint"
+        tools:visibility="visible" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAttendees"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:overScrollMode="ifContentScrolls"
+        android:paddingStart="20dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="14dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvPreviewHint"
+        tools:itemCount="12"
+        tools:listitem="@layout/item_attendee" />
+
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#FBFAFF"
+        android:elevation="12dp"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="24dp">
+        android:paddingStart="20dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <Button
             android:id="@+id/btnRunLottery"
             android:layout_width="0dp"
-            android:layout_height="52dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="9dp"
             android:background="@drawable/bg_button_primary"
             android:drawableStart="@drawable/ic_dice"
             android:drawablePadding="8dp"
             android:fontFamily="@font/poppins_bold"
             android:text="Run Lottery"
+            android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textAllCaps="false" />
+            android:textSize="15sp" />
 
         <Button
             android:id="@+id/btnNotify"
             android:layout_width="0dp"
-            android:layout_height="52dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="9dp"
             android:background="@drawable/bg_button_primary"
             android:drawableStart="@drawable/ic_megaphone"
             android:drawablePadding="8dp"
             android:fontFamily="@font/poppins_bold"
             android:text="NOTIFY"
+            android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textAllCaps="false" />
-
+            android:textSize="15sp" />
     </LinearLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

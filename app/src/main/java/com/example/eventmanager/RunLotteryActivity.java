@@ -2,6 +2,7 @@ package com.example.eventmanager;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
@@ -52,6 +53,7 @@ public class RunLotteryActivity extends AppCompatActivity {
 
     // ── State ─────────────────────────────────────────────────────────────────
     private String        eventId;
+    private String        eventName;
     private int           capacity     = Integer.MAX_VALUE;
     private int           winnerCount  = 1;
     private int           waitlistSize = 0;
@@ -69,7 +71,13 @@ public class RunLotteryActivity extends AppCompatActivity {
 
         // Read extras passed from OrganizerEventDetailActivity (or wherever you launch from)
         eventId  = getIntent().getStringExtra(EXTRA_EVENT_ID);
+        eventName = getIntent().getStringExtra("EVENT_NAME");
         capacity = getIntent().getIntExtra(EXTRA_CAPACITY, Integer.MAX_VALUE);
+
+        // ManageEventActivity currently sends EVENT_ID / EVENT_NAME.
+        if (eventId == null) {
+            eventId = getIntent().getStringExtra("EVENT_ID");
+        }
 
         // Fallback for testing without Intent (matches your existing hardcoded approach)
         if (eventId == null) {
@@ -112,8 +120,7 @@ public class RunLotteryActivity extends AppCompatActivity {
 
     // ── Click listeners ───────────────────────────────────────────────────────
     private void setupClickListeners() {
-
-        btnBack.setOnClickListener(v -> finish());
+        btnBack.setOnClickListener(v -> navigateBack());
 
         // Decrement — floor at 1
         btnDecrement.setOnClickListener(v -> {
@@ -141,6 +148,11 @@ public class RunLotteryActivity extends AppCompatActivity {
 
         // US 02.05.03 – Draw 1 replacement
         btnDrawReplacement.setOnClickListener(v -> confirmReplacement());
+    }
+
+    @Override
+    public void onBackPressed() {
+        navigateBack();
     }
 
     // ── Load live waitlist count from Firestore ───────────────────────────────
@@ -310,5 +322,14 @@ public class RunLotteryActivity extends AppCompatActivity {
                 .setDuration(380)
                 .setInterpolator(new OvershootInterpolator(0.9f))
                 .start();
+    }
+
+    private void navigateBack() {
+        Intent intent = new Intent(this, ManageEventActivity.class);
+        intent.putExtra("EVENT_ID", eventId);
+        intent.putExtra("EVENT_NAME", eventName);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 }
