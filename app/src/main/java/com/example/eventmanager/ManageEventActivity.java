@@ -3,7 +3,7 @@ package com.example.eventmanager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.ImageButton;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -18,6 +18,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -28,6 +29,7 @@ public class ManageEventActivity extends AppCompatActivity {
     private String eventId, eventName;
     private TextView tvEventTitle, tvSubtitle, tvActiveSectionLabel;
     private TextView tvWaitingCount, tvChosenCount, tvEnrolledCount;
+    private TextView tvEmptyState, tvPreviewHint;
     private RecyclerView rvAttendees;
     private Button btnRunLottery, btnNotify;
     private CardView cardWaiting, cardChosen, cardEnrolled;
@@ -35,6 +37,7 @@ public class ManageEventActivity extends AppCompatActivity {
     private OrganizerNotificationManager organizerNotificationManager;
     private String currentTab = "waiting";
     private int eventCapacity = Integer.MAX_VALUE;
+    private boolean previewWaitingMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +70,8 @@ public class ManageEventActivity extends AppCompatActivity {
         tvWaitingCount = findViewById(R.id.tvWaitingCount);
         tvChosenCount = findViewById(R.id.tvChosenCount);
         tvEnrolledCount = findViewById(R.id.tvEnrolledCount);
+        tvEmptyState = findViewById(R.id.tvEmptyState);
+        tvPreviewHint = findViewById(R.id.tvPreviewHint);
 
         // Cards (tabs)
         cardWaiting = findViewById(R.id.cardWaiting);
@@ -76,9 +81,23 @@ public class ManageEventActivity extends AppCompatActivity {
         // Attendee list
         rvAttendees = findViewById(R.id.rvAttendees);
         rvAttendees.setLayoutManager(new LinearLayoutManager(this));
+        rvAttendees.setHasFixedSize(false);
 
         // Tab clicks
         cardWaiting.setOnClickListener(v -> { currentTab = "waiting"; loadAttendees(); highlightTab(); });
+        cardWaiting.setOnLongClickListener(v -> {
+            previewWaitingMode = !previewWaitingMode;
+            currentTab = "waiting";
+            loadCounts();
+            loadAttendees();
+            highlightTab();
+            Toast.makeText(this,
+                    previewWaitingMode
+                            ? "Sample waiting list preview enabled."
+                            : "Sample waiting list preview disabled.",
+                    Toast.LENGTH_SHORT).show();
+            return true;
+        });
         cardChosen.setOnClickListener(v -> { currentTab = "selected"; loadAttendees(); highlightTab(); });
         cardEnrolled.setOnClickListener(v -> { currentTab = "enrolled"; loadAttendees(); highlightTab(); });
 
@@ -128,10 +147,21 @@ public class ManageEventActivity extends AppCompatActivity {
     }
 
     private void loadCounts() {
-        if (eventId == null) return;
+        if (previewWaitingMode) {
+            tvWaitingCount.setText(String.valueOf(getPreviewEntrants().size()));
+        }
 
-        db.collection("events").document(eventId).collection("waitingList").get()
-                .addOnSuccessListener(qs -> tvWaitingCount.setText(String.valueOf(qs.size())));
+        if (eventId == null || eventId.trim().isEmpty()) {
+            if (!previewWaitingMode) {
+                Toast.makeText(this, "This event is missing its database id.", Toast.LENGTH_SHORT).show();
+            }
+            return;
+        }
+
+        if (!previewWaitingMode) {
+            db.collection("events").document(eventId).collection("waitingList").get()
+                    .addOnSuccessListener(qs -> tvWaitingCount.setText(String.valueOf(qs.size())));
+        }
 
         db.collection("events").document(eventId).collection("selected").get()
                 .addOnSuccessListener(qs -> tvChosenCount.setText(String.valueOf(qs.size())));
@@ -141,7 +171,17 @@ public class ManageEventActivity extends AppCompatActivity {
     }
 
     private void loadAttendees() {
-        if (eventId == null) return;
+        if (previewWaitingMode && "waiting".equals(currentTab)) {
+            rvAttendees.setAdapter(new EntrantAdapter(getPreviewEntrants()));
+            hideEmptyState();
+            return;
+        }
+
+        if (eventId == null || eventId.trim().isEmpty()) {
+            rvAttendees.setAdapter(new EntrantAdapter(new ArrayList<>()));
+            showEmptyState("This event could not be loaded correctly.");
+            return;
+        }
 
         String collection = currentTab.equals("waiting") ? "waitingList" :
                 currentTab.equals("selected") ? "selected" : "enrolled";
@@ -168,9 +208,16 @@ public class ManageEventActivity extends AppCompatActivity {
                     List<AnasEntrant> groupedEntrants = buildGroupedEntrants(attendeeRows);
                     EntrantAdapter adapter = new EntrantAdapter(groupedEntrants);
                     rvAttendees.setAdapter(adapter);
+                    if (groupedEntrants.isEmpty()) {
+                        showEmptyState(getEmptyMessage());
+                    } else {
+                        hideEmptyState();
+                    }
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to load attendees", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    showEmptyState("Failed to load people for this section.");
+                    Toast.makeText(this, "Failed to load attendees", Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void highlightTab() {
@@ -184,6 +231,28 @@ public class ManageEventActivity extends AppCompatActivity {
                 : currentTab.equals("selected")
                 ? "Chosen Entrants"
                 : "Enrolled Entrants");
+        tvPreviewHint.setVisibility(currentTab.equals("waiting") ? View.VISIBLE : View.GONE);
+    }
+
+    private void showEmptyState(String message) {
+        tvEmptyState.setText(message);
+        tvEmptyState.setVisibility(View.VISIBLE);
+        rvAttendees.setVisibility(View.GONE);
+    }
+
+    private void hideEmptyState() {
+        tvEmptyState.setVisibility(View.GONE);
+        rvAttendees.setVisibility(View.VISIBLE);
+    }
+
+    private String getEmptyMessage() {
+        if ("selected".equals(currentTab)) {
+            return "No chosen entrants yet.";
+        }
+        if ("enrolled".equals(currentTab)) {
+            return "No enrolled entrants yet.";
+        }
+        return "No one is on the waiting list yet.";
     }
 
     private List<AnasEntrant> buildGroupedEntrants(List<AnasEntrant> attendees) {
@@ -258,5 +327,25 @@ public class ManageEventActivity extends AppCompatActivity {
         intent.putExtra("EVENT_ID", eventId);
         intent.putExtra("EVENT_NAME", eventName);
         startActivity(intent);
+    }
+
+    private List<AnasEntrant> getPreviewEntrants() {
+        List<String> previewNames = Arrays.asList(
+                "Alex Jim", "Adrian Oliveira", "Adnan Sajid", "Bao Shu",
+                "Bella Ahmed", "Chris Wong", "Dina Qureshi", "Ethan Cole",
+                "Fatima Noor", "Hassan Ali", "Ivy Chen", "Jason Park",
+                "Kira Singh", "Liam Brown", "Maya Patel", "Noah Smith"
+        );
+        List<AnasEntrant> entrants = new ArrayList<>();
+        for (int i = 0; i < previewNames.size(); i++) {
+            String name = previewNames.get(i);
+            entrants.add(new AnasEntrant(
+                    "preview-" + i,
+                    name,
+                    name.toLowerCase().replace(" ", ".") + "@spotly.test",
+                    "waiting"
+            ));
+        }
+        return entrants;
     }
 }

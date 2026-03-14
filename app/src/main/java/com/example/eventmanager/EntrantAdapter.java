@@ -1,5 +1,6 @@
 package com.example.eventmanager;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
+import java.util.Locale;
 
 public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.ViewHolder> {
 
@@ -62,6 +64,13 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.ViewHold
 
     @Override
     public int getItemCount() { return entrants != null ? entrants.size() : 0; }
+
+    private String getSectionLabel(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "#";
+        }
+        return name.trim().substring(0, 1).toUpperCase(Locale.getDefault());
+    }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivAvatar;

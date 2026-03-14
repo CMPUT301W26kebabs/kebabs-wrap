@@ -42,6 +42,9 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        findViewById(R.id.btn_notifications).setOnClickListener(v ->
+                startActivity(new Intent(this, NotificationsActivity.class)));
+
         mainRepo = FirebaseRepository.getInstance();
         eventRepo = new EventRepository();
         tvWelcome = findViewById(R.id.tv_welcome);

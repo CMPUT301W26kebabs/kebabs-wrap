@@ -53,7 +53,13 @@ public class MyEventsActivity extends AppCompatActivity {
                         List<Event> events = new ArrayList<>();
                         for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                             Event event = doc.toObject(Event.class);
-                            if (event != null) events.add(event);
+                            if (event != null) {
+                                if (event.getEventId() == null || event.getEventId().trim().isEmpty()) {
+                                    // Firestore document ids are the safest source of truth for downstream screens.
+                                    event.setEventId(doc.getId());
+                                }
+                                events.add(event);
+                            }
                         }
                         EventAdapter adapter = new EventAdapter(events);
                         adapter.setOnItemClickListener(event -> {

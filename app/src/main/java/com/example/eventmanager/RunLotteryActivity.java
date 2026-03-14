@@ -2,6 +2,7 @@ package com.example.eventmanager;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
@@ -122,8 +123,7 @@ public class RunLotteryActivity extends AppCompatActivity {
 
     // ── Click listeners ───────────────────────────────────────────────────────
     private void setupClickListeners() {
-
-        btnBack.setOnClickListener(v -> finish());
+        btnBack.setOnClickListener(v -> navigateBack());
 
         // Decrement — floor at 1
         btnDecrement.setOnClickListener(v -> {
@@ -151,6 +151,11 @@ public class RunLotteryActivity extends AppCompatActivity {
 
         // US 02.05.03 – Draw 1 replacement
         btnDrawReplacement.setOnClickListener(v -> confirmReplacement());
+    }
+
+    @Override
+    public void onBackPressed() {
+        navigateBack();
     }
 
     // ── Load live waitlist count from Firestore ───────────────────────────────
@@ -320,5 +325,14 @@ public class RunLotteryActivity extends AppCompatActivity {
                 .setDuration(380)
                 .setInterpolator(new OvershootInterpolator(0.9f))
                 .start();
+    }
+
+    private void navigateBack() {
+        Intent intent = new Intent(this, ManageEventActivity.class);
+        intent.putExtra("EVENT_ID", eventId);
+        intent.putExtra("EVENT_NAME", eventName);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
+        finish();
     }
 }
