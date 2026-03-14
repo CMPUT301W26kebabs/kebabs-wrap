@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="admin_primary">#4A43EC</color>
+    <color name="admin_accent">#4A43EC</color>
+    <color name="admin_bg_light">#F2F2F2</color>
+    <color name="admin_white">#FFFFFF</color>
+    <color name="admin_black">#000000</color>
+    <color name="admin_danger">#FF445D</color>
+</resources>

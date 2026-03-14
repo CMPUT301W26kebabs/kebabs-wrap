@@ -2,4 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="screen_lavender">#F5F0FF</color>
+    <color name="outline_lavender">#DED8F7</color>
+    <color name="primary_purple">#5C4CFF</color>
+    <color name="panel_purple">#5646F6</color>
+    <color name="text_primary">#2F2642</color>
+    <color name="text_muted">#8A819D</color>
+    <color name="text_link">#5B4BFF</color>
+    <color name="dot_inactive">#D9D4E5</color>
+    <color name="phone_stroke">#E6E1F4</color>
+    <color name="chip_orange">#FF9063</color>
+    <color name="chip_purple">#8C83FF</color>
+    <color name="phone_teal">#244A59</color>
+    <color name="skin_tone">#F0C5A6</color>
+    <color name="qr_blue">#6C63FF</color>
 </resources>

@@ -1,0 +1,8 @@
+com.example.eventmanager
+com.example.eventmanager.adapter
+com.example.eventmanager.adapters
+com.example.eventmanager.admin
+com.example.eventmanager.managers
+com.example.eventmanager.models
+com.example.eventmanager.repository
+com.example.eventmanager.ui
