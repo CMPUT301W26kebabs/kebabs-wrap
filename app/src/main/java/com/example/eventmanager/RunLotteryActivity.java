@@ -20,10 +20,15 @@ import com.example.eventmanager.adapters.WinnerAdapter;
 import com.example.eventmanager.models.Entrant;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * RunLotteryActivity
@@ -45,7 +50,7 @@ public class RunLotteryActivity extends AppCompatActivity {
     // ── UI ────────────────────────────────────────────────────────────────────
     private ImageButton             btnBack;
     private MaterialButton          btnIncrement, btnDecrement;
-    private MaterialButton          btnDrawWinners, btnDrawReplacement;
+    private MaterialButton          btnDrawWinners, btnDrawReplacement, btnSeedWaitlist;
     private TextView                tvWinnerCount, tvWaitlistCount;
     private TextView                tvStatusMessage, tvResultCount;
     private LinearProgressIndicator progressBar;
@@ -101,7 +106,8 @@ public class RunLotteryActivity extends AppCompatActivity {
         btnIncrement       = findViewById(R.id.btnIncrement);
         btnDecrement       = findViewById(R.id.btnDecrement);
         btnDrawWinners     = findViewById(R.id.btnDrawWinners);
-        btnDrawReplacement = findViewById(R.id.btnDrawReplacement);
+        btnDrawReplacement  = findViewById(R.id.btnDrawReplacement);
+        btnSeedWaitlist    = findViewById(R.id.btnSeedWaitlist);
         tvWinnerCount      = findViewById(R.id.tvWinnerCount);
         tvWaitlistCount    = findViewById(R.id.tvWaitlistCount);
         tvStatusMessage    = findViewById(R.id.tvStatusMessage);
@@ -151,6 +157,50 @@ public class RunLotteryActivity extends AppCompatActivity {
 
         // US 02.05.03 – Draw 1 replacement
         btnDrawReplacement.setOnClickListener(v -> confirmReplacement());
+
+        // Debug: seed waitlist with test entrants (no extra devices needed)
+        btnSeedWaitlist.setOnClickListener(v -> confirmSeedWaitlist());
+    }
+
+    /** Debug: add 10 test entrants to the current event's waiting list. */
+    private void confirmSeedWaitlist() {
+        new AlertDialog.Builder(this)
+                .setTitle("Seed waitlist")
+                .setMessage("Add 10 test users to the waiting list for this event? (For testing only.)")
+                .setPositiveButton("Seed", (d, w) -> seedWaitlist())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void seedWaitlist() {
+        btnSeedWaitlist.setEnabled(false);
+        showStatus("Seeding waitlist…", false);
+
+        CollectionReference waitlistRef = FirebaseFirestore.getInstance()
+                .collection("events").document(eventId)
+                .collection("waitingList");
+
+        WriteBatch batch = FirebaseFirestore.getInstance().batch();
+        for (int i = 1; i <= 10; i++) {
+            String docId = "test_waitlist_" + i;
+            Map<String, Object> data = new HashMap<>();
+            data.put("deviceId", docId);
+            data.put("name", "Test User " + i);
+            data.put("email", "test" + i + "@test.com");
+            data.put("joinedAt", FieldValue.serverTimestamp());
+            batch.set(waitlistRef.document(docId), data);
+        }
+
+        batch.commit()
+                .addOnSuccessListener(aVoid -> {
+                    showStatus("✓ 10 test users added to waitlist.", false);
+                    loadWaitlistCount();
+                    btnSeedWaitlist.setEnabled(true);
+                })
+                .addOnFailureListener(e -> {
+                    showStatus("Seed failed: " + e.getMessage(), true);
+                    btnSeedWaitlist.setEnabled(true);
+                });
     }
 
     @Override

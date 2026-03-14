@@ -322,6 +322,18 @@
                 app:strokeWidth="2dp"
                 app:cornerRadius="26dp" />
 
+            <!-- Debug: seed waitlist with 10 test entrants -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSeedWaitlist"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="🧪 Seed waitlist (10 test users)"
+                android:textColor="#8888AA"
+                android:textSize="12sp" />
+
             <!-- ─────────────────────────────────────────
                  RESULTS CARD  (hidden until draw completes)
                  ───────────────────────────────────────── -->
