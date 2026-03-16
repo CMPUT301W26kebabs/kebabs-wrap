@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottom_nav"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Purple header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#4A43EC"
+                android:paddingTop="44dp"
+                android:paddingBottom="20dp"
+                android:paddingHorizontal="20dp">
+
+                <!-- Top bar: hamburger + location + notification -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/ic_hamburger" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Current Location ▼"
+                            android:textColor="#C7C8FF"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Edmonton, CA"
+                            android:textColor="#FFFFFF"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/btn_notifications"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/ic_notification" />
+                </RelativeLayout>
+
+                <!-- Search bar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_search_home"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="4dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="#4A43EC" />
+
+                    <EditText
+                        android:id="@+id/et_home_search"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:background="@android:color/transparent"
+                        android:hint="Search..."
+                        android:textColorHint="#9CA3AF"
+                        android:textColor="#000000"
+                        android:textSize="14sp"
+                        android:singleLine="true"
+                        android:inputType="text" />
+
+                    <TextView
+                        android:id="@+id/btn_filters"
+                        android:layout_width="wrap_content"
+                        android:layout_height="28dp"
+                        android:gravity="center"
+                        android:text="⚙ Filters"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:background="@drawable/bg_filter_chip"
+                        android:paddingHorizontal="12dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Role switcher -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingVertical="16dp"
+                android:paddingHorizontal="20dp">
+
+                <TextView
+                    android:id="@+id/chip_entrant"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="center"
+                    android:text="🎟 Entrant"
+                    android:textColor="#2E7D32"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_role_chip_entrant" />
+
+                <TextView
+                    android:id="@+id/chip_organizer"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="center"
+                    android:text="🎪 Organizer"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_role_chip_organizer" />
+
+                <TextView
+                    android:id="@+id/chip_admin"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="👤 Admin"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_role_chip_admin" />
+            </LinearLayout>
+
+            <!-- Welcome message -->
+            <TextView
+                android:id="@+id/tv_welcome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome back 👋,"
+                android:textColor="#000000"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="20dp" />
+
+            <!-- Upcoming Events header -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:text="Upcoming Events"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/see_all_upcoming"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text="See All ▸"
+                    android:textColor="#4A43EC"
+                    android:textSize="13sp" />
+            </RelativeLayout>
+
+            <!-- Horizontal events list -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_upcoming_events"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:paddingStart="20dp"
+                android:paddingEnd="8dp" />
+
+            <!-- Lottery Banner -->
+            <LinearLayout
+                android:id="@+id/lottery_banner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_lottery_banner"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🎉 You Won The Lottery!"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_lottery_event"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tech Meetup 2026 - Tap to respond"
+                    android:textColor="#6B7280"
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:text="GET IT !"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_get_it_button"
+                    android:paddingHorizontal="20dp" />
+            </LinearLayout>
+
+            <!-- Nearby You header -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:text="Nearby You"
+                    android:textColor="#000000"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/see_all_nearby"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text="See All ▸"
+                    android:textColor="#4A43EC"
+                    android:textSize="13sp" />
+            </RelativeLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_nearby_events"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:paddingStart="20dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="16dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Navigation -->
+    <LinearLayout
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_alignParentBottom="true"
+        android:background="#FFFFFF"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout android:id="@+id/nav_explore" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+            android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_explore" app:tint="#4A43EC" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Explore"
+                android:textColor="#4A43EC" android:textSize="10sp" android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/nav_events" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+            android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_events" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Events"
+                android:textColor="#9CA3AF" android:textSize="10sp" android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <!-- Scan FAB -->
+        <FrameLayout android:id="@+id/nav_scan" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+            android:gravity="center">
+            <View android:layout_width="56dp" android:layout_height="56dp" android:layout_gravity="center"
+                android:background="@drawable/bg_scan_fab" android:elevation="4dp" />
+            <ImageView android:layout_width="28dp" android:layout_height="28dp" android:layout_gravity="center"
+                android:src="@drawable/ic_scan" android:elevation="5dp" />
+        </FrameLayout>
+
+        <LinearLayout android:id="@+id/nav_profile" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+            android:gravity="center" android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_profile" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile"
+                android:textColor="#9CA3AF" android:textSize="10sp" android:layout_marginTop="2dp" />
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

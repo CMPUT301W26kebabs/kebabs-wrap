@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -10,16 +13,61 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.EventManager">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+        android:theme="@style/Theme.EventManager"
+        tools:targetApi="31">
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <activity android:name=".ui.SplashActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
 
+        <!-- Fahad's Sign Up is reached after splash for new users -->
+        <activity android:name=".ui.EntrantSignUpActivity" android:exported="false" />
+
+        <activity android:name=".ui.ProfileActivity" android:exported="false" />
+
+        <!-- Fahad's onboarding -->
+        <activity android:name=".ui.BookedEventsActivity" android:exported="false" />
+        <activity android:name=".ui.QrAccessActivity" android:exported="false" />
+
+        <!-- Admin Dashboard (Ibrahim) -->
+        <activity android:name=".HomeActivity" android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
+
+        <!-- Ammaar's activities -->
+        <activity android:name=".NotificationsActivity" android:exported="false" />
+        <activity android:name=".AcceptDeclineActivity" android:exported="false" />
+
+        <!-- Huzaifa's activities -->
+        <activity android:name=".BrowseEventsActivity" android:exported="false" />
+        <activity android:name=".EventDetailsActivity" android:exported="false" />
+        <activity android:name=".QRScannerActivity" android:exported="false" />
+        <activity android:name=".CreateEventActivity" android:exported="false" />
+        <activity android:name=".ManageEventActivity" android:exported="false" />
+        <activity android:name=".ManagePosterActivity" android:exported="false" />
+        <activity android:name=".EventQRActivity" android:exported="false" />
+        <activity android:name=".MyEventsActivity" android:exported="false" />
+
+        <!-- Umar's activities -->
+        <activity android:name=".EnrolledListActivity" android:exported="false" />
+        <activity android:name=".RunLotteryActivity" android:exported="false" />
+
+        <!-- Ibrahim's admin screens -->
+        <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".admin.AdminImagesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".admin.AdminProfilesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+    </application>
 </manifest>

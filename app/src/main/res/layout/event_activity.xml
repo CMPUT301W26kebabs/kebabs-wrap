@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/event"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/ivEventBanner"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:contentDescription="Event banner image"
+            android:scaleType="centerCrop"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/ic_launcher_background" />
+
+        <View
+            android:id="@+id/viewBannerOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:background="@drawable/gradient_overlay"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="44dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Back"
+            android:src="@drawable/outline_arrow_back_24"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@android:color/white" />
+
+        <!-- Top label (Event Details) -->
+        <TextView
+            android:id="@+id/tvEventDetailsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:text="Event Details"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/layoutAttendeesRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="@id/ivEventBanner"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <!-- Stacked avatars (use overlapping via negative margins in code or FrameLayout) -->
+            <ImageView
+                android:id="@+id/ivAvatar1"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/circle_border_white"
+                android:contentDescription="Attendee 1"
+                android:scaleType="centerCrop"
+                android:src="@drawable/outline_account_circle_24" />
+
+            <ImageView
+                android:id="@+id/ivAvatar2"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="-10dp"
+                android:background="@drawable/circle_border_white"
+                android:contentDescription="Attendee 2"
+                android:scaleType="centerCrop"
+                android:src="@drawable/outline_account_circle_24" />
+
+            <ImageView
+                android:id="@+id/ivAvatar3"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="-10dp"
+                android:background="@drawable/circle_border_white"
+                android:contentDescription="Attendee 3"
+                android:scaleType="centerCrop"
+                android:src="@drawable/outline_account_circle_24" />
+
+            <!-- +20 Going label -->
+            <TextView
+                android:id="@+id/tvGoingCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:text="+20 Going"
+                android:textColor="@android:color/white"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Invite button (bottom-right on banner) -->
+        <Button
+            android:id="@+id/btnInvite"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_button_purple_rounded"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="Invite"
+            android:textColor="@android:color/white"
+            android:textSize="13sp"
+            app:layout_constraintBottom_toBottomOf="@id/ivEventBanner"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- White card content below banner -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardEventContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            app:cardCornerRadius="0dp"
+            app:cardElevation="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ivEventBanner">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="16dp">
+
+                <!-- Event Title -->
+                <TextView
+                    android:id="@+id/tvEventTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:text="World's Largest Tech Expo"
+                    android:textColor="#1A1A2E"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <!-- Date row -->
+                <LinearLayout
+                    android:id="@+id/layoutDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_light_purple"
+                        android:contentDescription="Date icon"
+                        android:padding="8dp"
+                        android:src="@drawable/outline_calendar_month_24" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvEventDate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="14 December, 2026"
+                            android:textColor="#1A1A2E"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvEventTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tuesday, 4:00PM - 8:00PM"
+                            android:textColor="#888888"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Location row -->
+                <LinearLayout
+                    android:id="@+id/layoutLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_light_purple"
+                        android:contentDescription="Location icon"
+                        android:padding="8dp"
+                        android:src="@drawable/outline_location_on_24" />
+
+                    <TextView
+                        android:id="@+id/tvEventLocation"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="University Of Alberta"
+                        android:textColor="#1A1A2E"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- Organizer row -->
+                <LinearLayout
+                    android:id="@+id/layoutOrganizer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/ivOrganizerLogo"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_light_purple"
+                        android:contentDescription="Organizer logo"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/outline_frame_person_24" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvOrganizerName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NVIDIA"
+                            android:textColor="#1A1A2E"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Organizer"
+                            android:textColor="#888888"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btnFollowOrganizer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:background="@drawable/bg_button_outline_purple"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:text="Follow"
+                        android:textColor="#6C47FF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- About Event section -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="About Event"
+                    android:textColor="#1A1A2E"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvEventDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:lineSpacingExtra="4dp"
+                    android:text="Experience the world's largest technology expo, bringing together innovators, startups, and industry leaders from around the globe."
+                    android:textColor="#555555"
+                    android:textSize="14sp" />
+
+                <!-- Read more -->
+                <TextView
+                    android:id="@+id/tvReadMore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:text="Read more"
+                    android:textColor="#6C47FF"
+                    android:textSize="13sp" />
+
+                <!-- Waiting list status badge (shown after joining) -->
+                <TextView
+                    android:id="@+id/tvWaitingListStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_badge_green"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="✓ On waiting list"
+                    android:textColor="#2E7D32"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <!-- JOIN WAITING LIST button -->
+                <!-- Visible only during registration window; hidden if already joined or window closed -->
+                <Button
+                    android:id="@+id/btnJoinWaitingList"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@drawable/bg_button_gradient_purple"
+                    android:text="JOIN WAITING LIST"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <!-- Error / info message (geolocation, capacity, etc.) -->
+                <TextView
+                    android:id="@+id/tvJoinErrorMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text=""
+                    android:textColor="#C62828"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    tools:text="Registration is currently closed."
+                    tools:visibility="visible" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
