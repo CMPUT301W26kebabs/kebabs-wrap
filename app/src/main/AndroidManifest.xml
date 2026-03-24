@@ -68,6 +68,7 @@
         <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminImagesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminProfilesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".admin.AdminCommentsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>
 </manifest>

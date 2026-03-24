@@ -8,7 +8,7 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottom_nav"
+        android:layout_above="@id/btn_create_event"
         android:fillViewport="true">
 
         <LinearLayout
@@ -32,12 +32,22 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp">
 
-                    <ImageView
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
+                    <TextView
+                        android:id="@+id/btn_admin_home"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
                         android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
-                        android:src="@drawable/ic_hamburger" />
+                        android:background="#EAF1FF"
+                        android:elevation="2dp"
+                        android:gravity="center"
+                        android:minWidth="104dp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="14dp"
+                        android:text="👤  ADMIN"
+                        android:textColor="#2F3DDB"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -113,54 +123,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Role switcher -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:paddingVertical="16dp"
-                android:paddingHorizontal="20dp">
-
-                <TextView
-                    android:id="@+id/chip_entrant"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:gravity="center"
-                    android:text="🎟 Entrant"
-                    android:textColor="#2E7D32"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_role_chip_entrant" />
-
-                <TextView
-                    android:id="@+id/chip_organizer"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:gravity="center"
-                    android:text="🎪 Organizer"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_role_chip_organizer" />
-
-                <TextView
-                    android:id="@+id/chip_admin"
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="👤 Admin"
-                    android:textColor="#FFFFFF"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_role_chip_admin" />
-            </LinearLayout>
-
             <!-- Welcome message -->
             <TextView
                 android:id="@+id/tv_welcome"
@@ -170,6 +132,7 @@
                 android:textColor="#000000"
                 android:textSize="18sp"
                 android:textStyle="bold"
+                android:layout_marginTop="12dp"
                 android:paddingHorizontal="20dp" />
 
             <!-- Upcoming Events header -->
@@ -289,6 +252,22 @@
         </LinearLayout>
     </ScrollView>
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_create_event"
+        style="@style/Widget.MaterialComponents.Button"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_above="@id/bottom_nav"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="12dp"
+        android:text="CREATE EVENT"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:backgroundTint="#4A43EC"
+        app:cornerRadius="24dp" />
+
     <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/bottom_nav"
@@ -310,7 +289,7 @@
         <LinearLayout android:id="@+id/nav_events" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
             android:gravity="center" android:orientation="vertical">
             <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_events" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Events"
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="My Events"
                 android:textColor="#9CA3AF" android:textSize="10sp" android:layout_marginTop="2dp" />
         </LinearLayout>
 
