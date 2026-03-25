@@ -1,112 +1,336 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#4A43EC"
-    android:fillViewport="true"
-    android:fitsSystemWindows="true">
+    android:background="#F7F7FB"
+    android:orientation="vertical"
+    android:paddingTop="24dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:id="@+id/btn_back_home"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:padding="10dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="#4A4ED9" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Admin Panel"
+            android:textColor="#4A4ED9"
+            android:textSize="29sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true">
+
+            <View
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="#EBC4A4" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="r"
+                android:textColor="#CB8B67"
+                android:textSize="16sp" />
+        </FrameLayout>
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:background="#E9E9F2" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
         android:orientation="vertical"
-        android:paddingTop="48dp"
-        android:paddingHorizontal="24dp"
-        android:paddingBottom="40dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
-        <!-- Top bar with back button + avatar -->
-        <RelativeLayout
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_events"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
 
-            <!-- Back button -->
-            <ImageView
-                android:id="@+id/btn_back_home"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:padding="8dp"
-                android:src="@drawable/ic_arrow_back"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                app:tint="#FFFFFF" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
 
-            <FrameLayout android:layout_width="48dp" android:layout_height="48dp"
-                android:layout_toEndOf="@id/btn_back_home" android:layout_marginStart="8dp">
-                <View android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/bg_avatar_white_ring" />
-                <TextView android:layout_width="40dp" android:layout_height="40dp" android:layout_gravity="center" android:gravity="center"
-                    android:background="@drawable/bg_avatar_inner" android:textColor="#4A43EC" android:textSize="18sp" android:textStyle="bold" android:text="A" />
-            </FrameLayout>
+                <FrameLayout
+                    android:id="@+id/icon_events"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_centerVertical="true"
+                    android:background="#E8E8FB">
 
-            <ImageView android:layout_width="44dp" android:layout_height="44dp" android:layout_alignParentEnd="true" android:layout_centerVertical="true"
-                android:src="@drawable/ic_search" android:padding="10dp" app:tint="#FFFFFF" />
-        </RelativeLayout>
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_events"
+                        app:tint="#4A4ED9" />
+                </FrameLayout>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Admin Panel,"
-            android:textColor="#FFFFFF" android:textSize="28sp" android:textStyle="bold" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ADMINISTRATOR MODE"
-            android:textColor="#C7C8FF" android:textSize="13sp" android:letterSpacing="0.08" android:layout_marginTop="4dp" android:layout_marginBottom="32dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon_events"
+                    android:text="Events"
+                    android:textColor="#2F2F52"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-        <!-- Browse Events Card -->
-        <androidx.cardview.widget.CardView android:id="@+id/card_events" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="14dp" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="20dp" app:cardElevation="8dp" android:clickable="true" android:focusable="true">
-            <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="20dp">
-                <TextView android:id="@+id/icon_events" android:layout_width="44dp" android:layout_height="44dp" android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true" android:gravity="center" android:text="📅" android:textSize="24sp" android:background="@drawable/bg_icon_circle_light" />
-                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_toEndOf="@id/icon_events"
-                    android:layout_centerVertical="true" android:orientation="vertical" android:paddingStart="16dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Browse Events" android:textColor="#9CA3AF" android:textSize="13sp" />
-                    <TextView android:id="@+id/tv_event_count" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-- events"
-                        android:textColor="#000000" android:textSize="22sp" android:textStyle="bold" android:layout_marginTop="2dp" />
-                </LinearLayout>
-                <ImageView android:layout_width="32dp" android:layout_height="32dp" android:layout_alignParentEnd="true" android:layout_centerVertical="true"
-                    android:src="@drawable/ic_arrow_forward" app:tint="#000000" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_arrow_forward"
+                    app:tint="#A8A8D0" />
             </RelativeLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Browse Profiles Card -->
-        <androidx.cardview.widget.CardView android:id="@+id/card_profiles" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="14dp" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="20dp" app:cardElevation="8dp" android:clickable="true" android:focusable="true">
-            <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="20dp">
-                <TextView android:id="@+id/icon_profiles" android:layout_width="44dp" android:layout_height="44dp" android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true" android:gravity="center" android:text="👥" android:textSize="24sp" android:background="@drawable/bg_icon_circle_light" />
-                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_toEndOf="@id/icon_profiles"
-                    android:layout_centerVertical="true" android:orientation="vertical" android:paddingStart="16dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Browse Profiles" android:textColor="#9CA3AF" android:textSize="13sp" />
-                    <TextView android:id="@+id/tv_profile_count" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-- users"
-                        android:textColor="#000000" android:textSize="22sp" android:textStyle="bold" android:layout_marginTop="2dp" />
-                </LinearLayout>
-                <ImageView android:layout_width="32dp" android:layout_height="32dp" android:layout_alignParentEnd="true" android:layout_centerVertical="true"
-                    android:src="@drawable/ic_arrow_forward" app:tint="#000000" />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_profiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <FrameLayout
+                    android:id="@+id/icon_profiles"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_centerVertical="true"
+                    android:background="#EBE8FB">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_people_small"
+                        app:tint="#6654CC" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon_profiles"
+                    android:text="Profiles"
+                    android:textColor="#2F2F52"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_arrow_forward"
+                    app:tint="#A8A8D0" />
             </RelativeLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Browse Images Card -->
-        <androidx.cardview.widget.CardView android:id="@+id/card_images" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp" app:cardBackgroundColor="#FFFFFF" app:cardCornerRadius="20dp" app:cardElevation="8dp" android:clickable="true" android:focusable="true">
-            <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="20dp">
-                <TextView android:id="@+id/icon_images" android:layout_width="44dp" android:layout_height="44dp" android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true" android:gravity="center" android:text="🖼️" android:textSize="24sp" android:background="@drawable/bg_icon_circle_light" />
-                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_toEndOf="@id/icon_images"
-                    android:layout_centerVertical="true" android:orientation="vertical" android:paddingStart="16dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Browse Images" android:textColor="#9CA3AF" android:textSize="13sp" />
-                    <TextView android:id="@+id/tv_image_count" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="-- posters"
-                        android:textColor="#000000" android:textSize="22sp" android:textStyle="bold" android:layout_marginTop="2dp" />
-                </LinearLayout>
-                <ImageView android:layout_width="32dp" android:layout_height="32dp" android:layout_alignParentEnd="true" android:layout_centerVertical="true"
-                    android:src="@drawable/ic_arrow_forward" app:tint="#000000" />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_images"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <FrameLayout
+                    android:id="@+id/icon_posters"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_centerVertical="true"
+                    android:background="#F6E5F4">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_event_placeholder"
+                        app:tint="#B04A8E" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon_posters"
+                    android:text="Posters"
+                    android:textColor="#2F2F52"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_arrow_forward"
+                    app:tint="#A8A8D0" />
             </RelativeLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Umar's test buttons -->
-        <Button android:id="@+id/btnTestRunLottery" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Test: Run Lottery Screen" android:layout_marginBottom="12dp" android:backgroundTint="#FFFFFF" android:textColor="#4A43EC" />
-        <Button android:id="@+id/btnTestEnrolledList" android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Test: View Enrolled List" android:backgroundTint="#FFFFFF" android:textColor="#4A43EC" />
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_comments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
 
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <FrameLayout
+                    android:id="@+id/icon_comments"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_centerVertical="true"
+                    android:background="#E8E8FB">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_envelope_outline"
+                        app:tint="#4A4ED9" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon_comments"
+                    android:text="Comments"
+                    android:textColor="#2F2F52"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_arrow_forward"
+                    app:tint="#A8A8D0" />
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/card_notification_logs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <FrameLayout
+                    android:id="@+id/icon_notification_logs"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_centerVertical="true"
+                    android:background="#EEE8FB">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_list_small"
+                        app:tint="#7962C8" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toEndOf="@id/icon_notification_logs"
+                    android:text="Notification Logs"
+                    android:textColor="#2F2F52"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_arrow_forward"
+                    app:tint="#A8A8D0" />
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
     </LinearLayout>
-</ScrollView>
+</LinearLayout>
