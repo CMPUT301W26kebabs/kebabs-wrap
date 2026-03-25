@@ -27,7 +27,6 @@ import java.util.List;
 public class HomeActivity extends AppCompatActivity {
 
     private TextView tvWelcome;
-    private TextView chipEntrant, chipOrganizer, chipAdmin;
     private RecyclerView rvUpcoming, rvNearby;
     private HomeEventAdapter upcomingAdapter, nearbyAdapter;
     private FirebaseRepository mainRepo;
@@ -48,9 +47,6 @@ public class HomeActivity extends AppCompatActivity {
         mainRepo = FirebaseRepository.getInstance();
         eventRepo = new EventRepository();
         tvWelcome = findViewById(R.id.tv_welcome);
-        chipEntrant = findViewById(R.id.chip_entrant);
-        chipOrganizer = findViewById(R.id.chip_organizer);
-        chipAdmin = findViewById(R.id.chip_admin);
         navEvents = findViewById(R.id.nav_events);
         rvUpcoming = findViewById(R.id.rv_upcoming_events);
         rvNearby = findViewById(R.id.rv_nearby_events);
@@ -89,17 +85,8 @@ public class HomeActivity extends AppCompatActivity {
         // Lottery banner
         lotteryBanner.setOnClickListener(v -> openPendingInvite());
 
-        // Role chips
-        chipEntrant.setOnClickListener(v -> {
-            rvUpcoming.smoothScrollToPosition(0);
-            Toast.makeText(this, "Entrant mode active. Tap any event card to view details.", Toast.LENGTH_SHORT).show();
-        });
-
-        chipOrganizer.setOnClickListener(v -> {
-            startActivity(new Intent(this, MyEventsActivity.class));
-        });
-
-        chipAdmin.setOnClickListener(v -> {
+        // Admin shortcut in top-left
+        findViewById(R.id.btn_admin_home).setOnClickListener(v -> {
             startActivity(new Intent(this, MainActivity.class));
         });
 
@@ -118,6 +105,8 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.nav_profile).setOnClickListener(v -> {
             startActivity(new Intent(this, ProfileActivity.class));
         });
+        findViewById(R.id.btn_create_event).setOnClickListener(v ->
+                startActivity(new Intent(this, CreateEventActivity.class)));
 
         loadUserName();
         loadEvents();
