@@ -64,6 +64,9 @@
         <activity android:name=".EnrolledListActivity" android:exported="false" />
         <activity android:name=".RunLotteryActivity" android:exported="false" />
 
+        <!-- Anas's activities -->
+        <activity android:name=".ui.EditProfileActivity" android:exported="false" android:screenOrientation="portrait" />
+
         <!-- Ibrahim's admin screens -->
         <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminImagesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
