@@ -66,8 +66,8 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void openEditProfile() {
-        Intent intent = new Intent(this, EntrantSignUpActivity.class);
-        intent.putExtra(EXTRA_EDIT_PROFILE, true);
+        Intent intent = new Intent(this, EditProfileActivity.class);
+        //intent.putExtra(EXTRA_EDIT_PROFILE, true);
         startActivity(intent);
     }
 

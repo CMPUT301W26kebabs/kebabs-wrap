@@ -45,14 +45,14 @@ public class FirebaseRepository {
 
     /**
      * Saves or overwrites an entrant profile in Firestore.
-     *
+     * Uses merge() prevents accidental deletion of existing fields.
      * @param entrant entrant profile to persist
-     * @param callback callback notified when the write completes or fails
+     * @param callback callback notified when write completes or fails
      */
     public void saveUser(Entrant entrant, RepoCallback<Void> callback) {
         db.collection("users")
                 .document(entrant.getDeviceId())
-                .set(entrant)
+                .set(entrant, com.google.firebase.firestore.SetOptions.merge())
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onError);
     }
@@ -92,6 +92,16 @@ public class FirebaseRepository {
                 .document(entrant.getDeviceId())
                 .set(entrant)
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Deletes the user profile document from Firestore.
+     */
+    public void deleteUser(String deviceId, RepoCallback<Void> callback) {
+        db.collection("users").document(deviceId)
+                .delete()
+                .addOnSuccessListener(aVoid -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onError);
     }
 }

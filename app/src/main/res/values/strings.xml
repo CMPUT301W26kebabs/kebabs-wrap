@@ -32,7 +32,7 @@
     <string name="profile_missing_error">No saved profile found for this device</string>
     <string name="edit_profile_title">Edit Profile</string>
     <string name="edit_profile_subtitle">Update your information</string>
-    <string name="save_profile">Save</string>
+    <string name="save_profile">Save Profile</string>
     <string name="splash_get_started">Get Started</string>
     <string name="splash_checking_device">Checking your device...</string>
     <string name="splash_welcome_back">Welcome back. Opening your home screen...</string>
