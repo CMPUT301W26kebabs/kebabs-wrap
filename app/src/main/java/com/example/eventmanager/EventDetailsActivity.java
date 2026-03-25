@@ -44,29 +44,31 @@ public class EventDetailsActivity extends AppCompatActivity {
         deviceId = new DeviceAuthManager().getDeviceId(this);
 
         // Views
-        ivPoster = findViewById(R.id.iv_event_poster);
-        tvEventName = findViewById(R.id.tv_event_name);
-        tvEventDate = findViewById(R.id.tv_event_date);
-        tvEventTime = findViewById(R.id.tv_event_time);
-        tvEventLocation = findViewById(R.id.tv_event_location);
-        tvEventDescription = findViewById(R.id.tv_event_description);
-        tvOrganizerName = findViewById(R.id.tv_organizer_name);
-        tvOrganizerInitial = findViewById(R.id.tv_organizer_initial);
-        tvGoingCount = findViewById(R.id.tv_going_count);
-        btnJoinWaitlist = findViewById(R.id.btn_join_waitlist);
-        tvJoinWaitlistLabel = findViewById(R.id.tv_join_waitlist_label);
+        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.eventDetailsToolbar);
+        ivPoster = findViewById(R.id.eventPosterImage);
+        tvEventName = findViewById(R.id.eventTitleText);
+        tvEventDate = findViewById(R.id.eventDateText);
+        tvEventLocation = findViewById(R.id.eventLocationText);
+        tvEventDescription = findViewById(R.id.aboutEventText);
+        tvOrganizerName = findViewById(R.id.eventOrganizerText);
+        btnJoinWaitlist = findViewById(R.id.leaveWaitlistButton);
 
-        // Back button
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+        // These are not present in the new XML
+        tvEventTime = null;
+        tvOrganizerInitial = null;
+        tvGoingCount = null;
+        tvJoinWaitlistLabel = null;
 
-        // Decorative controls from the design
-        findViewById(R.id.btn_bookmark).setOnClickListener(v ->
-                Toast.makeText(this, "Bookmark coming soon", Toast.LENGTH_SHORT).show());
-        findViewById(R.id.btn_follow).setOnClickListener(v ->
+        // Back button through toolbar navigation icon
+        toolbar.setNavigationOnClickListener(v -> finish());
+
+        // Follow button from the new UI
+        findViewById(R.id.followButton).setOnClickListener(v ->
                 Toast.makeText(this, "Follow coming soon", Toast.LENGTH_SHORT).show());
+
         btnJoinWaitlist.setOnClickListener(v -> joinWaitingList());
 
-        setJoinButtonState("JOIN WAITING LIST", true, R.drawable.bg_button_gradient_purple);
+        setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
 
         if (eventId != null) {
             loadEventDetails();
