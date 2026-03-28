@@ -53,6 +53,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         tvOrganizerName = findViewById(R.id.eventOrganizerText);
         btnJoinWaitlist = findViewById(R.id.leaveWaitlistButton);
 
+
         // These are not present in the new XML
         tvEventTime = null;
         tvOrganizerInitial = null;

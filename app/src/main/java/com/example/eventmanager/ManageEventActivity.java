@@ -1,19 +1,23 @@
 package com.example.eventmanager;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -26,18 +30,29 @@ import java.util.Locale;
 
 public class ManageEventActivity extends AppCompatActivity {
 
-    private String eventId, eventName;
-    private TextView tvEventTitle, tvSubtitle, tvActiveSectionLabel;
-    private TextView tvWaitingCount, tvChosenCount, tvEnrolledCount;
-    private TextView tvEmptyState, tvPreviewHint;
-    private RecyclerView rvAttendees;
-    private Button btnRunLottery, btnNotify;
-    private CardView cardWaiting, cardChosen, cardEnrolled;
+    private String eventId;
+    private String eventName;
+    private String eventLocation;
+    private TextView textEventTitle;
+    private TextView textListHeader;
+    private TextView badgeTotal;
+    private TextView textEmptyList;
+    private TextView tabWaiting;
+    private TextView tabChosen;
+    private TextView tabEnrolled;
+    private TextView tabCancelled;
+    private RecyclerView recyclerChosenEntrants;
+    private MaterialButton btnRunLottery;
+    private MaterialButton btnNotify;
     private FirebaseFirestore db;
     private OrganizerNotificationManager organizerNotificationManager;
     private String currentTab = "waiting";
     private int eventCapacity = Integer.MAX_VALUE;
     private boolean previewWaitingMode;
+    private int waitingCount;
+    private int chosenCount;
+    private int enrolledCount;
+    private int cancelledCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,37 +70,59 @@ public class ManageEventActivity extends AppCompatActivity {
             return;
         }
 
-        // Back button
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
-        findViewById(R.id.btnViewQr).setOnClickListener(v -> openEventQr());
+        ImageView btnBack = findViewById(R.id.btn_back);
+        btnBack.setOnClickListener(v -> finish());
 
-        // Header
-        tvEventTitle = findViewById(R.id.tvEventTitle);
-        tvSubtitle = findViewById(R.id.tvSubtitle);
-        tvActiveSectionLabel = findViewById(R.id.tvActiveSectionLabel);
-        tvEventTitle.setText(eventName != null ? eventName : "Event");
-        tvSubtitle.setText("Manage Event");
+        textEventTitle = findViewById(R.id.text_event_title);
+        textListHeader = findViewById(R.id.text_list_header);
+        badgeTotal = findViewById(R.id.badge_total);
+        textEmptyList = findViewById(R.id.text_empty_list);
+        tabWaiting = findViewById(R.id.tab_waiting);
+        tabChosen = findViewById(R.id.tab_chosen);
+        tabEnrolled = findViewById(R.id.tab_enrolled);
+        tabCancelled = findViewById(R.id.tab_cancelled);
 
-        // Counts
-        tvWaitingCount = findViewById(R.id.tvWaitingCount);
-        tvChosenCount = findViewById(R.id.tvChosenCount);
-        tvEnrolledCount = findViewById(R.id.tvEnrolledCount);
-        tvEmptyState = findViewById(R.id.tvEmptyState);
-        tvPreviewHint = findViewById(R.id.tvPreviewHint);
+        textEventTitle.setText(eventName != null ? eventName : "Event");
 
-        // Cards (tabs)
-        cardWaiting = findViewById(R.id.cardWaiting);
-        cardChosen = findViewById(R.id.cardChosen);
-        cardEnrolled = findViewById(R.id.cardEnrolled);
+        recyclerChosenEntrants = findViewById(R.id.recycler_chosen_entrants);
+        recyclerChosenEntrants.setLayoutManager(new LinearLayoutManager(this));
+        recyclerChosenEntrants.setHasFixedSize(false);
 
-        // Attendee list
-        rvAttendees = findViewById(R.id.rvAttendees);
-        rvAttendees.setLayoutManager(new LinearLayoutManager(this));
-        rvAttendees.setHasFixedSize(false);
+        btnRunLottery = findViewById(R.id.btn_run_lottery);
+        btnRunLottery.setOnClickListener(v -> {
+            Intent intent = new Intent(this, RunLotteryActivity.class);
+            intent.putExtra(RunLotteryActivity.EXTRA_EVENT_ID, eventId);
+            intent.putExtra(RunLotteryActivity.EXTRA_EVENT_NAME, eventName);
+            intent.putExtra(RunLotteryActivity.EXTRA_CAPACITY, eventCapacity);
+            startActivity(intent);
+        });
 
-        // Tab clicks
-        cardWaiting.setOnClickListener(v -> { currentTab = "waiting"; loadAttendees(); highlightTab(); });
-        cardWaiting.setOnLongClickListener(v -> {
+        btnNotify = findViewById(R.id.btn_notify);
+        btnNotify.setOnClickListener(v -> showNotifyAudienceChooser());
+
+        ImageButton btnAdd = findViewById(R.id.btn_action_add);
+        btnAdd.setOnClickListener(v -> openEventQr());
+
+        ImageButton btnDownload = findViewById(R.id.btn_action_download);
+        btnDownload.setOnClickListener(v -> shareCurrentTabList());
+
+        ImageButton btnLocation = findViewById(R.id.btn_action_location);
+        btnLocation.setOnClickListener(v -> openLocationInMaps());
+
+        ImageButton btnChat = findViewById(R.id.btn_action_chat);
+        btnChat.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ModerateCommentsActivity.class);
+            intent.putExtra("EVENT_ID", eventId);
+            intent.putExtra("EVENT_NAME", eventName != null ? eventName : "Event");
+            startActivity(intent);
+        });
+
+        tabWaiting.setOnClickListener(v -> {
+            currentTab = "waiting";
+            loadAttendees();
+            highlightTab();
+        });
+        tabWaiting.setOnLongClickListener(v -> {
             previewWaitingMode = !previewWaitingMode;
             currentTab = "waiting";
             loadCounts();
@@ -98,22 +135,21 @@ public class ManageEventActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
             return true;
         });
-        cardChosen.setOnClickListener(v -> { currentTab = "selected"; loadAttendees(); highlightTab(); });
-        cardEnrolled.setOnClickListener(v -> { currentTab = "enrolled"; loadAttendees(); highlightTab(); });
-
-        // Run Lottery button
-        btnRunLottery = findViewById(R.id.btnRunLottery);
-        btnRunLottery.setOnClickListener(v -> {
-            Intent intent = new Intent(this, RunLotteryActivity.class);
-            intent.putExtra(RunLotteryActivity.EXTRA_EVENT_ID, eventId);
-            intent.putExtra(RunLotteryActivity.EXTRA_EVENT_NAME, eventName);
-            intent.putExtra(RunLotteryActivity.EXTRA_CAPACITY, eventCapacity);
-            startActivity(intent);
+        tabChosen.setOnClickListener(v -> {
+            currentTab = "selected";
+            loadAttendees();
+            highlightTab();
         });
-
-        // Notify button
-        btnNotify = findViewById(R.id.btnNotify);
-        btnNotify.setOnClickListener(v -> showNotifyAudienceChooser());
+        tabEnrolled.setOnClickListener(v -> {
+            currentTab = "enrolled";
+            loadAttendees();
+            highlightTab();
+        });
+        tabCancelled.setOnClickListener(v -> {
+            currentTab = "cancelled";
+            loadAttendees();
+            highlightTab();
+        });
 
         loadEventMeta();
         loadCounts();
@@ -137,8 +173,10 @@ public class ManageEventActivity extends AppCompatActivity {
                     String loadedName = doc.getString("name");
                     if (!TextUtils.isEmpty(loadedName)) {
                         eventName = loadedName;
-                        tvEventTitle.setText(loadedName);
+                        textEventTitle.setText(loadedName);
                     }
+                    String loc = doc.getString("location");
+                    eventLocation = loc != null ? loc.trim() : null;
                     Long cap = doc.getLong("capacity");
                     if (cap != null && cap > 0) {
                         eventCapacity = cap.intValue();
@@ -148,43 +186,71 @@ public class ManageEventActivity extends AppCompatActivity {
 
     private void loadCounts() {
         if (previewWaitingMode) {
-            tvWaitingCount.setText(String.valueOf(getPreviewEntrants().size()));
+            waitingCount = getPreviewEntrants().size();
         }
 
         if (eventId == null || eventId.trim().isEmpty()) {
             if (!previewWaitingMode) {
                 Toast.makeText(this, "This event is missing its database id.", Toast.LENGTH_SHORT).show();
             }
+            updateTabLabels();
             return;
         }
 
         if (!previewWaitingMode) {
             db.collection("events").document(eventId).collection("waitingList").get()
-                    .addOnSuccessListener(qs -> tvWaitingCount.setText(String.valueOf(qs.size())));
+                    .addOnSuccessListener(qs -> {
+                        waitingCount = qs.size();
+                        updateTabLabels();
+                    });
+        } else {
+            updateTabLabels();
         }
 
         db.collection("events").document(eventId).collection("selected").get()
-                .addOnSuccessListener(qs -> tvChosenCount.setText(String.valueOf(qs.size())));
+                .addOnSuccessListener(qs -> {
+                    chosenCount = qs.size();
+                    updateTabLabels();
+                });
 
         db.collection("events").document(eventId).collection("enrolled").get()
-                .addOnSuccessListener(qs -> tvEnrolledCount.setText(String.valueOf(qs.size())));
+                .addOnSuccessListener(qs -> {
+                    enrolledCount = qs.size();
+                    updateTabLabels();
+                });
+
+        db.collection("events").document(eventId).collection("cancelled").get()
+                .addOnSuccessListener(qs -> {
+                    cancelledCount = qs.size();
+                    updateTabLabels();
+                });
+    }
+
+    private void updateTabLabels() {
+        tabWaiting.setText(String.format(Locale.getDefault(), "Waiting (%d)", waitingCount));
+        tabChosen.setText(String.format(Locale.getDefault(), "Chosen (%d)", chosenCount));
+        tabEnrolled.setText(String.format(Locale.getDefault(), "Enrolled (%d)", enrolledCount));
+        tabCancelled.setText(String.format(Locale.getDefault(), "Cancelled (%d)", cancelledCount));
+        highlightTab();
     }
 
     private void loadAttendees() {
         if (previewWaitingMode && "waiting".equals(currentTab)) {
-            rvAttendees.setAdapter(new EntrantAdapter(getPreviewEntrants()));
+            List<AnasEntrant> preview = getPreviewEntrants();
+            recyclerChosenEntrants.setAdapter(new EntrantAdapter(preview));
+            badgeTotal.setText(preview.size() + " Total");
             hideEmptyState();
             return;
         }
 
         if (eventId == null || eventId.trim().isEmpty()) {
-            rvAttendees.setAdapter(new EntrantAdapter(new ArrayList<>()));
+            recyclerChosenEntrants.setAdapter(new EntrantAdapter(new ArrayList<>()));
+            badgeTotal.setText("0 Total");
             showEmptyState("This event could not be loaded correctly.");
             return;
         }
 
-        String collection = currentTab.equals("waiting") ? "waitingList" :
-                currentTab.equals("selected") ? "selected" : "enrolled";
+        String collection = collectionForTab(currentTab);
 
         db.collection("events").document(eventId).collection(collection).get()
                 .addOnSuccessListener(qs -> {
@@ -196,18 +262,19 @@ public class ManageEventActivity extends AppCompatActivity {
                         if (deviceId == null || deviceId.trim().isEmpty()) {
                             deviceId = doc.getId();
                         }
+                        String tabLabel = currentTab;
                         AnasEntrant e = new AnasEntrant(deviceId,
                                 name != null ? name : deviceId,
                                 email != null ? email : "",
-                                currentTab);
+                                tabLabel);
                         attendeeRows.add(e);
                     }
                     Collections.sort(attendeeRows, Comparator.comparing(
                             entrant -> entrant.getName() == null ? "" : entrant.getName().toLowerCase(Locale.getDefault())
                     ));
                     List<AnasEntrant> groupedEntrants = buildGroupedEntrants(attendeeRows);
-                    EntrantAdapter adapter = new EntrantAdapter(groupedEntrants);
-                    rvAttendees.setAdapter(adapter);
+                    recyclerChosenEntrants.setAdapter(new EntrantAdapter(groupedEntrants));
+                    badgeTotal.setText(attendeeRows.size() + " Total");
                     if (groupedEntrants.isEmpty()) {
                         showEmptyState(getEmptyMessage());
                     } else {
@@ -215,34 +282,78 @@ public class ManageEventActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    badgeTotal.setText("0 Total");
                     showEmptyState("Failed to load people for this section.");
                     Toast.makeText(this, "Failed to load attendees", Toast.LENGTH_SHORT).show();
                 });
     }
 
+    private String collectionForTab(String tab) {
+        switch (tab) {
+            case "waiting":
+                return "waitingList";
+            case "selected":
+                return "selected";
+            case "enrolled":
+                return "enrolled";
+            case "cancelled":
+                return "cancelled";
+            default:
+                return "waitingList";
+        }
+    }
+
     private void highlightTab() {
-        float activeAlpha = 1.0f;
-        float inactiveAlpha = 0.5f;
-        cardWaiting.setAlpha(currentTab.equals("waiting") ? activeAlpha : inactiveAlpha);
-        cardChosen.setAlpha(currentTab.equals("selected") ? activeAlpha : inactiveAlpha);
-        cardEnrolled.setAlpha(currentTab.equals("enrolled") ? activeAlpha : inactiveAlpha);
-        tvActiveSectionLabel.setText(currentTab.equals("waiting")
-                ? "Waiting List"
-                : currentTab.equals("selected")
-                ? "Chosen Entrants"
-                : "Enrolled Entrants");
-        tvPreviewHint.setVisibility(currentTab.equals("waiting") ? View.VISIBLE : View.GONE);
+        setTabStyle(tabWaiting, "waiting".equals(currentTab));
+        setTabStyle(tabChosen, "selected".equals(currentTab));
+        setTabStyle(tabEnrolled, "enrolled".equals(currentTab));
+        setTabStyle(tabCancelled, "cancelled".equals(currentTab));
+
+        if ("waiting".equals(currentTab)) {
+            textListHeader.setText("Waiting List");
+        } else if ("selected".equals(currentTab)) {
+            textListHeader.setText("Chosen Entrants");
+        } else if ("enrolled".equals(currentTab)) {
+            textListHeader.setText("Enrolled Entrants");
+        } else {
+            textListHeader.setText("Cancelled Entrants");
+        }
+
+        int totalForBadge;
+        switch (currentTab) {
+            case "waiting":
+                totalForBadge = previewWaitingMode ? waitingCount : waitingCount;
+                break;
+            case "selected":
+                totalForBadge = chosenCount;
+                break;
+            case "enrolled":
+                totalForBadge = enrolledCount;
+                break;
+            case "cancelled":
+                totalForBadge = cancelledCount;
+                break;
+            default:
+                totalForBadge = 0;
+        }
+        badgeTotal.setText(totalForBadge + " Total");
+    }
+
+    private void setTabStyle(TextView tab, boolean selected) {
+        tab.setBackgroundResource(selected ? R.drawable.bg_tab_active : R.drawable.bg_tab_inactive);
+        tab.setTextColor(selected ? Color.WHITE : Color.parseColor("#5A5C69"));
+        tab.setTypeface(null, selected ? Typeface.BOLD : Typeface.NORMAL);
     }
 
     private void showEmptyState(String message) {
-        tvEmptyState.setText(message);
-        tvEmptyState.setVisibility(View.VISIBLE);
-        rvAttendees.setVisibility(View.GONE);
+        textEmptyList.setText(message);
+        textEmptyList.setVisibility(View.VISIBLE);
+        recyclerChosenEntrants.setVisibility(View.GONE);
     }
 
     private void hideEmptyState() {
-        tvEmptyState.setVisibility(View.GONE);
-        rvAttendees.setVisibility(View.VISIBLE);
+        textEmptyList.setVisibility(View.GONE);
+        recyclerChosenEntrants.setVisibility(View.VISIBLE);
     }
 
     private String getEmptyMessage() {
@@ -251,6 +362,9 @@ public class ManageEventActivity extends AppCompatActivity {
         }
         if ("enrolled".equals(currentTab)) {
             return "No enrolled entrants yet.";
+        }
+        if ("cancelled".equals(currentTab)) {
+            return "No cancelled entrants yet.";
         }
         return "No one is on the waiting list yet.";
     }
@@ -327,6 +441,95 @@ public class ManageEventActivity extends AppCompatActivity {
         intent.putExtra("EVENT_ID", eventId);
         intent.putExtra("EVENT_NAME", eventName);
         startActivity(intent);
+    }
+
+    private void openLocationInMaps() {
+        if (eventLocation == null || eventLocation.isEmpty()) {
+            Toast.makeText(this, "Loading location…", Toast.LENGTH_SHORT).show();
+            db.collection("events").document(eventId).get()
+                    .addOnSuccessListener(doc -> {
+                        if (doc.exists()) {
+                            String loc = doc.getString("location");
+                            eventLocation = loc != null ? loc.trim() : null;
+                        }
+                        launchMapsForLocation();
+                    });
+            return;
+        }
+        launchMapsForLocation();
+    }
+
+    private void launchMapsForLocation() {
+        if (eventLocation == null || eventLocation.isEmpty()) {
+            Toast.makeText(this, "No location set for this event.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(eventLocation));
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        intent.setPackage("com.google.android.apps.maps");
+        if (intent.resolveActivity(getPackageManager()) == null) {
+            intent.setPackage(null);
+        }
+        try {
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not open maps.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void shareCurrentTabList() {
+        if (previewWaitingMode && "waiting".equals(currentTab)) {
+            StringBuilder sb = new StringBuilder();
+            for (AnasEntrant e : getPreviewEntrants()) {
+                sb.append(e.getName()).append(" — ").append(e.getEmail()).append('\n');
+            }
+            shareText("Waiting list (preview)\n\n" + sb);
+            return;
+        }
+
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(this, "Event not loaded.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String collection = collectionForTab(currentTab);
+        db.collection("events").document(eventId).collection(collection).get()
+                .addOnSuccessListener(qs -> {
+                    StringBuilder sb = new StringBuilder();
+                    for (DocumentSnapshot doc : qs.getDocuments()) {
+                        String name = doc.getString("name");
+                        String email = doc.getString("email");
+                        String line = (name != null ? name : doc.getId())
+                                + (email != null && !email.isEmpty() ? " — " + email : "");
+                        sb.append(line).append('\n');
+                    }
+                    String title = sectionTitleForShare();
+                    shareText(title + "\n\n" + (sb.length() > 0 ? sb.toString().trim() : "(empty)"));
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Could not load list to share.", Toast.LENGTH_SHORT).show());
+    }
+
+    private String sectionTitleForShare() {
+        switch (currentTab) {
+            case "waiting":
+                return "Waiting list — " + (eventName != null ? eventName : "Event");
+            case "selected":
+                return "Chosen entrants — " + (eventName != null ? eventName : "Event");
+            case "enrolled":
+                return "Enrolled entrants — " + (eventName != null ? eventName : "Event");
+            case "cancelled":
+                return "Cancelled entrants — " + (eventName != null ? eventName : "Event");
+            default:
+                return eventName != null ? eventName : "Event";
+        }
+    }
+
+    private void shareText(String text) {
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(send, "Share list"));
     }
 
     private List<AnasEntrant> getPreviewEntrants() {
