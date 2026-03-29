@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="18dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:cardCornerRadius="22dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="18dp">
+
+        <TextView
+            android:id="@+id/avatarText"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
+            android:gravity="center"
+            android:background="@drawable/bg_circle_avatar"
+            android:text="JL"
+            android:textColor="#7B3E73"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/guestNameText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Jessica Lee"
+                android:textColor="#2E2C59"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/guestContactText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="jess.lee@outlook.com"
+                android:textColor="#6F6A90"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/inviteGuestButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_action_green"
+            android:src="@android:drawable/ic_input_add"
+            app:tint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/inviteOrganizerButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_action_purple"
+            android:src="@android:drawable/ic_menu_manage"
+            app:tint="#5A54E8" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

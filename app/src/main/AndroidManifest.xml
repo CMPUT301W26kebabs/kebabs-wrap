@@ -53,6 +53,7 @@
         <!-- Huzaifa's activities -->
         <activity android:name=".BrowseEventsActivity" android:exported="false" />
         <activity android:name=".EventDetailsActivity" android:exported="false" />
+        <activity android:name=".InviteGuestsActivity" android:exported="false" />
         <activity android:name=".QRScannerActivity" android:exported="false" />
         <activity android:name=".CreateEventActivity" android:exported="false" />
         <activity android:name=".ManageEventActivity" android:exported="false" />
@@ -68,6 +69,7 @@
         <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminImagesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminProfilesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".admin.AdminCommentsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
     </application>
 </manifest>
