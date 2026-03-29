@@ -40,6 +40,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private TextView tvEventName, tvEventDate, tvEventLocation;
     private TextView tvEventDescription, tvOrganizerName;
+    private TextView tvGoingCount;
     private Button btnJoinWaitlist;
     private ImageView ivPoster;
     private EditText commentInput;
@@ -69,6 +70,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         tvEventLocation = findViewById(R.id.eventLocationText);
         tvEventDescription = findViewById(R.id.aboutEventText);
         tvOrganizerName = findViewById(R.id.eventOrganizerText);
+        tvGoingCount = findViewById(R.id.tvGoingCount);
         btnJoinWaitlist = findViewById(R.id.leaveWaitlistButton);
         commentInput = findViewById(R.id.commentInput);
         sendCommentButton = findViewById(R.id.sendCommentButton);
@@ -198,7 +200,15 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     private void loadGoingCount() {
-        // tvGoingCount view not present in current layout; no-op
+        if (eventId == null || tvGoingCount == null) return;
+        db.collection("events").document(eventId).collection("waitingList").get()
+                .addOnSuccessListener(qs -> {
+                    int count = qs.size();
+                    tvGoingCount.setText("CURRENTLY IN POOL: " + count + " ENTRANTS");
+                })
+                .addOnFailureListener(e -> {
+                    // Keep existing text; optionally surface a small hint.
+                });
     }
 
     private void checkIfAlreadyJoined() {

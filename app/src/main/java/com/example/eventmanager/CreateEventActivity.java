@@ -5,6 +5,7 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -13,7 +14,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.bumptech.glide.Glide;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Event;
 import com.google.firebase.storage.FirebaseStorage;
@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 public class CreateEventActivity extends AppCompatActivity {
+    private static final String TAG = "CreateEventActivity";
 
     private EditText nameInput, descriptionInput, startDateInput, endDateInput;
     private EditText locationInput, capacityInput, waitlistLimitInput;
@@ -130,9 +131,20 @@ public class CreateEventActivity extends AppCompatActivity {
                             event.setPosterUrl(uri.toString());
                             saveEventToFirestore(event);
                         })
-                        .addOnFailureListener(e -> saveEventToFirestore(event)))
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show());
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Poster uploaded but failed to fetch download URL", e);
+                            Toast.makeText(this,
+                                    "Uploaded poster, but failed to get URL. Creating event without poster.",
+                                    Toast.LENGTH_LONG).show();
+                            saveEventToFirestore(event);
+                        }))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Poster upload failed", e);
+                    Toast.makeText(this,
+                            "Image upload failed: " + e.getMessage() + ". Creating event without poster.",
+                            Toast.LENGTH_LONG).show();
+                    saveEventToFirestore(event);
+                });
     }
 
     private void saveEventToFirestore(Event event) {
