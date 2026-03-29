@@ -25,7 +25,7 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_height="220dp"
             android:layout_marginStart="12dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="12dp">
@@ -33,7 +33,7 @@
             <ImageView
                 android:id="@+id/eventPosterImage"
                 android:layout_width="match_parent"
-                android:layout_height="230dp"
+                android:layout_height="match_parent"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_launcher_background" />
 
@@ -52,88 +52,50 @@
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
                 android:textStyle="bold" />
+        </FrameLayout>
 
-            <androidx.cardview.widget.CardView
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="18dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_marginStart="18dp"
-                android:layout_marginEnd="18dp"
-                android:layout_marginBottom="0dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="6dp">
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/eventTitleText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="World's Largest&#10;Tech Expo"
+                    android:textColor="#2E2C59"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:id="@+id/eventTitleText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="World’s Largest&#10;Tech Expo"
-                        android:textColor="#2E2C59"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                    android:layout_marginTop="20dp"
+                    android:orientation="horizontal">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:layout_marginTop="2dp"
-                                android:src="@android:drawable/ic_menu_my_calendar"
-                                app:tint="#5A54E8" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Date &amp; Time"
-                                    android:textColor="#8A86A8"
-                                    android:textSize="12sp" />
-
-                                <TextView
-                                    android:id="@+id/eventDateText"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="14 December, 2026"
-                                    android:textColor="#2E2C59"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_weight="1"
                         android:orientation="horizontal">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_marginTop="2dp"
-                            android:src="@android:drawable/ic_menu_mylocation"
+                            android:src="@android:drawable/ic_menu_my_calendar"
                             app:tint="#5A54E8" />
 
                         <LinearLayout
@@ -145,87 +107,139 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Location"
+                                android:text="Date &amp; Time"
                                 android:textColor="#8A86A8"
                                 android:textSize="12sp" />
 
                             <TextView
-                                android:id="@+id/eventLocationText"
+                                android:id="@+id/eventDateText"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="University Of Alberta"
+                                android:text="14 December, 2026"
+                                android:textColor="#2E2C59"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginTop="2dp"
+                        android:src="@android:drawable/ic_menu_mylocation"
+                        app:tint="#5A54E8" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Location"
+                            android:textColor="#8A86A8"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/eventLocationText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="University Of Alberta"
+                            android:textColor="#2E2C59"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="20dp"
+                    android:background="#ECE9F5" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="42dp"
+                            android:layout_height="42dp"
+                            android:gravity="center"
+                            android:background="@drawable/bg_circle_dark"
+                            android:text="N"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Organizer"
+                                android:textColor="#8A86A8"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/eventOrganizerText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="NVIDIA"
                                 android:textColor="#2E2C59"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="20dp"
-                        android:background="#ECE9F5" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="42dp"
-                                android:layout_height="42dp"
-                                android:gravity="center"
-                                android:background="@drawable/bg_circle_dark"
-                                android:text="N"
-                                android:textColor="@android:color/white"
-                                android:textStyle="bold" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Organizer"
-                                    android:textColor="#8A86A8"
-                                    android:textSize="12sp" />
-
-                                <TextView
-                                    android:id="@+id/eventOrganizerText"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="NVIDIA"
-                                    android:textColor="#2E2C59"
-                                    android:textSize="14sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </LinearLayout>
-
-                        <Button
-                            android:id="@+id/followButton"
-                            android:layout_width="88dp"
-                            android:layout_height="40dp"
-                            android:background="@drawable/bg_follow_button"
-                            android:text="Follow"
-                            android:textAllCaps="false"
-                            android:textColor="#5A54E8"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                    <Button
+                        android:id="@+id/followButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:minWidth="88dp"
+                        android:background="@drawable/bg_follow_button"
+                        android:text="Follow"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
-        </FrameLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/inviteGuestsButton"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/bg_follow_button"
+            android:text="Invite Guests"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
