@@ -58,6 +58,8 @@ public class MyEventsActivity extends AppCompatActivity {
                                     // Firestore document ids are the safest source of truth for downstream screens.
                                     event.setEventId(doc.getId());
                                 }
+                                // Be explicit: soft-delete status must come from Firestore even if POJO mapping varies.
+                                event.setDeleted(Boolean.TRUE.equals(doc.getBoolean("isDeleted")));
                                 events.add(event);
                             }
                         }

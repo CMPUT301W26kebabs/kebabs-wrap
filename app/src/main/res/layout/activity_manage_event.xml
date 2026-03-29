@@ -66,7 +66,18 @@
             android:layout_height="48dp"
             android:layout_marginEnd="12dp"
             android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Invite guests"
             android:src="@android:drawable/ic_input_add"
+            app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/btn_action_qr"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Event QR code"
+            android:src="@drawable/ic_qr_code"
             app:tint="#FFFFFF" />
 
         <ImageButton

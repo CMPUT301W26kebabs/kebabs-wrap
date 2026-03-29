@@ -57,6 +57,7 @@
         <activity android:name=".QRScannerActivity" android:exported="false" />
         <activity android:name=".CreateEventActivity" android:exported="false" />
         <activity android:name=".ManageEventActivity" android:exported="false" />
+        <activity android:name=".ModerateCommentsActivity" android:exported="false" />
         <activity android:name=".ManagePosterActivity" android:exported="false" />
         <activity android:name=".EventQRActivity" android:exported="false" />
         <activity android:name=".MyEventsActivity" android:exported="false" />
@@ -67,7 +68,7 @@
         <activity android:name=".RunLotteryActivity" android:exported="false" />
 
         <!-- Ibrahim's admin screens -->
-        <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.EventManager" />
         <activity android:name=".admin.AdminImagesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminProfilesActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         <activity android:name=".admin.AdminCommentsActivity" android:exported="false" android:theme="@style/Theme.AppCompat.Light.NoActionBar" />

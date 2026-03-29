@@ -38,4 +38,12 @@
     <string name="splash_welcome_back">Welcome back. Opening your home screen...</string>
     <string name="splash_new_user_prompt">New here? Set up your profile to continue.</string>
     <string name="splash_logo_content_description">Spotly app logo</string>
+    <string name="admin_comments_load_error">Could not load comments: %1$s</string>
+    <string name="admin_comments_remove_title">Remove comment?</string>
+    <string name="admin_comments_remove_message">This removes the comment for all users. This cannot be undone.</string>
+    <string name="admin_comments_remove_confirm">Delete</string>
+    <string name="admin_comments_removed">Comment removed</string>
+    <string name="admin_comments_remove_failed">Could not delete: %1$s</string>
+    <string name="admin_comments_empty">No comments yet.</string>
+    <string name="admin_comments_load_failed">Could not load comments. Check your connection and Firestore rules.</string>
 </resources>
