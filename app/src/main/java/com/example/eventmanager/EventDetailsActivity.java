@@ -3,22 +3,33 @@ package com.example.eventmanager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.eventmanager.adapters.EventCommentAdapter;
 import com.example.eventmanager.managers.DeviceAuthManager;
+import com.example.eventmanager.models.EventComment;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -31,6 +42,12 @@ public class EventDetailsActivity extends AppCompatActivity {
     private TextView tvEventDescription, tvOrganizerName;
     private Button btnJoinWaitlist;
     private ImageView ivPoster;
+    private EditText commentInput;
+    private ImageButton sendCommentButton;
+    private RecyclerView commentsRecyclerView;
+    private TextView tvCommentsEmpty;
+    private EventCommentAdapter commentAdapter;
+    private ListenerRegistration commentsListener;
     private boolean alreadyJoined = false;
     private Date registrationStart;
     private Date registrationEnd;
@@ -53,6 +70,19 @@ public class EventDetailsActivity extends AppCompatActivity {
         tvEventDescription = findViewById(R.id.aboutEventText);
         tvOrganizerName = findViewById(R.id.eventOrganizerText);
         btnJoinWaitlist = findViewById(R.id.leaveWaitlistButton);
+        commentInput = findViewById(R.id.commentInput);
+        sendCommentButton = findViewById(R.id.sendCommentButton);
+        commentsRecyclerView = findViewById(R.id.commentsRecyclerView);
+        tvCommentsEmpty = findViewById(R.id.tvCommentsEmpty);
+        if (commentsRecyclerView != null) {
+            commentAdapter = new EventCommentAdapter();
+            commentsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            commentsRecyclerView.setNestedScrollingEnabled(false);
+            commentsRecyclerView.setAdapter(commentAdapter);
+        }
+        if (sendCommentButton != null) {
+            sendCommentButton.setOnClickListener(v -> submitComment());
+        }
 
         // Back button through toolbar navigation icon
         toolbar.setNavigationOnClickListener(v -> finish());
@@ -82,6 +112,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (eventId != null) {
             loadEventDetails();
             checkIfAlreadyJoined();
+            attachCommentsListener();
         } else {
             Toast.makeText(this, "Missing event information", Toast.LENGTH_SHORT).show();
             finish();
@@ -324,5 +355,100 @@ public class EventDetailsActivity extends AppCompatActivity {
         btnJoinWaitlist.setClickable(enabled);
         btnJoinWaitlist.setAlpha(enabled ? 1f : 0.92f);
         btnJoinWaitlist.setBackgroundResource(backgroundRes);
+    }
+
+    private void attachCommentsListener() {
+        if (eventId == null || commentsRecyclerView == null || commentAdapter == null) {
+            return;
+        }
+        if (commentsListener != null) {
+            return;
+        }
+        commentsListener = db.collection("events").document(eventId)
+                .collection("comments")
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+                .addSnapshotListener((snap, e) -> {
+                    if (e != null || snap == null) {
+                        return;
+                    }
+                    List<EventComment> list = new ArrayList<>(snap.size());
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        EventComment c = EventComment.fromDocument(doc);
+                        if (c != null) {
+                            list.add(c);
+                        }
+                    }
+                    commentAdapter.updateData(list);
+                    if (tvCommentsEmpty != null) {
+                        boolean empty = list.isEmpty();
+                        tvCommentsEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+                    }
+                });
+    }
+
+    private void submitComment() {
+        if (eventId == null || commentInput == null) {
+            return;
+        }
+        String text = commentInput.getText().toString().trim();
+        if (text.isEmpty()) {
+            Toast.makeText(this, "Write a comment first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (sendCommentButton != null) {
+            sendCommentButton.setEnabled(false);
+        }
+
+        db.collection("users").document(deviceId).get()
+                .addOnSuccessListener(userDoc -> {
+                    String authorName = "Entrant";
+                    if (userDoc.exists()) {
+                        String n = userDoc.getString("name");
+                        if (n != null && !n.trim().isEmpty()) {
+                            authorName = n.trim();
+                        }
+                    }
+
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("deviceId", deviceId);
+                    data.put("authorName", authorName);
+                    data.put("text", text);
+                    data.put("timestamp", FieldValue.serverTimestamp());
+                    data.put("eventId", eventId);
+                    String eventTitle = tvEventName != null && tvEventName.getText() != null
+                            ? tvEventName.getText().toString().trim() : "";
+                    if (!eventTitle.isEmpty()) {
+                        data.put("eventName", eventTitle);
+                    }
+
+                    db.collection("events").document(eventId).collection("comments").add(data)
+                            .addOnSuccessListener(docRef -> {
+                                commentInput.setText("");
+                                if (sendCommentButton != null) {
+                                    sendCommentButton.setEnabled(true);
+                                }
+                            })
+                            .addOnFailureListener(err -> {
+                                if (sendCommentButton != null) {
+                                    sendCommentButton.setEnabled(true);
+                                }
+                                Toast.makeText(this, "Failed to post comment", Toast.LENGTH_LONG).show();
+                            });
+                })
+                .addOnFailureListener(err -> {
+                    if (sendCommentButton != null) {
+                        sendCommentButton.setEnabled(true);
+                    }
+                    Toast.makeText(this, "Could not load profile for comment", Toast.LENGTH_LONG).show();
+                });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (commentsListener != null) {
+            commentsListener.remove();
+            commentsListener = null;
+        }
     }
 }

@@ -49,15 +49,33 @@
         android:layout_height="1dp"
         android:background="#ECECF3" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_comments"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingStart="14dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="14dp"
-        android:paddingBottom="16dp" />
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_comments"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingStart="14dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tv_comments_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:text="@string/admin_comments_empty"
+            android:textColor="#8D8CA6"
+            android:textSize="15sp"
+            android:visibility="gone" />
+    </FrameLayout>
 
 </LinearLayout>
