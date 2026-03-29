@@ -1,6 +1,8 @@
 package com.example.eventmanager;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,10 +27,9 @@ public class EventDetailsActivity extends AppCompatActivity {
     private String eventId;
     private String deviceId;
     private FirebaseFirestore db;
-    private TextView tvEventName, tvEventDate, tvEventTime, tvEventLocation;
-    private TextView tvEventDescription, tvOrganizerName, tvOrganizerInitial, tvGoingCount;
-    private TextView tvJoinWaitlistLabel;
-    private View btnJoinWaitlist;
+    private TextView tvEventName, tvEventDate, tvEventLocation;
+    private TextView tvEventDescription, tvOrganizerName;
+    private Button btnJoinWaitlist;
     private ImageView ivPoster;
     private boolean alreadyJoined = false;
     private Date registrationStart;
@@ -53,6 +54,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         tvOrganizerName = findViewById(R.id.eventOrganizerText);
         btnJoinWaitlist = findViewById(R.id.leaveWaitlistButton);
 
+
         // These are not present in the new XML
         tvEventTime = null;
         tvOrganizerInitial = null;
@@ -63,12 +65,26 @@ public class EventDetailsActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         // Follow button from the new UI
-        findViewById(R.id.followButton).setOnClickListener(v ->
-                Toast.makeText(this, "Follow coming soon", Toast.LENGTH_SHORT).show());
+        View followButton = findViewById(R.id.followButton);
+        if (followButton != null) {
+            followButton.setOnClickListener(v ->
+                    Toast.makeText(this, "Follow coming soon", Toast.LENGTH_SHORT).show());
+        }
 
-        btnJoinWaitlist.setOnClickListener(v -> joinWaitingList());
+        // Invite Guests button
+        Button inviteGuestsButton = findViewById(R.id.inviteGuestsButton);
+        if (inviteGuestsButton != null) {
+            inviteGuestsButton.setOnClickListener(v -> {
+                Intent intent = new Intent(this, InviteGuestsActivity.class);
+                intent.putExtra("EVENT_ID", eventId);
+                startActivity(intent);
+            });
+        }
 
-        setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
+        if (btnJoinWaitlist != null) {
+            btnJoinWaitlist.setOnClickListener(v -> joinWaitingList());
+            setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
+        }
 
         if (eventId != null) {
             loadEventDetails();
@@ -105,17 +121,8 @@ public class EventDetailsActivity extends AppCompatActivity {
                     if (registrationStart != null) {
                         tvEventDate.setText(new SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault())
                                 .format(registrationStart));
-                        String dayLabel = new SimpleDateFormat("EEEE", Locale.getDefault()).format(registrationStart);
-                        String startLabel = new SimpleDateFormat("h:mma", Locale.getDefault()).format(registrationStart);
-                        if (registrationEnd != null) {
-                            String endLabel = new SimpleDateFormat("h:mma", Locale.getDefault()).format(registrationEnd);
-                            tvEventTime.setText(dayLabel + ", " + startLabel + " - " + endLabel);
-                        } else {
-                            tvEventTime.setText(dayLabel + ", " + startLabel);
-                        }
                     } else {
                         tvEventDate.setText("Date TBA");
-                        tvEventTime.setText("Schedule will be announced soon");
                     }
 
                     // Location
@@ -142,7 +149,6 @@ public class EventDetailsActivity extends AppCompatActivity {
                         loadOrganizerName(orgId);
                     } else {
                         tvOrganizerName.setText("Organizer");
-                        tvOrganizerInitial.setText("O");
                     }
 
                     // Going count
@@ -161,22 +167,14 @@ public class EventDetailsActivity extends AppCompatActivity {
                     String name = doc.getString("name");
                     if (name != null && !name.isEmpty()) {
                         tvOrganizerName.setText(name);
-                        tvOrganizerInitial.setText(String.valueOf(name.charAt(0)).toUpperCase());
-                        tvOrganizerInitial.setVisibility(View.VISIBLE);
                     } else {
                         tvOrganizerName.setText("Organizer");
-                        tvOrganizerInitial.setText("O");
-                        tvOrganizerInitial.setVisibility(View.VISIBLE);
                     }
                 });
     }
 
     private void loadGoingCount() {
-        db.collection("events").document(eventId).collection("waitingList").get()
-                .addOnSuccessListener(qs -> {
-                    int count = qs.size();
-                    tvGoingCount.setText("+" + count + " Going");
-                });
+        // tvGoingCount view not present in current layout; no-op
     }
 
     private void checkIfAlreadyJoined() {
@@ -327,7 +325,8 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     private void setJoinButtonState(String label, boolean enabled, int backgroundRes) {
-        tvJoinWaitlistLabel.setText(label);
+        if (btnJoinWaitlist == null) return;
+        btnJoinWaitlist.setText(label);
         btnJoinWaitlist.setEnabled(enabled);
         btnJoinWaitlist.setClickable(enabled);
         btnJoinWaitlist.setAlpha(enabled ? 1f : 0.92f);
