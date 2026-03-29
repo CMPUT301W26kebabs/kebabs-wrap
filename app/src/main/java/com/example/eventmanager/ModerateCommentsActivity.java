@@ -15,18 +15,22 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventmanager.admin.AdminCommentListItem;
 import com.example.eventmanager.admin.AdminCommentsAdapter;
+import com.example.eventmanager.managers.DeviceAuthManager;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
- * Organizer view: lists comments for one event and allows removal.
+ * Organizer view: lists comments for one event, allows removal, and posting (US 02.08.02).
  */
 public class ModerateCommentsActivity extends AppCompatActivity {
 
@@ -38,6 +42,8 @@ public class ModerateCommentsActivity extends AppCompatActivity {
     private final List<AdminCommentListItem> allItems = new ArrayList<>();
     private TextView tvEmpty;
     private EditText editSearch;
+    private EditText editCompose;
+    private View btnSendComment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +73,10 @@ public class ModerateCommentsActivity extends AppCompatActivity {
         rv.setAdapter(adapter);
 
         editSearch = findViewById(R.id.edit_search_comments);
+        editCompose = findViewById(R.id.edit_compose_comment);
+        btnSendComment = findViewById(R.id.btn_send_comment);
+        btnSendComment.setOnClickListener(v -> submitOrganizerComment());
+
         editSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -81,6 +91,70 @@ public class ModerateCommentsActivity extends AppCompatActivity {
         });
 
         attachListener();
+    }
+
+    /** US 02.08.02 — same sub-collection as entrant comments; gated to event organizer when {@code organizerId} is set. */
+    private void submitOrganizerComment() {
+        if (editCompose == null) {
+            return;
+        }
+        String text = editCompose.getText().toString().trim();
+        if (text.isEmpty()) {
+            Toast.makeText(this, "Write a comment first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String deviceId = new DeviceAuthManager().getDeviceId(this);
+        btnSendComment.setEnabled(false);
+
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(eventDoc -> {
+                    String orgId = eventDoc != null ? eventDoc.getString("organizerId") : null;
+                    if (orgId != null && !orgId.trim().isEmpty() && !orgId.equals(deviceId)) {
+                        btnSendComment.setEnabled(true);
+                        Toast.makeText(this, "Only the event organizer can post here.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    db.collection("users").document(deviceId).get()
+                            .addOnSuccessListener(userDoc -> {
+                                String authorLabel = "Organizer";
+                                if (userDoc.exists()) {
+                                    String n = userDoc.getString("name");
+                                    if (n != null && !n.trim().isEmpty()) {
+                                        authorLabel = n.trim();
+                                    }
+                                }
+                                Map<String, Object> data = new HashMap<>();
+                                data.put("deviceId", deviceId);
+                                data.put("authorName", authorLabel);
+                                data.put("text", text);
+                                data.put("timestamp", FieldValue.serverTimestamp());
+                                data.put("eventId", eventId);
+                                if (eventName != null && !eventName.isEmpty()) {
+                                    data.put("eventName", eventName);
+                                }
+                                data.put("authorRole", "organizer");
+
+                                db.collection("events").document(eventId).collection("comments").add(data)
+                                        .addOnSuccessListener(docRef -> {
+                                            editCompose.setText("");
+                                            btnSendComment.setEnabled(true);
+                                        })
+                                        .addOnFailureListener(err -> {
+                                            btnSendComment.setEnabled(true);
+                                            Toast.makeText(this,
+                                                    getString(R.string.admin_comments_remove_failed, err.getMessage()),
+                                                    Toast.LENGTH_LONG).show();
+                                        });
+                            })
+                            .addOnFailureListener(err -> {
+                                btnSendComment.setEnabled(true);
+                                Toast.makeText(this, "Could not load profile.", Toast.LENGTH_LONG).show();
+                            });
+                })
+                .addOnFailureListener(err -> {
+                    btnSendComment.setEnabled(true);
+                    Toast.makeText(this, "Could not verify organizer.", Toast.LENGTH_LONG).show();
+                });
     }
 
     private void attachListener() {

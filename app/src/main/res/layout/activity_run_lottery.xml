@@ -334,6 +334,91 @@
                 android:textColor="#8888AA"
                 android:textSize="12sp" />
 
+            <!-- US 02.06.02 / 02.06.04 / 02.06.05 / 02.07.03 — roster & cancelled -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardCancelledSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="24dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="8dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Cancelled entrants"
+                        android:textColor="#1A1A2E"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvCancelledCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="0 cancelled"
+                        android:textColor="#8A8AA0"
+                        android:textSize="13sp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvCancelled"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:maxHeight="220dp"
+                        android:nestedScrollingEnabled="false"
+                        android:overScrollMode="never" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnNotifyCancelled"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
+                        android:text="Notify cancelled entrants"
+                        android:textColor="#3D3D6B"
+                        android:textSize="13sp"
+                        app:strokeColor="#5C6BC0"
+                        app:strokeWidth="1dp"
+                        app:cornerRadius="24dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnExportCsv"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="8dp"
+                        android:text="Export final roster (CSV)"
+                        android:textColor="#3D3D6B"
+                        android:textSize="13sp"
+                        app:strokeColor="#5C6BC0"
+                        app:strokeWidth="1dp"
+                        app:cornerRadius="24dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCancelNonSignup"
+                        style="@style/Widget.MaterialComponents.Button"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="8dp"
+                        android:text="Cancel invited entrants who did not enroll"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        app:backgroundTint="#E57373"
+                        app:cornerRadius="24dp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <!-- ─────────────────────────────────────────
                  RESULTS CARD  (hidden until draw completes)
                  ───────────────────────────────────────── -->
