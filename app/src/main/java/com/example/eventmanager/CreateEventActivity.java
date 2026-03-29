@@ -15,6 +15,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Event;
 import com.google.android.material.button.MaterialButton;
@@ -200,14 +201,14 @@ public class CreateEventActivity extends AppCompatActivity {
                             Toast.makeText(this,
                                     "Uploaded poster, but failed to get URL. Creating event without poster.",
                                     Toast.LENGTH_LONG).show();
-                            saveEventToFirestore(event);
+                            saveEventToFirestore(event, generateQr);
                         }))
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Poster upload failed", e);
                     Toast.makeText(this,
                             "Image upload failed: " + e.getMessage() + ". Creating event without poster.",
                             Toast.LENGTH_LONG).show();
-                    saveEventToFirestore(event);
+                    saveEventToFirestore(event, generateQr);
                 });
     }
 
