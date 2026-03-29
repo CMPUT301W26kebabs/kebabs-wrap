@@ -73,7 +73,7 @@
             android:background="@drawable/bg_filter_selected"
             android:text="Name"
             android:textAllCaps="false"
-            android:textColor="#4B4BCB"
+            android:textColor="#FFFFFF"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -86,7 +86,7 @@
             android:background="@drawable/bg_filter_unselected"
             android:text="Email"
             android:textAllCaps="false"
-            android:textColor="#5B577A"
+            android:textColor="#FFFFFF"
             android:textSize="16sp" />
 
         <Button
@@ -97,7 +97,7 @@
             android:background="@drawable/bg_filter_unselected"
             android:text="Phone"
             android:textAllCaps="false"
-            android:textColor="#5B577A"
+            android:textColor="#FFFFFF"
             android:textSize="16sp" />
     </LinearLayout>
 
