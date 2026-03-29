@@ -101,12 +101,21 @@ public class ManageEventActivity extends AppCompatActivity {
         btnNotify.setOnClickListener(v -> showNotifyAudienceChooser());
 
         ImageButton btnAdd = findViewById(R.id.btn_action_add);
-        btnAdd.setOnClickListener(v -> openEventQr());
+        btnAdd.setOnClickListener(v -> {
+            Intent intent = new Intent(this, InviteGuestsActivity.class);
+            intent.putExtra("EVENT_ID", eventId);
+            intent.putExtra("EVENT_NAME", eventName);
+            startActivity(intent);
+        });
+
+        ImageButton btnQr = findViewById(R.id.btn_action_qr);
+        btnQr.setOnClickListener(v -> openEventQr());
 
         ImageButton btnDownload = findViewById(R.id.btn_action_download);
         btnDownload.setOnClickListener(v -> shareCurrentTabList());
 
         ImageButton btnLocation = findViewById(R.id.btn_action_location);
+        btnLocation.setContentDescription("Open location in Maps");
         btnLocation.setOnClickListener(v -> openLocationInMaps());
 
         ImageButton btnChat = findViewById(R.id.btn_action_chat);

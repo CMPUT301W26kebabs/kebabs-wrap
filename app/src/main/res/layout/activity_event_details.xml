@@ -344,7 +344,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
-                android:hint="Ask a question..."
+                android:hint="Write a comment..."
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLines="4"
                 android:textColor="#2E2C59"
                 android:textColorHint="#A09CB8" />
 
@@ -373,98 +375,27 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/tvCommentsEmpty"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:gravity="center"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:text="No comments yet. Be the first to comment!"
+                    android:textColor="#7E789B"
+                    android:textSize="14sp" />
 
-                    <TextView
-                        android:layout_width="42dp"
-                        android:layout_height="42dp"
-                        android:gravity="center"
-                        android:background="@drawable/bg_circle_light"
-                        android:text="A"
-                        android:textColor="#2E2C59"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Alex Rivera"
-                            android:textColor="#2E2C59"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Will there be a livestream for those who aren't selected in the lottery?"
-                            android:textColor="#7E789B"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="2h ago"
-                        android:textColor="#B0ABC7"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <LinearLayout
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/commentsRecyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="42dp"
-                        android:layout_height="42dp"
-                        android:gravity="center"
-                        android:background="@drawable/bg_circle_light"
-                        android:text="S"
-                        android:textColor="#2E2C59"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Sarah Chen"
-                            android:textColor="#2E2C59"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Are there any specific hardware requirements for the hands-on workshops?"
-                            android:textColor="#7E789B"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="5h ago"
-                        android:textColor="#B0ABC7"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                    android:nestedScrollingEnabled="false" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <TextView
+            android:id="@+id/tvGoingCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
