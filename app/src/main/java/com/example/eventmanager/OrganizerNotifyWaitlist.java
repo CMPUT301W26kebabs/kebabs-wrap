@@ -22,7 +22,7 @@ public class OrganizerNotifyWaitlist extends AppCompatActivity {
 
         OrganizerNotificationManager manager = new OrganizerNotificationManager();
 
-        findViewById(R.id.rvAttendees).setOnClickListener(v ->
+        findViewById(R.id.btn_notify).setOnClickListener(v ->
                 manager.notifyWaitingList(testEventId, testEventName)
         );
 
