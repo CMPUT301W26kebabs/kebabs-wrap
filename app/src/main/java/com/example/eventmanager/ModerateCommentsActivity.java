@@ -35,6 +35,7 @@ import java.util.Map;
 public class ModerateCommentsActivity extends AppCompatActivity {
 
     private String eventId;
+
     private String eventName;
     private FirebaseFirestore db;
     private ListenerRegistration commentsListener;
@@ -76,6 +77,7 @@ public class ModerateCommentsActivity extends AppCompatActivity {
         editCompose = findViewById(R.id.edit_compose_comment);
         btnSendComment = findViewById(R.id.btn_send_comment);
         btnSendComment.setOnClickListener(v -> submitOrganizerComment());
+
 
         editSearch.addTextChangedListener(new TextWatcher() {
             @Override
