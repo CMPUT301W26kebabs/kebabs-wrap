@@ -130,7 +130,7 @@ public class ManageEventActivity extends AppCompatActivity {
         btnQr.setOnClickListener(v -> openEventQr());
 
         ImageButton btnDownload = findViewById(R.id.btn_action_download);
-        btnDownload.setOnClickListener(v -> shareCurrentTabList());
+        btnDownload.setOnClickListener(v -> exportFinalRosterCsv()); // Now the blue icon downloads the CSV!
 
         ImageButton btnLocation = findViewById(R.id.btn_action_location);
         btnLocation.setContentDescription("Open location in Maps");
@@ -416,7 +416,9 @@ public class ManageEventActivity extends AppCompatActivity {
     }
 
     private void showNotifyAudienceChooser() {
-        String[] options = {"Waiting List", "Chosen", "Enrolled"};
+        // 1. We added "Cancelled Entrants" as the 4th option in the list
+        String[] options = {"Waiting List", "Chosen", "Enrolled", "Cancelled Entrants"};
+
         new AlertDialog.Builder(this)
                 .setTitle("Send notification")
                 .setItems(options, (dialog, which) -> {
@@ -435,15 +437,24 @@ public class ManageEventActivity extends AppCompatActivity {
                                     createNotificationCallback("chosen entrants")
                             );
                             break;
-                        default:
+                        case 2:
                             organizerNotificationManager.notifyEnrolled(
                                     eventId,
                                     eventName != null ? eventName : "Event",
                                     createNotificationCallback("enrolled entrants")
                             );
                             break;
+                        case 3: // 2. This handles the new Cancelled Entrants option!
+                            organizerNotificationManager.notifyCancelled(
+                                    eventId,
+                                    eventName != null ? eventName : "Event",
+                                    createNotificationCallback("cancelled entrants")
+                            );
+                            break;
                     }
                 })
+                // 3. This adds a safe "Cancel" button to close the menu
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
