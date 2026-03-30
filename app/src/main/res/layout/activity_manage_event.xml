@@ -279,33 +279,7 @@
 
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNotifyCancelled"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="10dp"
-            android:text="Notify cancelled entrants"
-            android:textAllCaps="false"
-            android:textColor="#3D3D6B"
-            android:textSize="13sp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#5C6BC0"
-            app:strokeWidth="1dp"
-            app:cornerRadius="24dp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnExportCsv"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:text="Export final roster (CSV)"
-            android:textAllCaps="false"
-            android:textColor="#3D3D6B"
-            android:textSize="13sp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            app:strokeColor="#5C6BC0"
-            app:strokeWidth="1dp"
-            app:cornerRadius="24dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCancelNonSignup"

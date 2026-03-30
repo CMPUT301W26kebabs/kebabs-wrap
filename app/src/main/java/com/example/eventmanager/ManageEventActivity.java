@@ -109,14 +109,6 @@ public class ManageEventActivity extends AppCompatActivity {
         btnNotify = findViewById(R.id.btn_notify);
         btnNotify.setOnClickListener(v -> showNotifyAudienceChooser());
 
-        btnNotifyCancelled = findViewById(R.id.btnNotifyCancelled);
-        btnNotifyCancelled.setOnClickListener(v -> confirmNotifyCancelled());
-
-        btnExportCsv = findViewById(R.id.btnExportCsv);
-        btnExportCsv.setOnClickListener(v -> exportFinalRosterCsv());
-
-        btnCancelNonSignup = findViewById(R.id.btnCancelNonSignup);
-        btnCancelNonSignup.setOnClickListener(v -> confirmCancelNonSignup());
 
         ImageButton btnAdd = findViewById(R.id.btn_action_add);
         btnAdd.setOnClickListener(v -> {
