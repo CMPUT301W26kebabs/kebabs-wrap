@@ -40,23 +40,38 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Avatar placeholder -->
+        <!--
+            Avatar area: FrameLayout stacks the initials TextView behind
+            the ShapeableImageView. When a photo exists the ImageView is
+            VISIBLE and covers the initials; otherwise it stays GONE.
+        -->
         <FrameLayout
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:layout_gravity="center_horizontal"
-            android:background="@drawable/bg_detail_icon_circle"
             android:layout_marginBottom="20dp">
 
+            <!-- Initials circle (shown when no photo) -->
             <TextView
                 android:id="@+id/tv_profile_initial"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:background="@drawable/bg_detail_icon_circle"
                 android:gravity="center"
                 android:text="?"
                 android:textColor="#4A43EC"
                 android:textSize="36sp"
                 android:textStyle="bold" />
+
+            <!-- Profile photo (shown when photo URL exists) -->
+            <ImageView
+                android:id="@+id/iv_profile_avatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:contentDescription="Profile photo" />
+
         </FrameLayout>
 
         <!-- Name -->
@@ -93,5 +108,6 @@
             android:textStyle="bold"
             app:backgroundTint="#4A43EC"
             app:cornerRadius="12dp" />
+
     </LinearLayout>
 </ScrollView>

@@ -11,8 +11,13 @@ public class Entrant {
     private String name;
     private String email;
     private String phoneNumber;
+    /**
+     * When {@code null} or {@code true}, the user receives notifications; {@code false} opts out (US 01.04.03).
+     */
+    private Boolean receiveNotifications = true;
     private boolean isAdmin;
     private boolean isOrganizer;
+    private String photoUrl;
 
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
@@ -93,6 +98,29 @@ public class Entrant {
      */
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    /**
+     * Gets the user's photo URL.
+     * @return The photo URL string.
+     */
+    public String getPhotoUrl() { return photoUrl; }
+
+    /**
+     * Sets the user's photo URL.
+     * @param photoUrl The new photo URL string.
+     */
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+
+    /**
+     * Whether the user wants to receive notifications. Defaults to {@code true} when unset in Firestore.
+     */
+    public boolean isReceiveNotifications() {
+        return receiveNotifications == null || receiveNotifications;
+    }
+
+    public void setReceiveNotifications(boolean receiveNotifications) {
+        this.receiveNotifications = receiveNotifications;
     }
 
     /**
