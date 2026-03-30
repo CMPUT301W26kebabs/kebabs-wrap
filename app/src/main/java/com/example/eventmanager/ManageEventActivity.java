@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,6 +22,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,8 +48,12 @@ public class ManageEventActivity extends AppCompatActivity {
     private RecyclerView recyclerChosenEntrants;
     private MaterialButton btnRunLottery;
     private MaterialButton btnNotify;
+    private MaterialButton btnNotifyCancelled;
+    private MaterialButton btnExportCsv;
+    private MaterialButton btnCancelNonSignup;
     private FirebaseFirestore db;
     private OrganizerNotificationManager organizerNotificationManager;
+    private EventRepository eventRepository;
     private String currentTab = "waiting";
     private int eventCapacity = Integer.MAX_VALUE;
     private boolean previewWaitingMode;
@@ -61,6 +69,7 @@ public class ManageEventActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         organizerNotificationManager = new OrganizerNotificationManager();
+        eventRepository = new EventRepository();
         eventId = getIntent().getStringExtra("EVENT_ID");
         eventName = getIntent().getStringExtra("EVENT_NAME");
 
@@ -99,6 +108,15 @@ public class ManageEventActivity extends AppCompatActivity {
 
         btnNotify = findViewById(R.id.btn_notify);
         btnNotify.setOnClickListener(v -> showNotifyAudienceChooser());
+
+        btnNotifyCancelled = findViewById(R.id.btnNotifyCancelled);
+        btnNotifyCancelled.setOnClickListener(v -> confirmNotifyCancelled());
+
+        btnExportCsv = findViewById(R.id.btnExportCsv);
+        btnExportCsv.setOnClickListener(v -> exportFinalRosterCsv());
+
+        btnCancelNonSignup = findViewById(R.id.btnCancelNonSignup);
+        btnCancelNonSignup.setOnClickListener(v -> confirmCancelNonSignup());
 
         ImageButton btnAdd = findViewById(R.id.btn_action_add);
         btnAdd.setOnClickListener(v -> {
@@ -443,6 +461,127 @@ public class ManageEventActivity extends AppCompatActivity {
                 Toast.makeText(ManageEventActivity.this, message, Toast.LENGTH_LONG).show();
             }
         };
+    }
+
+    /** US 02.07.03 — notify everyone in {@code events/{eventId}/cancelled}. */
+    private void confirmNotifyCancelled() {
+        String label = eventName != null ? eventName : "this event";
+        new AlertDialog.Builder(this)
+                .setTitle("Notify cancelled entrants")
+                .setMessage("Send an in-app notification to everyone in the cancelled list for "
+                        + label + "?")
+                .setPositiveButton("Send", (d, w) -> organizerNotificationManager.notifyCancelled(
+                        eventId,
+                        eventName != null ? eventName : "Event",
+                        new OrganizerNotificationManager.NotificationDispatchCallback() {
+                            @Override
+                            public void onSuccess(int recipientCount) {
+                                Toast.makeText(ManageEventActivity.this,
+                                        "Notification sent to " + recipientCount + " cancelled entrants.",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onFailure(String message) {
+                                Toast.makeText(ManageEventActivity.this,
+                                        message,
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+                ))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /** US 02.06.05 — export final enrolled roster as CSV. */
+    private void exportFinalRosterCsv() {
+        Toast.makeText(this, "Building CSV…", Toast.LENGTH_SHORT).show();
+        db.collection("events").document(eventId).collection("enrolled")
+                .get()
+                .addOnSuccessListener(qs -> {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("name,email,deviceId\n");
+                    for (DocumentSnapshot doc : qs.getDocuments()) {
+                        sb.append(escapeCsvField(doc.getString("name")))
+                                .append(',')
+                                .append(escapeCsvField(doc.getString("email")))
+                                .append(',')
+                                .append(escapeCsvField(
+                                        doc.getString("deviceId") != null ? doc.getString("deviceId") : doc.getId()))
+                                .append('\n');
+                    }
+
+                    String safeName = (eventName != null ? eventName : "event")
+                            .replaceAll("[^a-zA-Z0-9_-]", "_");
+                    File file = new File(getCacheDir(), "roster_" + safeName + ".csv");
+                    try (FileWriter fw = new FileWriter(file)) {
+                        fw.write(sb.toString());
+                    } catch (IOException e) {
+                        Toast.makeText(this, "Could not write CSV file.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    Uri uri = FileProvider.getUriForFile(this,
+                            getPackageName() + ".fileprovider", file);
+
+                    Intent share = new Intent(Intent.ACTION_SEND);
+                    share.setType("text/csv");
+                    share.putExtra(Intent.EXTRA_SUBJECT, "Final roster — "
+                            + (eventName != null ? eventName : "Event"));
+                    share.putExtra(Intent.EXTRA_STREAM, uri);
+                    share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(share, "Export CSV"));
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this,
+                                "Could not load enrolled list.",
+                                Toast.LENGTH_SHORT).show());
+    }
+
+    private static String escapeCsvField(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
+    /** US 02.06.04 — cancel invited entrants who never enrolled. */
+    private void confirmCancelNonSignup() {
+        new AlertDialog.Builder(this)
+                .setTitle("Cancel non-enrolled invitees")
+                .setMessage("Move everyone who is still in “chosen” but has not enrolled into the cancelled list? "
+                        + "This matches invited entrants who never completed enrollment.")
+                .setPositiveButton("Cancel them", (d, w) -> executeCancelNonSignup())
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void executeCancelNonSignup() {
+        btnCancelNonSignup.setEnabled(false);
+        Toast.makeText(this, "Updating roster…", Toast.LENGTH_SHORT).show();
+        eventRepository.cancelSelectedWithoutEnrollment(eventId, new EventRepository.OperationCallback() {
+            @Override
+            public void onSuccess() {
+                btnCancelNonSignup.setEnabled(true);
+                Toast.makeText(ManageEventActivity.this,
+                        "Non-enrolled invitees moved to cancelled.",
+                        Toast.LENGTH_SHORT).show();
+                loadCounts();
+                loadAttendees();
+                highlightTab();
+            }
+
+            @Override
+            public void onFailure(String message) {
+                btnCancelNonSignup.setEnabled(true);
+                Toast.makeText(ManageEventActivity.this,
+                        message,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void openEventQr() {
