@@ -284,10 +284,10 @@ public class EventRepository {
                                     callback.onFailure("No invited entrants without enrollment to cancel.");
                                     return;
                                 }
-                                final int cancelledOps = ops;
+                                final int cancelledCount = ops;
                                 batch.commit()
                                         .addOnSuccessListener(unused -> {
-                                            Log.d(TAG, "Organizer cancelled " + cancelledOps + " non-enrolled selected entrants");
+                                            Log.d(TAG, "Organizer cancelled " + cancelledCount + " non-enrolled selected entrants");
                                             callback.onSuccess();
                                         })
                                         .addOnFailureListener(e -> {

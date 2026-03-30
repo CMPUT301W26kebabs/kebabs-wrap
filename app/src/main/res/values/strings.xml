@@ -32,7 +32,7 @@
     <string name="profile_missing_error">No saved profile found for this device</string>
     <string name="edit_profile_title">Edit Profile</string>
     <string name="edit_profile_subtitle">Update your information</string>
-    <string name="save_profile">Save</string>
+    <string name="save_profile">Save Profile</string>
     <string name="splash_get_started">Get Started</string>
     <string name="splash_checking_device">Checking your device...</string>
     <string name="splash_welcome_back">Welcome back. Opening your home screen...</string>
@@ -46,4 +46,15 @@
     <string name="admin_comments_remove_failed">Could not delete: %1$s</string>
     <string name="admin_comments_empty">No comments yet.</string>
     <string name="admin_comments_load_failed">Could not load comments. Check your connection and Firestore rules.</string>
+    <string name="phone_label">Phone number</string>
+    <string name="receive_notifications_label">Receive notifications</string>
+    <string name="your_registration_history">Your registration history</string>
+    <string name="delete_profile">Delete profile</string>
+    <string name="this_action_is_permanent_and_will_remove_all_your_data_from_our_servers">This action is permanent and will remove all your data from our servers.</string>
+    <string name="registration_status_selected">SELECTED</string>
+    <string name="registration_status_not_selected">NOT SELECTED</string>
+    <string name="registration_status_enrolled">ENROLLED</string>
+    <string name="registration_status_cancelled">CANCELLED</string>
+    <string name="registration_history_date_unknown">Date TBD</string>
+    <string name="registration_history_load_error">Could not load registration history</string>
 </resources>

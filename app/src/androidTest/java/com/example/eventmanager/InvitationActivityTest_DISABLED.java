@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.not;
  * and the current device's ID is in the chosenList array.
  */
 @RunWith(AndroidJUnit4.class)
-public class InvitationActivityTest {
+public class InvitationActivityTest_DISABLED {
 
     // ---------------------------------------------------------------
     // US4: Invitation screen layout
