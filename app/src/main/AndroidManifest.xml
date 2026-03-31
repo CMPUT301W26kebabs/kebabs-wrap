@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -16,6 +18,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EventManager"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -58,6 +63,7 @@
         <activity android:name=".QRScannerActivity" android:exported="false" />
         <activity android:name=".CreateEventActivity" android:exported="false" />
         <activity android:name=".ManageEventActivity" android:exported="false" />
+        <activity android:name=".EntrantMapActivity" android:exported="false" />
         <activity android:name=".ModerateCommentsActivity" android:exported="false" />
         <activity android:name=".ManagePosterActivity" android:exported="false" />
         <activity android:name=".EventQRActivity" android:exported="false" />
