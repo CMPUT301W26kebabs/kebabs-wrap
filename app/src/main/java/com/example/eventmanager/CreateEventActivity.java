@@ -46,6 +46,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private MaterialButton btnCreateEvent;
     private MaterialButton btnSaveEvent;
     private SwitchMaterial switchPrivateEvent;
+    private SwitchMaterial switchRequireGeolocation;
 
     private final SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy  hh:mm a", Locale.getDefault());
 
@@ -107,6 +108,7 @@ public class CreateEventActivity extends AppCompatActivity {
             btnCreateEvent = findViewById(R.id.btnCreateEvent);
             btnSaveEvent = findViewById(R.id.btnSaveEvent);
             switchPrivateEvent = findViewById(R.id.switchPrivateEvent);
+            switchRequireGeolocation = findViewById(R.id.switchRequireGeolocation);
 
             btnCreateEvent.setOnClickListener(v -> saveEvent(true));
             btnSaveEvent.setOnClickListener(v -> saveEvent(false));
@@ -177,6 +179,9 @@ public class CreateEventActivity extends AppCompatActivity {
 
         String waitlistStr = waitlistLimitInput.getText().toString().trim();
         if (!waitlistStr.isEmpty()) newEvent.setMaxWaitlistCapacity(Integer.parseInt(waitlistStr));
+
+        boolean geolocationRequired = switchRequireGeolocation != null && switchRequireGeolocation.isChecked();
+        newEvent.setGeolocationRequired(geolocationRequired);
 
         Toast.makeText(this, "Creating event...", Toast.LENGTH_SHORT).show();
 

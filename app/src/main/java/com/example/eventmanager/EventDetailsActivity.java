@@ -1,5 +1,7 @@
 package com.example.eventmanager;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -9,7 +11,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,10 +22,14 @@ import com.bumptech.glide.Glide;
 import com.example.eventmanager.adapters.EventCommentAdapter;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.EventComment;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 
@@ -51,6 +60,24 @@ public class EventDetailsActivity extends AppCompatActivity {
     private boolean alreadyJoined = false;
     private Date registrationStart;
     private Date registrationEnd;
+    private FusedLocationProviderClient fusedLocationClient;
+    private Runnable pendingLocationPermissionAction;
+    private final ActivityResultLauncher<String[]> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                boolean grantedFine = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION));
+                boolean grantedCoarse = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_COARSE_LOCATION));
+                if (grantedFine || grantedCoarse) {
+                    if (pendingLocationPermissionAction != null) {
+                        Runnable action = pendingLocationPermissionAction;
+                        pendingLocationPermissionAction = null;
+                        action.run();
+                    }
+                    return;
+                }
+                pendingLocationPermissionAction = null;
+                setJoinButtonState("LOCATION REQUIRED", true, R.drawable.bg_button_gradient_purple);
+                Toast.makeText(this, "Location permission is required to join this event.", Toast.LENGTH_LONG).show();
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +85,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_event_details);
 
         db = FirebaseFirestore.getInstance();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         eventId = getIntent().getStringExtra("EVENT_ID");
         deviceId = new DeviceAuthManager().getDeviceId(this);
 
@@ -251,11 +279,8 @@ public class EventDetailsActivity extends AppCompatActivity {
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(eventDoc -> {
                     Boolean geolocationRequired = eventDoc.getBoolean("geolocationRequired");
-                    if (Boolean.TRUE.equals(geolocationRequired) || Boolean.TRUE.equals(eventDoc.getBoolean("isGeolocationRequired"))) {
-                        setJoinButtonState("LOCATION REQUIRED", false, R.drawable.bg_join_button);
-                        Toast.makeText(this, "This event requires geolocation verification before joining.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
+                    boolean requiresGeo = Boolean.TRUE.equals(geolocationRequired)
+                            || Boolean.TRUE.equals(eventDoc.getBoolean("isGeolocationRequired"));
 
                     Long maxWaitlist = eventDoc.getLong("maxWaitlistCapacity");
 
@@ -266,7 +291,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                                         setJoinButtonState("WAITLIST FULL", false, R.drawable.bg_join_button);
                                         Toast.makeText(this, "Waiting list is full!", Toast.LENGTH_LONG).show();
                                     } else {
-                                        executeJoin();
+                                        executeJoin(requiresGeo);
                                     }
                                 })
                                 .addOnFailureListener(e -> {
@@ -274,7 +299,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                                     Toast.makeText(this, "Failed to verify waitlist size.", Toast.LENGTH_LONG).show();
                                 });
                     } else {
-                        executeJoin();
+                        executeJoin(requiresGeo);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -283,10 +308,71 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
-    private void executeJoin() {
+    private void executeJoin(boolean geolocationRequired) {
+        if (geolocationRequired) {
+            collectLocationThenJoin();
+            return;
+        }
+        writeJoinToFirestore(null);
+    }
+
+    private void collectLocationThenJoin() {
+        if (hasLocationPermission()) {
+            fetchCurrentLocation();
+            return;
+        }
+        pendingLocationPermissionAction = this::fetchCurrentLocation;
+        locationPermissionLauncher.launch(new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        });
+    }
+
+    private boolean hasLocationPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void fetchCurrentLocation() {
+        setJoinButtonState("GETTING LOCATION...", false, R.drawable.bg_join_button);
+        CancellationTokenSource cts = new CancellationTokenSource();
+        fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, cts.getToken())
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        writeJoinToFirestore(new GeoPoint(location.getLatitude(), location.getLongitude()));
+                    } else {
+                        fetchLastKnownLocationFallback();
+                    }
+                })
+                .addOnFailureListener(e -> fetchLastKnownLocationFallback());
+    }
+
+    private void fetchLastKnownLocationFallback() {
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        writeJoinToFirestore(new GeoPoint(location.getLatitude(), location.getLongitude()));
+                    } else {
+                        setJoinButtonState("LOCATION REQUIRED", true, R.drawable.bg_button_gradient_purple);
+                        Toast.makeText(this, "Could not get your location. Please enable location and try again.", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    setJoinButtonState("LOCATION REQUIRED", true, R.drawable.bg_button_gradient_purple);
+                    Toast.makeText(this, "Could not get your location. Please try again.", Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private void writeJoinToFirestore(GeoPoint entrantGeoPoint) {
         Map<String, Object> data = new HashMap<>();
         data.put("deviceId", deviceId);
         data.put("joinedAt", FieldValue.serverTimestamp());
+        if (entrantGeoPoint != null) {
+            data.put("location", entrantGeoPoint);
+            data.put("latitude", entrantGeoPoint.getLatitude());
+            data.put("longitude", entrantGeoPoint.getLongitude());
+            data.put("locationCapturedAt", FieldValue.serverTimestamp());
+        }
 
         // Also fetch user name/email
         db.collection("users").document(deviceId).get()
