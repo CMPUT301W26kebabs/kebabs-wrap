@@ -77,7 +77,7 @@
             android:layout_marginEnd="12dp"
             android:background="@drawable/bg_avatar_circle"
             android:contentDescription="Event QR code"
-            android:src="@android:drawable/ic_menu_camera"
+            android:src="@drawable/ic_qr_code"
             app:tint="#FFFFFF" />
 
         <ImageButton

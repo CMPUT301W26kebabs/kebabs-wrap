@@ -16,4 +16,8 @@
     <color name="phone_teal">#244A59</color>
     <color name="skin_tone">#F0C5A6</color>
     <color name="qr_blue">#6C63FF</color>
+    <color name="status_selected_text">#2E7D32</color>
+    <color name="status_waiting_text">#F57F17</color>
+    <color name="status_cancelled_text">#C62828</color>
+    <color name="status_enrolled_text">#1565C0</color>
 </resources>

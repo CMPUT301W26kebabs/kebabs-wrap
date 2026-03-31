@@ -69,7 +69,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
         android:clipToPadding="false"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/row_compose_comment"
         app:layout_constraintTop_toBottomOf="@+id/edit_search_comments"
         tools:listitem="@layout/item_admin_comment" />
 
@@ -85,5 +85,43 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/recycler_comments"
         app:layout_constraintTop_toTopOf="@+id/recycler_comments" />
+
+    <!-- US 02.08.02 — organizer posts a public comment on this event -->
+    <LinearLayout
+        android:id="@+id/row_compose_comment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <EditText
+            android:id="@+id/edit_compose_comment"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_search_bar_white"
+            android:hint="Write a comment as organizer…"
+            android:imeOptions="actionSend"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4"
+            android:minHeight="48dp"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="10dp"
+            android:textColor="#2B2D42"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_send_comment"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Send"
+            android:textSize="13sp"
+            app:backgroundTint="#3F38DD"
+            app:cornerRadius="20dp" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

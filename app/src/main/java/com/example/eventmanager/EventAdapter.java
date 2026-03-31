@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.graphics.Color;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -50,8 +51,15 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         }
         Long cap = (long) event.getCapacity();
         holder.eventDate.setText(date + " • " + cap + " entrants");
-
-        holder.eventStatus.setText("Open");
+        if (event.isDeleted()) {
+            holder.eventStatus.setText("REMOVED");
+            holder.eventStatus.setTextColor(Color.parseColor("#C62828"));
+            holder.itemView.setAlpha(0.55f);
+        } else {
+            holder.eventStatus.setText("Open");
+            holder.eventStatus.setTextColor(Color.parseColor("#4E55E6"));
+            holder.itemView.setAlpha(1.0f);
+        }
 
         String posterUrl = event.getPosterUrl();
         if (posterUrl != null && !posterUrl.isEmpty()) {
@@ -59,6 +67,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         }
 
         holder.itemView.setOnClickListener(v -> {
+            if (event.isDeleted()) return;
             if (clickListener != null) clickListener.onItemClick(event);
         });
     }

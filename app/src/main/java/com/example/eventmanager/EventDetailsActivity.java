@@ -1,6 +1,5 @@
 package com.example.eventmanager;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -94,16 +93,6 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (followButton != null) {
             followButton.setOnClickListener(v ->
                     Toast.makeText(this, "Follow coming soon", Toast.LENGTH_SHORT).show());
-        }
-
-        // Invite Guests button
-        Button inviteGuestsButton = findViewById(R.id.inviteGuestsButton);
-        if (inviteGuestsButton != null) {
-            inviteGuestsButton.setOnClickListener(v -> {
-                Intent intent = new Intent(this, InviteGuestsActivity.class);
-                intent.putExtra("EVENT_ID", eventId);
-                startActivity(intent);
-            });
         }
 
         if (btnJoinWaitlist != null) {

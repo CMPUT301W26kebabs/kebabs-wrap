@@ -156,4 +156,29 @@ public class OrganizerNotificationManager {
             callback.onSuccess(deviceIds.size());
         });
     }
+
+    /**
+     * US 02.07.03 — notify everyone in {@code events/{eventId}/cancelled}.
+     */
+    public void notifyCancelled(@NonNull String eventId,
+                                @NonNull String eventName,
+                                @NonNull NotificationDispatchCallback callback) {
+        eventRepository.getCancelled(eventId, deviceIds -> {
+            if (deviceIds.isEmpty()) {
+                Log.d(TAG, "No cancelled entrants for event: " + eventId);
+                callback.onFailure("No cancelled entrants to notify.");
+                return;
+            }
+            for (String deviceId : deviceIds) {
+                Notification notification = new Notification(
+                        "Update regarding " + eventName,
+                        "The organizer has sent a message to cancelled entrants for " + eventName + ".",
+                        eventName
+                );
+                notificationRepository.addNotification(deviceId, notification);
+            }
+            Log.d(TAG, "Cancelled entrants notified: " + deviceIds.size());
+            callback.onSuccess(deviceIds.size());
+        });
+    }
 }

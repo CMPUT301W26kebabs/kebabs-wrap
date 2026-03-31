@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -29,6 +30,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 public class CreateEventActivity extends AppCompatActivity {
+    private static final String TAG = "CreateEventActivity";
 
     private EditText nameInput, descriptionInput, startDateInput, endDateInput;
     private EditText registrationStartInput, registrationEndInput;

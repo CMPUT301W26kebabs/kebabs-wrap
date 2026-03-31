@@ -18,6 +18,7 @@ import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.ui.ProfileActivity;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
@@ -35,6 +36,8 @@ public class HomeActivity extends AppCompatActivity {
     private View lotteryBanner;
     private TextView tvLotteryEvent;
     private List<DocumentSnapshot> allEvents = new ArrayList<>();
+    private String currentSearchQuery = "";
+    private ListenerRegistration eventsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +73,8 @@ public class HomeActivity extends AppCompatActivity {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(Editable s) {
-                filterAndUpdateLists(s != null ? s.toString().trim() : "");
+                currentSearchQuery = s != null ? s.toString().trim() : "";
+                filterAndUpdateLists(currentSearchQuery);
             }
         });
 
@@ -109,8 +113,22 @@ public class HomeActivity extends AppCompatActivity {
                 startActivity(new Intent(this, CreateEventActivity.class)));
 
         loadUserName();
-        loadEvents();
         loadPendingInvites();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        attachEventsListener();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
     }
 
     private void openBrowse(String title) {
@@ -163,17 +181,24 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    private void loadEvents() {
-        mainRepo.fetchAllActiveEvents(new FirebaseRepository.OnDocumentsLoadedListener() {
-            @Override
-            public void onLoaded(List<DocumentSnapshot> docs) {
-                allEvents = docs != null ? docs : new ArrayList<>();
-                sortByDate(allEvents);
-                filterAndUpdateLists("");
-            }
-            @Override
-            public void onError(Exception e) { }
-        });
+    private void attachEventsListener() {
+        if (eventsListener != null) return;
+        eventsListener = mainRepo.getDb().collection("events")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null || snapshot == null) {
+                        return;
+                    }
+                    List<DocumentSnapshot> active = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Boolean isDeleted = doc.getBoolean("isDeleted");
+                        if (isDeleted == null || !isDeleted) {
+                            active.add(doc);
+                        }
+                    }
+                    allEvents = active;
+                    sortByDate(allEvents);
+                    filterAndUpdateLists(currentSearchQuery);
+                });
     }
 
     private void sortByDate(List<DocumentSnapshot> docs) {

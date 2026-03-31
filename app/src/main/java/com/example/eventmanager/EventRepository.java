@@ -13,8 +13,10 @@ import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Handles all Firestore operations on event sub-collections.
@@ -204,6 +206,103 @@ public class EventRepository {
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to fetch enrolled entrants for event: " + eventId, e);
                     callback.onResult(new ArrayList<>());
+                });
+    }
+
+    /**
+     * Fetches deviceIds from {@code events/{eventId}/cancelled}.
+     * US 02.07.03 — notify cancelled entrants.
+     */
+    public void getCancelled(@NonNull String eventId,
+                             @NonNull DeviceIdListCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection(COLLECTION_CANCELLED)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    List<String> deviceIds = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        String deviceId = extractDeviceId(doc);
+                        if (deviceId != null) deviceIds.add(deviceId);
+                    }
+                    Log.d(TAG, "Fetched " + deviceIds.size() + " cancelled entrants for event: " + eventId);
+                    callback.onResult(deviceIds);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to fetch cancelled entrants for event: " + eventId, e);
+                    callback.onResult(new ArrayList<>());
+                });
+    }
+
+    /**
+     * Moves every entrant in {@code selected} who is not in {@code enrolled} into {@code cancelled}
+     * (invited via lottery but never completed enrollment). US 02.06.04.
+     */
+    public void cancelSelectedWithoutEnrollment(@NonNull String eventId,
+                                                @NonNull OperationCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection(COLLECTION_SELECTED)
+                .get()
+                .addOnSuccessListener(selectedSnap -> {
+                    db.collection("events")
+                            .document(eventId)
+                            .collection(COLLECTION_ENROLLED)
+                            .get()
+                            .addOnSuccessListener(enrolledSnap -> {
+                                Set<String> enrolledIds = new HashSet<>();
+                                for (QueryDocumentSnapshot d : enrolledSnap) {
+                                    String id = extractDeviceId(d);
+                                    if (id != null) enrolledIds.add(id);
+                                }
+                                WriteBatch batch = db.batch();
+                                int ops = 0;
+                                for (QueryDocumentSnapshot selectedDoc : selectedSnap) {
+                                    String deviceId = extractDeviceId(selectedDoc);
+                                    if (deviceId == null) {
+                                        continue;
+                                    }
+                                    if (enrolledIds.contains(deviceId)) {
+                                        continue;
+                                    }
+                                    Map<String, Object> cancelledData = new HashMap<>();
+                                    cancelledData.put("deviceId", deviceId);
+                                    cancelledData.put("status", "organizer_no_signup");
+                                    if (selectedDoc.getString("name") != null) {
+                                        cancelledData.put("name", selectedDoc.getString("name"));
+                                    }
+                                    if (selectedDoc.getString("email") != null) {
+                                        cancelledData.put("email", selectedDoc.getString("email"));
+                                    }
+                                    batch.set(db.collection("events").document(eventId)
+                                                    .collection(COLLECTION_CANCELLED).document(deviceId),
+                                            cancelledData);
+                                    batch.delete(selectedDoc.getReference());
+                                    ops++;
+                                }
+                                if (ops == 0) {
+                                    callback.onFailure("No invited entrants without enrollment to cancel.");
+                                    return;
+                                }
+                                final int cancelledCount = ops;
+                                batch.commit()
+                                        .addOnSuccessListener(unused -> {
+                                            Log.d(TAG, "Organizer cancelled " + cancelledCount + " non-enrolled selected entrants");
+                                            callback.onSuccess();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.e(TAG, "Batch cancel non-signups failed", e);
+                                            callback.onFailure("Could not cancel entrants.");
+                                        });
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to read enrolled for cancelSelectedWithoutEnrollment", e);
+                                callback.onFailure("Could not load enrollment data.");
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to read selected for cancelSelectedWithoutEnrollment", e);
+                    callback.onFailure("Could not load invited entrants.");
                 });
     }
 
