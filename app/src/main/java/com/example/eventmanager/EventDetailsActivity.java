@@ -40,6 +40,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private TextView tvEventName, tvEventDate, tvEventLocation;
     private TextView tvEventDescription, tvOrganizerName;
     private TextView tvGoingCount;
+    private TextView tvLotteryGuidelines;
     private Button btnJoinWaitlist;
     private ImageView ivPoster;
     private EditText commentInput;
@@ -49,8 +50,11 @@ public class EventDetailsActivity extends AppCompatActivity {
     private EventCommentAdapter commentAdapter;
     private ListenerRegistration commentsListener;
     private boolean alreadyJoined = false;
+    private boolean isOnWaitingList = false;
     private Date registrationStart;
     private Date registrationEnd;
+    private int eventCapacity = 0;
+    private int eventMaxWaitlist = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +75,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         tvOrganizerName = findViewById(R.id.eventOrganizerText);
         tvGoingCount = findViewById(R.id.tvGoingCount);
         btnJoinWaitlist = findViewById(R.id.leaveWaitlistButton);
+        tvLotteryGuidelines = findViewById(R.id.tvLotteryGuidelines);
         commentInput = findViewById(R.id.commentInput);
         sendCommentButton = findViewById(R.id.sendCommentButton);
         commentsRecyclerView = findViewById(R.id.commentsRecyclerView);
@@ -96,8 +101,8 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
 
         if (btnJoinWaitlist != null) {
-            btnJoinWaitlist.setOnClickListener(v -> joinWaitingList());
-            setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
+            btnJoinWaitlist.setOnClickListener(v -> onWaitlistButtonClicked());
+            setJoinButtonState("LOADING...", false, R.drawable.bg_join_button);
         }
 
         if (eventId != null) {
@@ -139,6 +144,15 @@ public class EventDetailsActivity extends AppCompatActivity {
                     } else {
                         tvEventDate.setText("Date TBA");
                     }
+
+                    // Capacity fields for guidelines
+                    Long cap = doc.getLong("capacity");
+                    Long maxWl = doc.getLong("maxWaitlistCapacity");
+                    eventCapacity = cap != null ? cap.intValue() : 0;
+                    eventMaxWaitlist = maxWl != null ? maxWl.intValue() : 0;
+
+                    // US 01.05.05 — Dynamic lottery guidelines
+                    updateLotteryGuidelines();
 
                     // Location
                     String location = doc.getString("location");
@@ -206,7 +220,8 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         alreadyJoined = true;
-                        setJoinButtonState("ON WAITING LIST", false, R.drawable.bg_joined_button);
+                        isOnWaitingList = true;
+                        setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
                     }
                 });
 
@@ -216,6 +231,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         alreadyJoined = true;
+                        isOnWaitingList = false;
                         setJoinButtonState("ENROLLED", false, R.drawable.bg_joined_button);
                     }
                 });
@@ -225,8 +241,48 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         alreadyJoined = true;
+                        isOnWaitingList = false;
                         setJoinButtonState("INVITED", false, R.drawable.bg_joined_button);
                     }
+                });
+    }
+
+    /**
+     * Handles the waitlist button click — delegates to join or leave based on current state.
+     */
+    private void onWaitlistButtonClicked() {
+        if (isOnWaitingList) {
+            leaveWaitingList();
+        } else {
+            joinWaitingList();
+        }
+    }
+
+    /**
+     * US 01.01.02 — Removes the current entrant from the event's waiting list.
+     */
+    private void leaveWaitingList() {
+        if (eventId == null) {
+            Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setJoinButtonState("LEAVING...", false, R.drawable.bg_join_button);
+
+        db.collection("events").document(eventId).collection("waitingList")
+                .document(deviceId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    alreadyJoined = false;
+                    isOnWaitingList = false;
+                    Toast.makeText(this, "You left the waiting list.", Toast.LENGTH_SHORT).show();
+                    loadGoingCount();
+                    updateJoinButtonForRegistrationWindow();
+                })
+                .addOnFailureListener(e -> {
+                    // Restore leave button on failure
+                    setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
+                    Toast.makeText(this, "Failed to leave: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
 
@@ -303,7 +359,8 @@ public class EventDetailsActivity extends AppCompatActivity {
                             .set(data)
                             .addOnSuccessListener(aVoid -> {
                                 alreadyJoined = true;
-                                setJoinButtonState("ON WAITING LIST", false, R.drawable.bg_joined_button);
+                                isOnWaitingList = true;
+                                setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
                                 Toast.makeText(this, "You joined the waiting list!", Toast.LENGTH_SHORT).show();
                                 loadGoingCount();
                             })
@@ -354,6 +411,39 @@ public class EventDetailsActivity extends AppCompatActivity {
         btnJoinWaitlist.setClickable(enabled);
         btnJoinWaitlist.setAlpha(enabled ? 1f : 0.92f);
         btnJoinWaitlist.setBackgroundResource(backgroundRes);
+    }
+
+    /**
+     * US 01.05.05 — Builds dynamic lottery criteria/guidelines text from event data.
+     */
+    private void updateLotteryGuidelines() {
+        if (tvLotteryGuidelines == null) return;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\u2022 Attendees are selected via random lottery from the waiting list.\n");
+        sb.append("\u2022 Joining the waiting list does not guarantee entry.\n");
+
+        if (eventCapacity > 0) {
+            sb.append("\u2022 Event capacity: ").append(eventCapacity).append(" spots.\n");
+        }
+        if (eventMaxWaitlist > 0) {
+            sb.append("\u2022 Waiting list limit: ").append(eventMaxWaitlist).append(" entrants.\n");
+        }
+
+        SimpleDateFormat fmt = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        if (registrationStart != null && registrationEnd != null) {
+            sb.append("\u2022 Registration window: ")
+              .append(fmt.format(registrationStart))
+              .append(" \u2013 ")
+              .append(fmt.format(registrationEnd)).append(".\n");
+        } else if (registrationEnd != null) {
+            sb.append("\u2022 Registration closes: ").append(fmt.format(registrationEnd)).append(".\n");
+        }
+
+        sb.append("\u2022 If a selected entrant declines, a replacement may be drawn.\n");
+        sb.append("\u2022 Winners will be notified via the app.");
+
+        tvLotteryGuidelines.setText(sb.toString());
     }
 
     private void attachCommentsListener() {
