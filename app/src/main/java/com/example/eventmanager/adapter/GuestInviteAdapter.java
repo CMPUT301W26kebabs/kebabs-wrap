@@ -31,15 +31,32 @@ public class GuestInviteAdapter extends RecyclerView.Adapter<GuestInviteAdapter.
         void onAssignCoOrganizer(DocumentSnapshot userDoc);
     }
 
+    /**
+     * Constructs the adapter with a callback interface to handle action clicks.
+     *
+     * @param listener The interface listening for click interactions on the item buttons.
+     */
     public GuestInviteAdapter(OnGuestActionListener listener) {
         this.listener = listener;
     }
 
+    /**
+     * Replaces the currently displayed active dataset and refreshes the RecyclerView.
+     *
+     * @param newList The new list of Firestore DocumentSnapshots to iterate over.
+     */
     public void updateList(List<DocumentSnapshot> newList) {
         this.users = newList;
         notifyDataSetChanged();
     }
 
+    /**
+     * Inflates the specific guest selection layout XML layout resource.
+     *
+     * @param parent   The enclosing container holding the views.
+     * @param viewType The standard categorical view type integer.
+     * @return Extracted logic encapsulated into the GuestVH inner class layout bounds.
+     */
     @NonNull
     @Override
     public GuestVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -48,6 +65,13 @@ public class GuestInviteAdapter extends RecyclerView.Adapter<GuestInviteAdapter.
         return new GuestVH(v);
     }
 
+    /**
+     * Evaluates data indices array offsets into visual UI components, initializing formatting logic.
+     * Provides initials-parsing validation for blank user records.
+     *
+     * @param h   The target Guest ViewHolder representing the list iteration boundary constraint.
+     * @param pos The integer list offset of the dataset pointer.
+     */
     @Override
     public void onBindViewHolder(@NonNull GuestVH h, int pos) {
         DocumentSnapshot doc = users.get(pos);
@@ -90,6 +114,11 @@ public class GuestInviteAdapter extends RecyclerView.Adapter<GuestInviteAdapter.
         });
     }
 
+    /**
+     * Identifies the precise limit bounding the scrolling dimensions length.
+     *
+     * @return Raw integer depth representation of rendered list components.
+     */
     @Override
     public int getItemCount() {
         return users.size();

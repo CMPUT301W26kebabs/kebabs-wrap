@@ -24,8 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * US 02.01.03 — Invite specific entrants to a private event's waiting list.
- * US 02.09.01 — Assign an entrant as a co-organizer.
+ * Activity for inviting specific entrants to a private event's waiting list
+ * and assigning top-level system entrants as co-organizers.
+ * Supports User Stories: US 02.01.03 (Invite to Waiting List) and US 02.09.01 (Co-organizer Assignment).
  */
 public class InviteGuestsActivity extends AppCompatActivity implements GuestInviteAdapter.OnGuestActionListener {
 
@@ -39,6 +40,12 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
     private List<DocumentSnapshot> allUsers = new ArrayList<>();
     private String currentFilter = "name"; // "name", "email", "phone"
 
+    /**
+     * Initializes the activity, establishes the view hierarchy, and loads all system users
+     * into memory for real-time search filtering.
+     *
+     * @param savedInstanceState The saved instance state bundle.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,6 +96,12 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
         loadAllUsers();
     }
 
+    /**
+     * Updates the active search filter flag and toggles the aesthetic selected states
+     * on the filter buttons. This dynamically changes what fields the search matches against.
+     *
+     * @param filter The filter category chosen (e.g., "name", "email", or "phone").
+     */
     private void setActiveFilter(String filter) {
         currentFilter = filter;
         btnFilterName.setBackgroundResource(
@@ -105,6 +118,10 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
         }
     }
 
+    /**
+     * Performs an asynchronous Firestore query to load every single registered user pattern.
+     * Binds the initial empty query state after loading to prevent race conditions during typing.
+     */
     private void loadAllUsers() {
         db.collection("users").get()
                 .addOnSuccessListener(qs -> {
@@ -122,6 +139,12 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
                         Toast.makeText(this, "Failed to load users", Toast.LENGTH_SHORT).show());
     }
 
+    /**
+     * Filters the cached list of users against the textual search query.
+     * Executes dynamically in real-time. Matches target strings via the active filter mode.
+     *
+     * @param query The input string from the search bar to evaluate.
+     */
     private void filterUsers(String query) {
         if (query.isEmpty()) {
             adapter.updateList(new ArrayList<>());
@@ -151,8 +174,10 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
     }
 
     /**
-     * US 02.01.03 — Invite entrant to the event's waiting list.
-     * Checks for duplicates before adding.
+     * Invites the requested user directly to the event's localized waiting list securely.
+     * Conducts deep cross-validation to prevent inviting already-enrolled participants.
+     *
+     * @param userDoc A Firestore DocumentSnapshot containing the exact user's data object.
      */
     @Override
     public void onInvite(DocumentSnapshot userDoc) {
@@ -212,8 +237,10 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
     }
 
     /**
-     * US 02.09.01 — Assign entrant as co-organizer.
-     * Uses batched write: adds to coOrganizers array AND removes from waitingList.
+     * Grants the target user full co-organizer permissions by atomically adding their ID to
+     * the event document array via a Firestore Batch Write. Also removes them implicitly from the waiting list.
+     *
+     * @param userDoc The Firestore DocumentSnapshot of the user to upgrade.
      */
     @Override
     public void onAssignCoOrganizer(DocumentSnapshot userDoc) {
