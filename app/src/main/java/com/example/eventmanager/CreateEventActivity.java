@@ -196,7 +196,7 @@ public class CreateEventActivity extends AppCompatActivity {
                         })
                         .addOnFailureListener(e -> saveEventToFirestore(event, generateQr)))
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show());
+                        Toast.makeText(this, "Image upload failed " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     private void saveEventToFirestore(Event event, boolean generateQr) {
