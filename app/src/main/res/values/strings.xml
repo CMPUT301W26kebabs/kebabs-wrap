@@ -57,5 +57,5 @@
     <string name="registration_status_cancelled">CANCELLED</string>
     <string name="registration_history_date_unknown">Date TBD</string>
     <string name="registration_history_load_error">Could not load registration history</string>
-    <string name="google_maps_key">AIzaSyBXZwQNg_N2nXm4v6IOlVCV0NcESuWQ0eg</string>
+    <string name="google_maps_key"></string>
 </resources>
