@@ -251,6 +251,11 @@ public class EditProfileActivity extends AppCompatActivity {
             public void onSuccess(Void result) {
                 loadedEntrant = entrant;
                 pendingAvatarUri = null;
+
+                // Propagate updated name/email/phone to all event sub-collections
+                // so organizers see the latest info (fire-and-forget)
+                repository.syncEntrantAcrossEvents(entrant, null);
+
                 Toast.makeText(getApplicationContext(),
                         "Profile updated successfully!", Toast.LENGTH_SHORT).show();
                 finish();

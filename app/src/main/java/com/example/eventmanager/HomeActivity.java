@@ -115,6 +115,11 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.btn_create_event).setOnClickListener(v ->
                 startActivity(new Intent(this, CreateEventActivity.class)));
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadUserName();
         loadPendingInvites();
     }

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -276,4 +277,71 @@ public class FirebaseRepository {
             }
         });
     }
+
+    /**
+     * After a profile update, propagates the entrant's latest name, email,
+     * and phoneNumber into every event sub-collection (waitingList, selected,
+     * enrolled, cancelled) where the entrant has a document.
+     *
+     * This ensures organizers see up-to-date entrant info in their lists.
+     *
+     * @param entrant  the updated entrant profile
+     * @param callback optional — notified when sync completes or fails
+     */
+    public void syncEntrantAcrossEvents(Entrant entrant, RepoCallback<Void> callback) {
+        String deviceId = entrant.getDeviceId();
+
+        // Build the map of fields to update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", entrant.getName());
+        updates.put("email", entrant.getEmail());
+        if (entrant.getPhoneNumber() != null) {
+            updates.put("phoneNumber", entrant.getPhoneNumber());
+        }
+
+        db.collection("events").get()
+                .addOnSuccessListener(eventsSnapshot -> {
+                    if (eventsSnapshot == null || eventsSnapshot.isEmpty()) {
+                        if (callback != null) callback.onSuccess(null);
+                        return;
+                    }
+
+                    List<Task<Void>> updateTasks = new ArrayList<>();
+
+                    for (DocumentSnapshot eventDoc : eventsSnapshot.getDocuments()) {
+                        String eventId = eventDoc.getId();
+                        for (String subCol : EVENT_SUB_COLLECTIONS) {
+                            DocumentReference ref = db.collection("events")
+                                    .document(eventId)
+                                    .collection(subCol)
+                                    .document(deviceId);
+
+                            // Use a get-then-update approach so we only write
+                            // to documents that actually exist
+                            updateTasks.add(
+                                    ref.get().continueWithTask(task -> {
+                                        if (task.isSuccessful()
+                                                && task.getResult() != null
+                                                && task.getResult().exists()) {
+                                            return ref.update(updates);
+                                        }
+                                        return Tasks.forResult(null);
+                                    })
+                            );
+                        }
+                    }
+
+                    Tasks.whenAll(updateTasks)
+                            .addOnSuccessListener(unused -> {
+                                if (callback != null) callback.onSuccess(null);
+                            })
+                            .addOnFailureListener(e -> {
+                                if (callback != null) callback.onError(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
+    }
 }
+
