@@ -69,6 +69,9 @@
         <activity android:name=".EventQRActivity" android:exported="false" />
         <activity android:name=".MyEventsActivity" android:exported="false" />
 
+        <!-- Follow System -->
+        <activity android:name=".OrganizerProfileActivity" android:exported="false" />
+        <activity android:name=".FollowerBroadcastActivity" android:exported="false" />
 
         <!-- Umar's activities -->
         <activity android:name=".EnrolledListActivity" android:exported="false" />
@@ -76,6 +79,7 @@
 
         <!-- Anas's activities -->
         <activity android:name=".ui.EditProfileActivity" android:exported="false" android:screenOrientation="portrait"/>
+        <activity android:name=".admin.AdminNotificationLogsActivity" android:exported="false" android:theme="@style/Theme.EventManager" />
 
         <!-- Ibrahim's admin screens -->
         <activity android:name=".admin.AdminEventsActivity" android:exported="false" android:theme="@style/Theme.EventManager" />

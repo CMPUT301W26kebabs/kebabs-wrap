@@ -20,10 +20,22 @@
             android:layout_height="wrap_content"
             android:paddingEnd="16dp">
 
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="#673AB7" />
+
             <ImageView
                 android:id="@+id/iv_icon"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
+                android:layout_toEndOf="@id/btn_back"
+                android:layout_marginStart="4dp"
                 android:src="@android:drawable/ic_dialog_email"
                 app:tint="#673AB7" />
 
@@ -68,16 +80,16 @@
         android:padding="16dp">
 
         <EditText
+            android:id="@+id/et_search"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/bg_search_grey"
             android:hint="Search by Organizer name..."
             android:paddingStart="16dp"
             android:textSize="14sp"
+            android:inputType="text"
             android:drawableStart="@android:drawable/ic_menu_sort_by_size"
-            android:drawablePadding="8dp"
-            android:focusable="false"
-            android:clickable="true" />
+            android:drawablePadding="8dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -107,32 +119,51 @@
         </LinearLayout>
     </LinearLayout>
 
-    <androidx.core.widget.NestedScrollView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_notification_logs"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                tools:listitem="@layout/item_admin_notification" />
+                android:orientation="vertical">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_load_more"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="24dp"
-                android:text="Load Previous 50 Notifications"
-                app:cornerRadius="20dp" />
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_notification_logs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    tools:listitem="@layout/item_admin_notification" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_load_more"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="24dp"
+                    android:text="Load Previous 50 Notifications"
+                    app:cornerRadius="20dp" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <TextView
+            android:id="@+id/tv_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:text="No notification logs yet."
+            android:textColor="#8D8CA6"
+            android:textSize="15sp"
+            android:visibility="gone" />
+    </FrameLayout>
 
 </LinearLayout>

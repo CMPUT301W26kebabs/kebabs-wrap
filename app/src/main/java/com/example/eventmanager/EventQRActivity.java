@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -62,7 +63,7 @@ public class EventQRActivity extends AppCompatActivity {
 
         // Back button
         try {
-            findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+            findViewById(R.id.btnBack).setOnClickListener(v -> openMyEvents());
         } catch (Exception e) { /* no back button in layout */ }
 
         // Done / Go to My Events button
@@ -80,6 +81,13 @@ public class EventQRActivity extends AppCompatActivity {
         try {
             findViewById(R.id.btnShare).setOnClickListener(v -> shareQRCode());
         } catch (Exception e) { /* no share button */ }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                openMyEvents();
+            }
+        });
     }
 
     private Bitmap generateQRCode(String content) {
@@ -131,8 +139,7 @@ public class EventQRActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
+    private void openMyEvents() {
         startActivity(new Intent(this, MyEventsActivity.class));
         finish();
     }
