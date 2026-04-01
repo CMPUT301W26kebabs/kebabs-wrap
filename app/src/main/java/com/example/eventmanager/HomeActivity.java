@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventmanager.adapter.HomeEventAdapter;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
+import com.example.eventmanager.repository.FollowRepository;
 import com.example.eventmanager.ui.ProfileActivity;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -25,7 +26,9 @@ import com.google.firebase.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -41,7 +44,11 @@ public class HomeActivity extends AppCompatActivity {
     private String currentSearchQuery = "";
     private boolean filterOpenReg = false;
     private boolean filterHasCapacity = false;
+    private boolean filterFollowing = false;
     private ListenerRegistration eventsListener;
+    private FollowRepository followRepo;
+    private Set<String> followingOrganizerIds = new HashSet<>();
+    private TextView chipAllEvents, chipFollowing, tvNoFollowing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,6 +122,21 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.btn_create_event).setOnClickListener(v ->
                 startActivity(new Intent(this, CreateEventActivity.class)));
 
+        followRepo = new FollowRepository();
+        chipAllEvents = findViewById(R.id.chip_all_events);
+        chipFollowing = findViewById(R.id.chip_following);
+        tvNoFollowing = findViewById(R.id.tv_no_following);
+
+        chipAllEvents.setOnClickListener(v -> {
+            filterFollowing = false;
+            updateChipUI();
+            filterAndUpdateLists(currentSearchQuery);
+        });
+        chipFollowing.setOnClickListener(v -> {
+            filterFollowing = true;
+            updateChipUI();
+            filterAndUpdateLists(currentSearchQuery);
+        });
     }
 
     @Override
@@ -122,6 +144,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onResume();
         loadUserName();
         loadPendingInvites();
+        loadFollowingList();
     }
 
     @Override
@@ -136,6 +159,30 @@ public class HomeActivity extends AppCompatActivity {
         if (eventsListener != null) {
             eventsListener.remove();
             eventsListener = null;
+        }
+    }
+
+    private void loadFollowingList() {
+        String devId = new DeviceAuthManager().getDeviceId(this);
+        followRepo.getFollowingList(devId, organizerIds -> runOnUiThread(() -> {
+            followingOrganizerIds = new HashSet<>(organizerIds);
+            if (filterFollowing) {
+                filterAndUpdateLists(currentSearchQuery);
+            }
+        }));
+    }
+
+    private void updateChipUI() {
+        if (filterFollowing) {
+            chipFollowing.setBackgroundResource(R.drawable.bg_chip_selected);
+            chipFollowing.setTextColor(0xFFFFFFFF);
+            chipAllEvents.setBackgroundResource(R.drawable.bg_chip_unselected);
+            chipAllEvents.setTextColor(0xFF4A43EC);
+        } else {
+            chipAllEvents.setBackgroundResource(R.drawable.bg_chip_selected);
+            chipAllEvents.setTextColor(0xFFFFFFFF);
+            chipFollowing.setBackgroundResource(R.drawable.bg_chip_unselected);
+            chipFollowing.setTextColor(0xFF4A43EC);
         }
     }
 
@@ -237,6 +284,12 @@ public class HomeActivity extends AppCompatActivity {
                 if (!match) continue;
             }
 
+            // Following filter
+            if (filterFollowing) {
+                String orgId = doc.getString("organizerId");
+                if (orgId == null || !followingOrganizerIds.contains(orgId)) continue;
+            }
+
             // Filter: open registration
             if (filterOpenReg) {
                 Timestamp regStart = doc.getTimestamp("registrationStart");
@@ -257,6 +310,11 @@ public class HomeActivity extends AppCompatActivity {
         }
         upcomingAdapter.updateList(filtered);
         nearbyAdapter.updateList(filtered);
+
+        if (tvNoFollowing != null) {
+            boolean showEmpty = filterFollowing && filtered.isEmpty();
+            tvNoFollowing.setVisibility(showEmpty ? View.VISIBLE : View.GONE);
+        }
     }
 
     /**

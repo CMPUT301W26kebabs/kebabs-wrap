@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Event;
+import com.example.eventmanager.repository.FollowRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.storage.FirebaseStorage;
@@ -216,7 +217,11 @@ public class CreateEventActivity extends AppCompatActivity {
         repository.createEvent(event,
                 aVoid -> {
                     Toast.makeText(this, "Event created!", Toast.LENGTH_SHORT).show();
+
                     if (generateQr) {
+                        new FollowRepository().notifyFollowersOfNewEvent(
+                                event.getOrganizerId(), event.getName(), event.getEventId());
+
                         Intent intent = new Intent(this, EventQRActivity.class);
                         intent.putExtra("EVENT_ID", event.getEventId());
                         intent.putExtra("EVENT_NAME", event.getName());

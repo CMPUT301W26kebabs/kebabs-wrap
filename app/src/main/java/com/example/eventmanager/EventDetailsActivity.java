@@ -1,10 +1,12 @@
 package com.example.eventmanager;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
@@ -17,6 +19,7 @@ import com.bumptech.glide.Glide;
 import com.example.eventmanager.adapters.EventCommentAdapter;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.EventComment;
+import com.example.eventmanager.repository.FollowRepository;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.Timestamp;
@@ -61,6 +64,13 @@ public class EventDetailsActivity extends AppCompatActivity {
     private int eventCapacity = 0;
     private int eventMaxWaitlist = 0;
 
+    private Button followButton;
+    private LinearLayout organizerRow;
+    private TextView organizerAvatarInitial;
+    private FollowRepository followRepo;
+    private String organizerId;
+    private boolean isFollowing = false;
+
     /**
      * Bootstraps the visual layout and maps intent parameters to Firestore data loads.
      * Hooks all button interactions and listeners.
@@ -104,11 +114,16 @@ public class EventDetailsActivity extends AppCompatActivity {
         // Back button through toolbar navigation icon
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        // Follow button from the new UI
-        View followButton = findViewById(R.id.followButton);
+        followRepo = new FollowRepository();
+        followButton = findViewById(R.id.followButton);
+        organizerRow = findViewById(R.id.organizerRow);
+        organizerAvatarInitial = findViewById(R.id.organizerAvatarInitial);
+
         if (followButton != null) {
-            followButton.setOnClickListener(v ->
-                    Toast.makeText(this, "Follow coming soon", Toast.LENGTH_SHORT).show());
+            followButton.setOnClickListener(v -> toggleFollow());
+        }
+        if (organizerRow != null) {
+            organizerRow.setOnClickListener(v -> openOrganizerProfile());
         }
 
         if (btnJoinWaitlist != null) {
@@ -210,16 +225,91 @@ public class EventDetailsActivity extends AppCompatActivity {
      *
      * @param organizerId The device ID of the user hosting this specific event.
      */
-    private void loadOrganizerName(String organizerId) {
-        db.collection("users").document(organizerId).get()
+    private void loadOrganizerName(String orgId) {
+        this.organizerId = orgId;
+        db.collection("users").document(orgId).get()
                 .addOnSuccessListener(doc -> {
                     String name = doc.getString("name");
                     if (name != null && !name.isEmpty()) {
                         tvOrganizerName.setText(name);
+                        if (organizerAvatarInitial != null) {
+                            organizerAvatarInitial.setText(
+                                    String.valueOf(Character.toUpperCase(name.charAt(0))));
+                        }
                     } else {
                         tvOrganizerName.setText("Organizer");
                     }
                 });
+        checkFollowState(orgId);
+    }
+
+    private void checkFollowState(String orgId) {
+        if (followRepo == null || followButton == null) return;
+        followRepo.isFollowing(deviceId, orgId, following -> {
+            isFollowing = following;
+            runOnUiThread(() -> updateFollowButtonUI());
+        });
+    }
+
+    private void updateFollowButtonUI() {
+        if (followButton == null) return;
+        if (isFollowing) {
+            followButton.setText(R.string.following);
+            followButton.setBackgroundResource(R.drawable.bg_following_button);
+            followButton.setTextColor(getResources().getColor(R.color.following_button_text, null));
+        } else {
+            followButton.setText(R.string.follow);
+            followButton.setBackgroundResource(R.drawable.bg_follow_button_active);
+            followButton.setTextColor(getResources().getColor(android.R.color.white, null));
+        }
+    }
+
+    private void toggleFollow() {
+        if (organizerId == null || followRepo == null) return;
+        followButton.setEnabled(false);
+        String entrantName = "Entrant";
+        String orgName = tvOrganizerName.getText() != null ? tvOrganizerName.getText().toString() : "Organizer";
+
+        db.collection("users").document(deviceId).get()
+                .addOnSuccessListener(doc -> {
+                    String myName = doc.getString("name");
+                    String finalName = (myName != null && !myName.isEmpty()) ? myName : "Entrant";
+
+                    followRepo.toggleFollow(deviceId, finalName, organizerId, orgName,
+                            new FollowRepository.FollowCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    runOnUiThread(() -> {
+                                        isFollowing = !isFollowing;
+                                        updateFollowButtonUI();
+                                        followButton.setEnabled(true);
+                                        Toast.makeText(EventDetailsActivity.this,
+                                                isFollowing ? getString(R.string.follow_success)
+                                                        : getString(R.string.unfollow_success),
+                                                Toast.LENGTH_SHORT).show();
+                                    });
+                                }
+
+                                @Override
+                                public void onFailure(@androidx.annotation.NonNull String message) {
+                                    runOnUiThread(() -> {
+                                        followButton.setEnabled(true);
+                                        Toast.makeText(EventDetailsActivity.this, message, Toast.LENGTH_SHORT).show();
+                                    });
+                                }
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    followButton.setEnabled(true);
+                    Toast.makeText(this, "Could not load your profile", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void openOrganizerProfile() {
+        if (organizerId == null) return;
+        Intent intent = new Intent(this, OrganizerProfileActivity.class);
+        intent.putExtra("ORGANIZER_ID", organizerId);
+        startActivity(intent);
     }
 
     /**

@@ -11,6 +11,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -120,6 +121,12 @@ public class RunLotteryActivity extends AppCompatActivity {
         setupRecyclerView();
         setupCancelledRecycler();
         setupClickListeners();
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBack();
+            }
+        });
         loadWaitlistCount();
         loadCancelledList();
     }
@@ -387,11 +394,6 @@ public class RunLotteryActivity extends AppCompatActivity {
                     showStatus("Seed failed: " + e.getMessage(), true);
                     btnSeedWaitlist.setEnabled(true);
                 });
-    }
-
-    @Override
-    public void onBackPressed() {
-        navigateBack();
     }
 
     // ── Load live waitlist count from Firestore ───────────────────────────────

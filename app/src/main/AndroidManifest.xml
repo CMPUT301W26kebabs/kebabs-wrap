@@ -62,6 +62,9 @@
         <activity android:name=".EventQRActivity" android:exported="false" />
         <activity android:name=".MyEventsActivity" android:exported="false" />
 
+        <!-- Follow System -->
+        <activity android:name=".OrganizerProfileActivity" android:exported="false" />
+        <activity android:name=".FollowerBroadcastActivity" android:exported="false" />
 
         <!-- Umar's activities -->
         <activity android:name=".EnrolledListActivity" android:exported="false" />

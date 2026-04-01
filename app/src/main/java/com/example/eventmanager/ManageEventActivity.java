@@ -12,11 +12,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.eventmanager.managers.DeviceAuthManager;
+import com.example.eventmanager.repository.FollowRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -125,6 +128,13 @@ public class ManageEventActivity extends AppCompatActivity {
             intent.putExtra("EVENT_NAME", eventName != null ? eventName : "Event");
             startActivity(intent);
         });
+
+        MaterialButton btnBroadcast = findViewById(R.id.btn_broadcast_followers);
+        btnBroadcast.setOnClickListener(v ->
+                startActivity(new Intent(this, FollowerBroadcastActivity.class)));
+
+        MaterialButton btnInviteFollowers = findViewById(R.id.btn_invite_followers);
+        btnInviteFollowers.setOnClickListener(v -> inviteFollowersToEvent());
 
         tabWaiting.setOnClickListener(v -> {
             currentTab = "waiting";
@@ -539,6 +549,45 @@ public class ManageEventActivity extends AppCompatActivity {
         send.setType("text/plain");
         send.putExtra(Intent.EXTRA_TEXT, text);
         startActivity(Intent.createChooser(send, "Share list"));
+    }
+
+    private void inviteFollowersToEvent() {
+        String organizerId = new DeviceAuthManager().getDeviceId(this);
+        FollowRepository followRepo = new FollowRepository();
+
+        followRepo.getFollowerCount(organizerId, count -> runOnUiThread(() -> {
+            if (count == 0) {
+                Toast.makeText(this, R.string.invite_followers_empty, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.invite_followers)
+                    .setMessage(getString(R.string.invite_followers_confirm, count))
+                    .setPositiveButton("Invite", (d, w) -> {
+                        followRepo.inviteAllFollowersToWaitlist(eventId, organizerId,
+                                new FollowRepository.FollowCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        runOnUiThread(() -> {
+                                            Toast.makeText(ManageEventActivity.this,
+                                                    R.string.invite_followers_success,
+                                                    Toast.LENGTH_SHORT).show();
+                                            loadCounts();
+                                            loadAttendees();
+                                        });
+                                    }
+
+                                    @Override
+                                    public void onFailure(@NonNull String message) {
+                                        runOnUiThread(() -> Toast.makeText(
+                                                ManageEventActivity.this, message,
+                                                Toast.LENGTH_LONG).show());
+                                    }
+                                });
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        }));
     }
 
     private List<AnasEntrant> getPreviewEntrants() {

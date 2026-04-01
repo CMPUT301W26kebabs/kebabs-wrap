@@ -40,8 +40,8 @@
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_arrow_back"
-            android:tint="#FFFFFF"
-            android:contentDescription="Back" />
+            android:contentDescription="Back"
+            app:tint="#FFFFFF" />
 
         <TextView
             android:layout_width="wrap_content"
