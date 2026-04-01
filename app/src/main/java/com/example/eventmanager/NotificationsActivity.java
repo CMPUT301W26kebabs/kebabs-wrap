@@ -2,6 +2,7 @@ package com.example.eventmanager;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -84,7 +85,7 @@ public class NotificationsActivity extends AppCompatActivity
         }
 
         // Route winner notifications to the accept/decline screen
-        if (notification.getEventId() != null) {
+        if (!TextUtils.isEmpty(notification.getEventId())) {
             Intent intent = new Intent(this, AcceptDeclineActivity.class);
             intent.putExtra("eventId", notification.getEventId());
             intent.putExtra("eventName", notification.getEventName());
