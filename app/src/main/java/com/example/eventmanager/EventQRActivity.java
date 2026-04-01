@@ -16,6 +16,7 @@ import androidx.core.content.FileProvider;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
@@ -38,10 +39,35 @@ public class EventQRActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_event_qr);
 
         eventId = getIntent().getStringExtra("EVENT_ID");
         eventName = getIntent().getStringExtra("EVENT_NAME");
+
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(this, "Event ID missing.", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        FirebaseFirestore.getInstance().collection("events").document(eventId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists() && Boolean.TRUE.equals(doc.getBoolean("privateEvent"))) {
+                        Toast.makeText(this,
+                                "QR codes are not available for private events.",
+                                Toast.LENGTH_LONG).show();
+                        finish();
+                        return;
+                    }
+                    inflateAndShowQrUi();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Could not load event.", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+    }
+
+    private void inflateAndShowQrUi() {
+        setContentView(R.layout.activity_event_qr);
 
         ivQrCode = findViewById(R.id.ivQrCode);
         tvEventName = findViewById(R.id.tvEventName);
@@ -51,14 +77,10 @@ public class EventQRActivity extends AppCompatActivity {
         if (tvEventId != null) tvEventId.setText("ID: " + (eventId != null ? eventId : "N/A"));
 
         // Generate real QR code with eventmanager://event/{eventId} - scannable by our app
-        if (eventId != null) {
-            String qrContent = QR_SCHEME + eventId;
-            qrBitmap = generateQRCode(qrContent);
-            if (qrBitmap != null) {
-                ivQrCode.setImageBitmap(qrBitmap);
-            }
-        } else {
-            Toast.makeText(this, "Event ID missing. Cannot generate QR code.", Toast.LENGTH_SHORT).show();
+        String qrContent = QR_SCHEME + eventId;
+        qrBitmap = generateQRCode(qrContent);
+        if (qrBitmap != null) {
+            ivQrCode.setImageBitmap(qrBitmap);
         }
 
         // Back button

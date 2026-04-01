@@ -19,6 +19,8 @@ public class Event {
     private String posterUrl;
     private String organizerId;
     private boolean isGeolocationRequired;
+    /** Invitation-only / private: hide from public home & browse; not broadcast to followers. */
+    private boolean privateEvent;
 
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
@@ -200,5 +202,13 @@ public class Event {
      */
     public void setGeolocationRequired(boolean geolocationRequired) {
         isGeolocationRequired = geolocationRequired;
+    }
+
+    public boolean isPrivateEvent() {
+        return privateEvent;
+    }
+
+    public void setPrivateEvent(boolean privateEvent) {
+        this.privateEvent = privateEvent;
     }
 }

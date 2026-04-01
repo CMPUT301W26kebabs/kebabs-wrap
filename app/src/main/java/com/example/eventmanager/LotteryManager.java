@@ -1,6 +1,8 @@
 package com.example.eventmanager;
+
+import androidx.annotation.NonNull;
+
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
@@ -17,6 +19,15 @@ public class LotteryManager {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    /** Matches {@code EventRepository} / notification routing: field {@code deviceId} or document id. */
+    private static String deviceIdFromWaitlistDoc(@NonNull DocumentSnapshot doc) {
+        String fromField = doc.getString("deviceId");
+        if (fromField != null && !fromField.trim().isEmpty()) {
+            return fromField.trim();
+        }
+        return doc.getId();
+    }
+
     /**
      * Randomly samples a target number of entrants from the waiting list and moves them
      * to the 'selected' sub-collection.
@@ -32,45 +43,42 @@ public class LotteryManager {
         // Step 1: Fetch everyone currently on the waiting list
         waitlistRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful() && task.getResult() != null) {
-                List<Entrant> allWaitlisted = new ArrayList<>();
+                List<DocumentSnapshot> allDocs = new ArrayList<>(task.getResult().getDocuments());
 
-                for (DocumentSnapshot doc : task.getResult().getDocuments()) {
-                    Entrant entrant = doc.toObject(Entrant.class);
-                    if (entrant != null) {
-                        allWaitlisted.add(entrant);
-                    }
-                }
-
-                // Step 2: Check if there's anyone to draw
-                if (allWaitlisted.isEmpty()) {
+                if (allDocs.isEmpty()) {
                     callback.onFailure("The waiting list is empty.");
                     return;
                 }
 
-                // Step 3: The Lottery Math (Shuffle and Pick)
-                Collections.shuffle(allWaitlisted);
+                Collections.shuffle(allDocs);
 
-                // If the target count is greater than the waitlist size, just select everyone
-                int winnersCount = Math.min(targetCount, allWaitlisted.size());
-                List<Entrant> winners = allWaitlisted.subList(0, winnersCount);
+                int winnersCount = Math.min(targetCount, allDocs.size());
+                List<DocumentSnapshot> winnerDocs = allDocs.subList(0, winnersCount);
 
-                // Step 4: Execute the database moves as a single, safe Batch Transaction
                 WriteBatch batch = db.batch();
+                List<Entrant> winners = new ArrayList<>();
+                List<String> winnerDeviceIds = new ArrayList<>();
 
-                for (Entrant winner : winners) {
-                    DocumentReference oldDoc = waitlistRef.document(winner.getDeviceId());
-                    DocumentReference newDoc = selectedRef.document(winner.getDeviceId());
+                for (DocumentSnapshot doc : winnerDocs) {
+                    Entrant entrant = doc.toObject(Entrant.class);
+                    if (entrant == null) {
+                        entrant = new Entrant();
+                    }
+                    String id = deviceIdFromWaitlistDoc(doc);
+                    entrant.setDeviceId(id);
 
-                    batch.delete(oldDoc); // Remove from waitlist
-                    batch.set(newDoc, winner); // Add to selected list
+                    // Always delete the exact waitlist document we drew (doc id may differ from deviceId field).
+                    batch.delete(doc.getReference());
+                    batch.set(selectedRef.document(id), entrant);
+                    winners.add(entrant);
+                    winnerDeviceIds.add(id);
                 }
 
-                batch.commit().addOnSuccessListener(aVoid -> {
-                    // Success! Return the list of winners so the UI can update
-                    callback.onSuccess(winners);
-                }).addOnFailureListener(e -> {
-                    callback.onFailure("Failed to process lottery results: " + e.getMessage());
-                });
+                final List<Entrant> winnersOut = winners;
+                final List<String> idsOut = new ArrayList<>(winnerDeviceIds);
+                batch.commit().addOnSuccessListener(aVoid -> callback.onSuccess(winnersOut, idsOut))
+                        .addOnFailureListener(e ->
+                                callback.onFailure("Failed to process lottery results: " + e.getMessage()));
 
             } else {
                 callback.onFailure("Failed to fetch waiting list data.");

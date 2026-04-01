@@ -21,6 +21,8 @@ import com.example.eventmanager.models.Event;
 import com.example.eventmanager.repository.FollowRepository;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.Timestamp;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -32,6 +34,15 @@ import java.util.UUID;
 
 public class CreateEventActivity extends AppCompatActivity {
     private static final String TAG = "CreateEventActivity";
+
+    public static final String EXTRA_EDIT_EVENT_ID = "EDIT_EVENT_ID";
+
+    /** When non-null, we update this event instead of creating a new one. */
+    private String editEventId;
+    private String editingOrganizerId;
+    private String existingPosterUrl;
+    /** Preserved when the waitlist limit field is left blank in edit mode. */
+    private Integer persistedMaxWaitlist;
 
     private EditText nameInput, descriptionInput, startDateInput, endDateInput;
     private EditText registrationStartInput, registrationEndInput;
@@ -120,10 +131,107 @@ public class CreateEventActivity extends AppCompatActivity {
             // Fallback: keep existing behavior if some widgets are missing.
             findViewById(R.id.btnCreateEvent).setOnClickListener(v -> saveEvent(true));
         }
+
+        String editId = getIntent().getStringExtra(EXTRA_EDIT_EVENT_ID);
+        if (editId != null && !editId.trim().isEmpty()) {
+            loadEventForEdit(editId.trim());
+        }
+    }
+
+    private void loadEventForEdit(String eventId) {
+        repository.fetchEventById(eventId, new FirebaseRepository.OnDocumentLoadedListener() {
+            @Override
+            public void onLoaded(DocumentSnapshot document) {
+                if (document == null || !document.exists()) {
+                    Toast.makeText(CreateEventActivity.this, "Event not found.", Toast.LENGTH_LONG).show();
+                    finish();
+                    return;
+                }
+                Event ev = document.toObject(Event.class);
+                String myId = new DeviceAuthManager().getDeviceId(CreateEventActivity.this);
+                String orgId = ev != null && ev.getOrganizerId() != null
+                        ? ev.getOrganizerId()
+                        : document.getString("organizerId");
+                if (orgId != null && !orgId.equals(myId)) {
+                    Toast.makeText(CreateEventActivity.this,
+                            "You can only edit your own events.", Toast.LENGTH_LONG).show();
+                    finish();
+                    return;
+                }
+
+                editEventId = eventId;
+                editingOrganizerId = orgId;
+
+                android.widget.TextView tvTitle = findViewById(R.id.tv_create_event_title);
+                if (tvTitle != null) {
+                    tvTitle.setText("Edit Event");
+                }
+
+                String n = document.getString("name");
+                if (n != null) nameInput.setText(n);
+                String desc = document.getString("description");
+                if (desc != null) descriptionInput.setText(desc);
+                String loc = document.getString("location");
+                if (loc != null) locationInput.setText(loc);
+                Long cap = document.getLong("capacity");
+                if (cap != null) capacityInput.setText(String.valueOf(cap));
+                Long wl = document.getLong("maxWaitlistCapacity");
+                persistedMaxWaitlist = wl != null ? wl.intValue() : null;
+                if (wl != null && wl > 0) waitlistLimitInput.setText(String.valueOf(wl));
+
+                Timestamp rs = document.getTimestamp("registrationStart");
+                Timestamp re = document.getTimestamp("registrationEnd");
+                if (rs != null) {
+                    registrationStartDate = rs.toDate();
+                    registrationStartInput.setText(sdf.format(registrationStartDate));
+                }
+                if (re != null) {
+                    registrationEndDate = re.toDate();
+                    registrationEndInput.setText(sdf.format(registrationEndDate));
+                }
+
+                if (switchPrivateEvent != null) {
+                    switchPrivateEvent.setChecked(Boolean.TRUE.equals(document.getBoolean("privateEvent")));
+                    updateBottomButtons(switchPrivateEvent.isChecked());
+                }
+                if (switchRequireGeolocation != null) {
+                    switchRequireGeolocation.setChecked(
+                            Boolean.TRUE.equals(document.getBoolean("geolocationRequired")));
+                }
+
+                existingPosterUrl = document.getString("posterUrl");
+                if (existingPosterUrl != null && !existingPosterUrl.isEmpty()
+                        && imagePosterPreview != null) {
+                    if (uploadPlaceholder != null) uploadPlaceholder.setVisibility(View.GONE);
+                    imagePosterPreview.setVisibility(View.VISIBLE);
+                    Glide.with(CreateEventActivity.this).load(existingPosterUrl).centerCrop().into(imagePosterPreview);
+                }
+
+                if (btnCreateEvent != null) {
+                    btnCreateEvent.setText("Save changes");
+                    btnCreateEvent.setVisibility(View.VISIBLE);
+                }
+                if (btnSaveEvent != null) {
+                    btnSaveEvent.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(CreateEventActivity.this,
+                        "Failed to load event.", Toast.LENGTH_LONG).show();
+                finish();
+            }
+        });
     }
 
     private void updateBottomButtons(boolean isPrivate) {
         if (btnCreateEvent == null || btnSaveEvent == null) return;
+        if (editEventId != null) {
+            btnSaveEvent.setVisibility(View.GONE);
+            btnCreateEvent.setVisibility(View.VISIBLE);
+            return;
+        }
         btnCreateEvent.setVisibility(isPrivate ? View.GONE : View.VISIBLE);
         btnSaveEvent.setVisibility(isPrivate ? View.VISIBLE : View.GONE);
     }
@@ -152,6 +260,11 @@ public class CreateEventActivity extends AppCompatActivity {
     }
 
     private void saveEvent(boolean generateQr) {
+        if (editEventId != null) {
+            saveExistingEvent();
+            return;
+        }
+
         String nameStr = nameInput.getText().toString().trim();
         String capacityStr = capacityInput.getText().toString().trim();
 
@@ -184,6 +297,9 @@ public class CreateEventActivity extends AppCompatActivity {
         boolean geolocationRequired = switchRequireGeolocation != null && switchRequireGeolocation.isChecked();
         newEvent.setGeolocationRequired(geolocationRequired);
 
+        boolean isPrivate = switchPrivateEvent != null && switchPrivateEvent.isChecked();
+        newEvent.setPrivateEvent(isPrivate);
+
         Toast.makeText(this, "Creating event...", Toast.LENGTH_SHORT).show();
 
         if (selectedImageUri != null) {
@@ -191,6 +307,80 @@ public class CreateEventActivity extends AppCompatActivity {
         } else {
             saveEventToFirestore(newEvent, generateQr);
         }
+    }
+
+    private void saveExistingEvent() {
+        String nameStr = nameInput.getText().toString().trim();
+        String capacityStr = capacityInput.getText().toString().trim();
+
+        if (nameStr.isEmpty()) { Toast.makeText(this, "Enter event name", Toast.LENGTH_SHORT).show(); return; }
+        if (capacityStr.isEmpty()) { Toast.makeText(this, "Enter capacity", Toast.LENGTH_SHORT).show(); return; }
+
+        Event event = new Event();
+        event.setEventId(editEventId);
+        event.setOrganizerId(editingOrganizerId != null
+                ? editingOrganizerId
+                : new DeviceAuthManager().getDeviceId(this));
+        event.setName(nameStr);
+        event.setCapacity(Integer.parseInt(capacityStr));
+
+        String desc = descriptionInput.getText().toString().trim();
+        if (!desc.isEmpty()) event.setDescription(desc);
+        String loc = locationInput.getText().toString().trim();
+        if (!loc.isEmpty()) event.setLocation(loc);
+
+        Date regStart = registrationStartDate != null ? registrationStartDate : startDate;
+        Date regEnd = registrationEndDate != null ? registrationEndDate : endDate;
+        if (regStart != null) event.setRegistrationStart(regStart);
+        if (regEnd != null) event.setRegistrationEnd(regEnd);
+
+        String waitlistStr = waitlistLimitInput.getText().toString().trim();
+        if (!waitlistStr.isEmpty()) {
+            event.setMaxWaitlistCapacity(Integer.parseInt(waitlistStr));
+        } else if (persistedMaxWaitlist != null) {
+            event.setMaxWaitlistCapacity(persistedMaxWaitlist);
+        }
+
+        boolean geolocationRequired = switchRequireGeolocation != null && switchRequireGeolocation.isChecked();
+        event.setGeolocationRequired(geolocationRequired);
+
+        boolean isPrivate = switchPrivateEvent != null && switchPrivateEvent.isChecked();
+        event.setPrivateEvent(isPrivate);
+
+        if (selectedImageUri == null && existingPosterUrl != null && !existingPosterUrl.isEmpty()) {
+            event.setPosterUrl(existingPosterUrl);
+        }
+
+        Toast.makeText(this, "Saving event…", Toast.LENGTH_SHORT).show();
+
+        if (selectedImageUri != null) {
+            uploadImageThenUpdate(editEventId, event);
+        } else {
+            persistEventUpdate(event);
+        }
+    }
+
+    private void uploadImageThenUpdate(String eventId, Event event) {
+        StorageReference ref = FirebaseStorage.getInstance().getReference()
+                .child("event_posters/" + eventId + ".jpg");
+        ref.putFile(selectedImageUri)
+                .addOnSuccessListener(task -> ref.getDownloadUrl()
+                        .addOnSuccessListener(uri -> {
+                            event.setPosterUrl(uri.toString());
+                            persistEventUpdate(event);
+                        })
+                        .addOnFailureListener(e -> persistEventUpdate(event)))
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show());
+    }
+
+    private void persistEventUpdate(Event event) {
+        repository.updateEvent(event,
+                aVoid -> {
+                    Toast.makeText(this, "Event updated!", Toast.LENGTH_SHORT).show();
+                    finish();
+                },
+                e -> Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     private void uploadImageThenSave(String eventId, Event event, boolean generateQr) {
@@ -213,8 +403,10 @@ public class CreateEventActivity extends AppCompatActivity {
                     Toast.makeText(this, "Event created!", Toast.LENGTH_SHORT).show();
 
                     if (generateQr) {
-                        new FollowRepository().notifyFollowersOfNewEvent(
-                                event.getOrganizerId(), event.getName(), event.getEventId());
+                        if (!event.isPrivateEvent()) {
+                            new FollowRepository().notifyFollowersOfNewEvent(
+                                    event.getOrganizerId(), event.getName(), event.getEventId());
+                        }
 
                         Intent intent = new Intent(this, EventQRActivity.class);
                         intent.putExtra("EVENT_ID", event.getEventId());

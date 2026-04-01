@@ -123,6 +123,15 @@ public class ManageEventActivity extends AppCompatActivity {
         ImageButton btnQr = findViewById(R.id.btn_action_qr);
         btnQr.setOnClickListener(v -> openEventQr());
 
+        ImageButton btnEdit = findViewById(R.id.btn_action_edit);
+        if (btnEdit != null) {
+            btnEdit.setOnClickListener(v -> {
+                Intent i = new Intent(this, CreateEventActivity.class);
+                i.putExtra(CreateEventActivity.EXTRA_EDIT_EVENT_ID, eventId);
+                startActivity(i);
+            });
+        }
+
         ImageButton btnDownload = findViewById(R.id.btn_action_download);
         btnDownload.setOnClickListener(v -> exportFinalRosterCsv()); // Now the blue icon downloads the CSV!
 
@@ -138,7 +147,7 @@ public class ManageEventActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        MaterialButton btnCancelNonSignup = findViewById(R.id.btnCancelNonSignup);
+        btnCancelNonSignup = findViewById(R.id.btnCancelNonSignup);
         if (btnCancelNonSignup != null) {
             btnCancelNonSignup.setOnClickListener(v -> confirmCancelNonSignup());
         }
@@ -215,6 +224,12 @@ public class ManageEventActivity extends AppCompatActivity {
                     Long cap = doc.getLong("capacity");
                     if (cap != null && cap > 0) {
                         eventCapacity = cap.intValue();
+                    }
+
+                    ImageButton btnQr = findViewById(R.id.btn_action_qr);
+                    if (btnQr != null) {
+                        boolean isPrivate = Boolean.TRUE.equals(doc.getBoolean("privateEvent"));
+                        btnQr.setVisibility(isPrivate ? View.GONE : View.VISIBLE);
                     }
                 });
     }
@@ -579,23 +594,55 @@ public class ManageEventActivity extends AppCompatActivity {
     }
 
     private void executeCancelNonSignup() {
-        btnCancelNonSignup.setEnabled(false);
+        if (btnCancelNonSignup != null) {
+            btnCancelNonSignup.setEnabled(false);
+        }
         Toast.makeText(this, "Updating roster…", Toast.LENGTH_SHORT).show();
-        eventRepository.cancelSelectedWithoutEnrollment(eventId, new EventRepository.OperationCallback() {
+        eventRepository.cancelSelectedWithoutEnrollment(eventId, new EventRepository.CancelNonEnrollmentCallback() {
             @Override
-            public void onSuccess() {
-                btnCancelNonSignup.setEnabled(true);
-                Toast.makeText(ManageEventActivity.this,
-                        "Non-enrolled invitees moved to cancelled.",
-                        Toast.LENGTH_SHORT).show();
-                loadCounts();
-                loadAttendees();
-                highlightTab();
+            public void onSuccess(@NonNull List<String> movedDeviceIds) {
+                String label = eventName != null ? eventName : "Event";
+                organizerNotificationManager.notifyOrganizerRevokedNonEnrollment(
+                        eventId, label, movedDeviceIds,
+                        new OrganizerNotificationManager.NotificationDispatchCallback() {
+                            @Override
+                            public void onSuccess(int recipientCount) {
+                                runOnUiThread(() -> {
+                                    if (btnCancelNonSignup != null) {
+                                        btnCancelNonSignup.setEnabled(true);
+                                    }
+                                    Toast.makeText(ManageEventActivity.this,
+                                            "Moved to cancelled and notified " + movedDeviceIds.size()
+                                                    + " entrant(s).",
+                                            Toast.LENGTH_SHORT).show();
+                                    loadCounts();
+                                    loadAttendees();
+                                    highlightTab();
+                                });
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull String message) {
+                                runOnUiThread(() -> {
+                                    if (btnCancelNonSignup != null) {
+                                        btnCancelNonSignup.setEnabled(true);
+                                    }
+                                    Toast.makeText(ManageEventActivity.this,
+                                            "Roster updated but notifications failed: " + message,
+                                            Toast.LENGTH_LONG).show();
+                                    loadCounts();
+                                    loadAttendees();
+                                    highlightTab();
+                                });
+                            }
+                        });
             }
 
             @Override
             public void onFailure(String message) {
-                btnCancelNonSignup.setEnabled(true);
+                if (btnCancelNonSignup != null) {
+                    btnCancelNonSignup.setEnabled(true);
+                }
                 Toast.makeText(ManageEventActivity.this,
                         message,
                         Toast.LENGTH_LONG).show();
@@ -604,10 +651,20 @@ public class ManageEventActivity extends AppCompatActivity {
     }
 
     private void openEventQr() {
-        Intent intent = new Intent(this, EventQRActivity.class);
-        intent.putExtra("EVENT_ID", eventId);
-        intent.putExtra("EVENT_NAME", eventName);
-        startActivity(intent);
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists() && Boolean.TRUE.equals(doc.getBoolean("privateEvent"))) {
+                        Toast.makeText(this, "QR codes are not available for private events.",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    Intent intent = new Intent(this, EventQRActivity.class);
+                    intent.putExtra("EVENT_ID", eventId);
+                    intent.putExtra("EVENT_NAME", eventName);
+                    startActivity(intent);
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Could not verify event.", Toast.LENGTH_SHORT).show());
     }
 
     private void openEntrantMap() {

@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    >
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="24dp">
 
     <ImageView
         android:id="@+id/btn_back"
@@ -50,15 +55,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_back" />
 
-    <LinearLayout
-        android:id="@+id/layout_action_buttons"
-        android:layout_width="match_parent"
+    <HorizontalScrollView
+        android:id="@+id/scroll_action_buttons"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        android:orientation="horizontal"
-        android:gravity="start"
+        android:fillViewport="false"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_event_title">
+
+        <LinearLayout
+            android:id="@+id/layout_action_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start">
 
         <ImageButton
             android:id="@+id/btn_action_add"
@@ -102,11 +117,22 @@
             android:id="@+id/btn_action_chat"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_marginEnd="12dp"
             android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Moderate comments"
             android:src="@android:drawable/sym_action_chat"
-            app:tint="#FFFFFF"
-            />
-    </LinearLayout>
+            app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/btn_action_edit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Edit event"
+            android:src="@android:drawable/ic_menu_edit"
+            app:tint="#FFFFFF" />
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <GridLayout
         android:id="@+id/grid_tabs"
@@ -117,7 +143,7 @@
         android:columnCount="2"
         android:rowCount="2"
         android:useDefaultMargins="true"
-        app:layout_constraintTop_toBottomOf="@+id/layout_action_buttons">
+        app:layout_constraintTop_toBottomOf="@+id/scroll_action_buttons">
 
         <TextView
             android:id="@+id/tab_waiting"
@@ -166,20 +192,20 @@
     </GridLayout>
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_entrants_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="24dp"
-        android:layout_marginBottom="16dp"
         app:cardBackgroundColor="#F8F9FA"
         app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/layout_bottom_buttons"
-        app:layout_constraintTop_toBottomOf="@+id/grid_tabs">
+        app:layout_constraintTop_toBottomOf="@+id/grid_tabs"
+        app:layout_constraintBottom_toTopOf="@+id/layout_follow_actions">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:padding="20dp">
 
             <TextView
@@ -211,13 +237,13 @@
             <TextView
                 android:id="@+id/text_empty_list"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="120dp"
                 android:layout_marginTop="16dp"
                 android:gravity="center"
                 android:textColor="#7A7C87"
                 android:textSize="15sp"
                 android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_list_header" />
@@ -225,10 +251,12 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_chosen_entrants"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:nestedScrollingEnabled="false"
+                android:minHeight="160dp"
+                android:maxHeight="420dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_list_header"
                 tools:listitem="@layout/item_chosen_entrant" />
 
@@ -240,8 +268,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp"
         android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/card_entrants_list"
         app:layout_constraintBottom_toTopOf="@+id/layout_bottom_buttons">
 
         <com.google.android.material.button.MaterialButton
@@ -278,8 +308,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginTop="8dp"
         android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/layout_follow_actions"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
@@ -334,3 +365,5 @@
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.core.widget.NestedScrollView>

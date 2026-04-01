@@ -8,6 +8,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 /**
  * Shown when a user taps a winner notification.
  * Presents the event name and two choices: Accept or Decline.
@@ -55,6 +57,19 @@ public class AcceptDeclineActivity extends AppCompatActivity {
 
         Button btnAccept  = findViewById(R.id.btn_accept);
         Button btnDecline = findViewById(R.id.btn_decline);
+
+        FirebaseFirestore.getInstance()
+                .collection("events").document(eventId).collection("selected").document(deviceId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        btnAccept.setEnabled(false);
+                        btnDecline.setEnabled(false);
+                        Toast.makeText(this,
+                                "This invitation is no longer active.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
 
         // ── Accept ──────────────────────────────────────────────────────────
         btnAccept.setOnClickListener(v -> {

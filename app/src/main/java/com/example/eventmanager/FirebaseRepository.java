@@ -87,6 +87,12 @@ public class FirebaseRepository {
                 .addOnSuccessListener(success).addOnFailureListener(failure);
     }
 
+    /** Merge-updates an existing event (organizer edit flow). */
+    public void updateEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
+        db.collection("events").document(event.getEventId()).set(event, SetOptions.merge())
+                .addOnSuccessListener(success).addOnFailureListener(failure);
+    }
+
     public void updateEventPosterUrl(String eventId, String posterUrl,
                                      OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
         db.collection("events").document(eventId).update("posterUrl", posterUrl)
@@ -184,7 +190,9 @@ public class FirebaseRepository {
             List<DocumentSnapshot> active = new ArrayList<>();
             for (DocumentSnapshot doc : qs.getDocuments()) {
                 Boolean isDeleted = doc.getBoolean("isDeleted");
-                if (isDeleted == null || !isDeleted) active.add(doc);
+                if (isDeleted != null && isDeleted) continue;
+                if (Boolean.TRUE.equals(doc.getBoolean("privateEvent"))) continue;
+                active.add(doc);
             }
             listener.onLoaded(active);
         }).addOnFailureListener(listener::onError);

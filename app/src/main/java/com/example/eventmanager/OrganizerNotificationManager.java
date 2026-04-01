@@ -2,15 +2,20 @@ package com.example.eventmanager;
 
 import android.util.Log;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Source;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Orchestrates sending notifications to groups of entrants.
@@ -185,6 +190,168 @@ public class OrganizerNotificationManager {
         });
     }
 
+    /**
+     * Sends the winner (accept/decline) notification only to the given device IDs.
+     * Used after a lottery draw so we notify exactly who was drawn in this run, not everyone
+     * currently in {@code selected} (which can include stale reads or prior invitees).
+     */
+    private void notifySelectedDeviceIds(@NonNull String eventId,
+                                         @NonNull String eventName,
+                                         @NonNull List<String> deviceIds,
+                                         @NonNull NotificationDispatchCallback callback) {
+        if (deviceIds.isEmpty()) {
+            Log.d(TAG, "No winner device IDs to notify for event: " + eventId);
+            callback.onFailure("No selected entrants to notify.");
+            return;
+        }
+
+        String title = "🎉 You've been selected!";
+        String body = "You were chosen to attend " + eventName + ". Tap to respond.";
+
+        for (String deviceId : deviceIds) {
+            Notification notification = new Notification(title, body, eventName, eventId);
+            sendIfOptedIn(deviceId, notification);
+        }
+
+        Log.d(TAG, "Selected entrants notified (explicit list): " + deviceIds.size());
+        callback.onSuccess(deviceIds.size());
+
+        writeNotificationLog(eventId, eventName,
+                "Selected Entrants", deviceIds.size(), title, body);
+    }
+
+    /**
+     * Notifies everyone still on the waiting list that they were not selected in the lottery.
+     * {@code excludeWinnerDeviceIds} skips devices who were just chosen (safety if waitlist data overlaps).
+     */
+    public void notifyNotChosenAfterLottery(@NonNull String eventId,
+                                            @NonNull String eventName,
+                                            @Nullable Set<String> excludeWinnerDeviceIds,
+                                            @NonNull NotificationDispatchCallback callback) {
+        // Read from server so we see the post-lottery waitlist (not a stale cache with winners still on it).
+        eventRepository.getWaitingList(eventId, Source.SERVER, deviceIds -> {
+            String safeName = eventName != null && !eventName.trim().isEmpty() ? eventName.trim() : "Event";
+            String title = "Unfortunately, you weren't chosen for " + safeName + ".";
+            String body = "";
+
+            int sent = 0;
+            for (String deviceId : deviceIds) {
+                if (deviceId == null || deviceId.trim().isEmpty()) {
+                    continue;
+                }
+                String id = deviceId.trim();
+                if (excludeWinnerDeviceIds != null && excludeWinnerDeviceIds.contains(id)) {
+                    Log.d(TAG, "Skipping not-chosen notification for current draw winner: " + id);
+                    continue;
+                }
+                Notification notification = new Notification(title, body, eventName);
+                sendIfOptedIn(id, notification);
+                sent++;
+            }
+
+            if (sent == 0) {
+                callback.onSuccess(0);
+                return;
+            }
+
+            Log.d(TAG, "Not-chosen (waitlist) notified: " + sent);
+            callback.onSuccess(sent);
+
+            writeNotificationLog(eventId, eventName,
+                    "Not selected (after lottery)", sent, title, body);
+        });
+    }
+
+    /**
+     * After running the lottery: notify this draw's winners (exact device IDs from {@link LotteryManager})
+     * and everyone still on the waiting list that they were not chosen.
+     * <p>
+     * Does not re-query {@code selected}: that would also match prior invitees and duplicate winner alerts.
+     */
+    public void notifyAfterLotteryDraw(@NonNull String eventId,
+                                       @NonNull String eventName,
+                                       @NonNull List<String> winnerDeviceIds,
+                                       @NonNull NotificationDispatchCallback callback) {
+        List<String> validWinners = new ArrayList<>();
+        HashSet<String> seen = new HashSet<>();
+        for (String id : winnerDeviceIds) {
+            if (id != null && !id.trim().isEmpty() && seen.add(id.trim())) {
+                validWinners.add(id.trim());
+            }
+        }
+
+        if (validWinners.isEmpty()) {
+            Log.e(TAG, "Lottery notify: empty winner id list — skipping winner invites (not re-querying selected).");
+            notifyNotChosenAfterLottery(eventId, eventName, null, callback);
+            return;
+        }
+
+        runLotteryWinnerThenNotChosen(eventId, eventName, validWinners, callback);
+    }
+
+    private void runLotteryWinnerThenNotChosen(@NonNull String eventId,
+                                               @NonNull String eventName,
+                                               @NonNull List<String> winnerDeviceIds,
+                                               @NonNull NotificationDispatchCallback callback) {
+        HashSet<String> excludeLosersForWinners = new HashSet<>();
+        for (String id : winnerDeviceIds) {
+            if (id != null && !id.trim().isEmpty()) {
+                excludeLosersForWinners.add(id.trim());
+            }
+        }
+
+        notifySelectedDeviceIds(eventId, eventName, winnerDeviceIds, new NotificationDispatchCallback() {
+            @Override
+            public void onSuccess(int winnerCount) {
+                notifyNotChosenAfterLottery(eventId, eventName, excludeLosersForWinners,
+                        new NotificationDispatchCallback() {
+                            @Override
+                            public void onSuccess(int loserCount) {
+                                callback.onSuccess(winnerCount + loserCount);
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull String message) {
+                                callback.onSuccess(winnerCount);
+                            }
+                        });
+            }
+
+            @Override
+            public void onFailure(@NonNull String message) {
+                notifyNotChosenAfterLottery(eventId, eventName, excludeLosersForWinners, callback);
+            }
+        });
+    }
+
+    /**
+     * Organizer removed chosen entrants who never completed enrollment — informational only
+     * (no {@code eventId} on notification so accept/decline does not open).
+     */
+    public void notifyOrganizerRevokedNonEnrollment(@NonNull String eventId,
+                                                    @NonNull String eventName,
+                                                    @NonNull List<String> deviceIds,
+                                                    @NonNull NotificationDispatchCallback callback) {
+        if (deviceIds.isEmpty()) {
+            callback.onSuccess(0);
+            return;
+        }
+        String title = "Invitation cancelled";
+        String body = "The organizer removed you from the chosen list for \"" + eventName
+                + "\" because you did not complete enrollment.";
+
+        for (String deviceId : deviceIds) {
+            Notification notification = new Notification(title, body, eventName);
+            sendIfOptedIn(deviceId, notification);
+        }
+
+        Log.d(TAG, "Organizer revoked non-enrollment for " + deviceIds.size() + " entrants");
+        callback.onSuccess(deviceIds.size());
+
+        writeNotificationLog(eventId, eventName,
+                "Revoked (no enrollment)", deviceIds.size(), title, body);
+    }
+
     public void notifyEnrolled(@NonNull String eventId,
                                @NonNull String eventName,
                                @NonNull NotificationDispatchCallback callback) {
@@ -225,8 +392,8 @@ public class OrganizerNotificationManager {
                 return;
             }
 
-            String title = "Update regarding " + eventName;
-            String body = "The organizer has sent a message to cancelled entrants for " + eventName + ".";
+            String title = "Registration update";
+            String body = "You cancelled from \"" + eventName + "\".";
 
             for (String deviceId : deviceIds) {
                 Notification notification = new Notification(title, body, eventName);
@@ -318,4 +485,4 @@ public class OrganizerNotificationManager {
                 .addOnFailureListener(e ->
                         Log.e(TAG, "Failed to write notification log", e));
     }
-}
+}

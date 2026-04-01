@@ -20,6 +20,7 @@ import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.repository.FollowRepository;
 import com.example.eventmanager.ui.ProfileActivity;
+import com.example.eventmanager.ui.SplashActivity;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.Timestamp;
@@ -228,14 +229,23 @@ public class HomeActivity extends AppCompatActivity {
         repo.getUser(deviceId, new com.example.eventmanager.repository.FirebaseRepository.RepoCallback<Entrant>() {
             @Override
             public void onSuccess(Entrant result) {
-                if (result != null && result.getName() != null) {
+                if (result == null || result.isProfileDisabled()) {
+                    Intent intent = new Intent(HomeActivity.this, SplashActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                    return;
+                }
+                if (result.getName() != null) {
                     tvWelcome.setText("Welcome back " + result.getName() + " \uD83D\uDC4B,");
                 } else {
                     tvWelcome.setText("Welcome \uD83D\uDC4B,");
                 }
             }
             @Override
-            public void onError(Exception e) { tvWelcome.setText("Welcome \uD83D\uDC4B,"); }
+            public void onError(Exception e) {
+                tvWelcome.setText("Welcome \uD83D\uDC4B,");
+            }
         });
     }
 
@@ -258,9 +268,9 @@ public class HomeActivity extends AppCompatActivity {
                     List<DocumentSnapshot> active = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         Boolean isDeleted = doc.getBoolean("isDeleted");
-                        if (isDeleted == null || !isDeleted) {
-                            active.add(doc);
-                        }
+                        if (isDeleted != null && isDeleted) continue;
+                        if (Boolean.TRUE.equals(doc.getBoolean("privateEvent"))) continue;
+                        active.add(doc);
                     }
                     allEvents = active;
                     sortByDate(allEvents);

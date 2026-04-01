@@ -10,6 +10,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.Source;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +55,12 @@ public class EventRepository {
         void onFailure(@NonNull String message);
     }
 
+    /** Returns device IDs moved from {@code selected} to {@code cancelled} (organizer non-enrollment). */
+    public interface CancelNonEnrollmentCallback {
+        void onSuccess(@NonNull List<String> movedDeviceIds);
+        void onFailure(@NonNull String message);
+    }
+
     /**
      * Result for events where the user is in the selected (pending accept/decline) list.
      */
@@ -84,17 +91,27 @@ public class EventRepository {
      */
     public void getWaitingList(@NonNull String eventId,
                                @NonNull DeviceIdListCallback callback) {
+        getWaitingList(eventId, Source.DEFAULT, callback);
+    }
+
+    /**
+     * Same as {@link #getWaitingList(String, DeviceIdListCallback)} but allows choosing the read
+     * source (e.g. {@link Source#SERVER} right after a lottery so the cache is not stale).
+     */
+    public void getWaitingList(@NonNull String eventId,
+                               @NonNull Source source,
+                               @NonNull DeviceIdListCallback callback) {
         db.collection("events")
                 .document(eventId)
                 .collection(COLLECTION_WAITING)
-                .get()
+                .get(source)
                 .addOnSuccessListener(snapshots -> {
                     List<String> deviceIds = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         String deviceId = extractDeviceId(doc);
                         if (deviceId != null) deviceIds.add(deviceId);
                     }
-                    Log.d(TAG, "Fetched " + deviceIds.size() + " entrants from waitingList");
+                    Log.d(TAG, "Fetched " + deviceIds.size() + " entrants from waitingList (source=" + source + ")");
                     callback.onResult(deviceIds);
                 })
                 .addOnFailureListener(e -> {
@@ -112,17 +129,25 @@ public class EventRepository {
      */
     public void getSelected(@NonNull String eventId,
                             @NonNull DeviceIdListCallback callback) {
+        getSelected(eventId, Source.DEFAULT, callback);
+    }
+
+    /** Same as {@link #getSelected(String, DeviceIdListCallback)} with an explicit read source. */
+    public void getSelected(@NonNull String eventId,
+                            @NonNull Source source,
+                            @NonNull DeviceIdListCallback callback) {
         db.collection("events")
                 .document(eventId)
                 .collection(COLLECTION_SELECTED)
-                .get()
+                .get(source)
                 .addOnSuccessListener(snapshots -> {
                     List<String> deviceIds = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         String deviceId = extractDeviceId(doc);
                         if (deviceId != null) deviceIds.add(deviceId);
                     }
-                    Log.d(TAG, "Fetched " + deviceIds.size() + " selected entrants for event: " + eventId);
+                    Log.d(TAG, "Fetched " + deviceIds.size() + " selected entrants for event: " + eventId
+                            + " (source=" + source + ")");
                     callback.onResult(deviceIds);
                 })
                 .addOnFailureListener(e -> {
@@ -239,7 +264,7 @@ public class EventRepository {
      * (invited via lottery but never completed enrollment). US 02.06.04.
      */
     public void cancelSelectedWithoutEnrollment(@NonNull String eventId,
-                                                @NonNull OperationCallback callback) {
+                                                @NonNull CancelNonEnrollmentCallback callback) {
         db.collection("events")
                 .document(eventId)
                 .collection(COLLECTION_SELECTED)
@@ -256,7 +281,7 @@ public class EventRepository {
                                     if (id != null) enrolledIds.add(id);
                                 }
                                 WriteBatch batch = db.batch();
-                                int ops = 0;
+                                List<String> moved = new ArrayList<>();
                                 for (QueryDocumentSnapshot selectedDoc : selectedSnap) {
                                     String deviceId = extractDeviceId(selectedDoc);
                                     if (deviceId == null) {
@@ -278,17 +303,17 @@ public class EventRepository {
                                                     .collection(COLLECTION_CANCELLED).document(deviceId),
                                             cancelledData);
                                     batch.delete(selectedDoc.getReference());
-                                    ops++;
+                                    moved.add(deviceId);
                                 }
-                                if (ops == 0) {
+                                if (moved.isEmpty()) {
                                     callback.onFailure("No invited entrants without enrollment to cancel.");
                                     return;
                                 }
-                                final int cancelledCount = ops;
+                                final int cancelledCount = moved.size();
                                 batch.commit()
                                         .addOnSuccessListener(unused -> {
                                             Log.d(TAG, "Organizer cancelled " + cancelledCount + " non-enrolled selected entrants");
-                                            callback.onSuccess();
+                                            callback.onSuccess(moved);
                                         })
                                         .addOnFailureListener(e -> {
                                             Log.e(TAG, "Batch cancel non-signups failed", e);
@@ -326,16 +351,19 @@ public class EventRepository {
                 .document(deviceId)
                 .get()
                 .addOnSuccessListener(selectedDoc -> {
+                    if (!selectedDoc.exists()) {
+                        callback.onFailure("This invitation is no longer active.");
+                        return;
+                    }
+
                     Map<String, Object> data = new HashMap<>();
                     data.put("deviceId", deviceId);
 
-                    if (selectedDoc.exists()) {
-                        if (selectedDoc.getString("name") != null) {
-                            data.put("name", selectedDoc.getString("name"));
-                        }
-                        if (selectedDoc.getString("email") != null) {
-                            data.put("email", selectedDoc.getString("email"));
-                        }
+                    if (selectedDoc.getString("name") != null) {
+                        data.put("name", selectedDoc.getString("name"));
+                    }
+                    if (selectedDoc.getString("email") != null) {
+                        data.put("email", selectedDoc.getString("email"));
                     }
 
                     WriteBatch batch = db.batch();
@@ -412,17 +440,20 @@ public class EventRepository {
                 .document(deviceId)
                 .get()
                 .addOnSuccessListener(selectedDoc -> {
+                    if (!selectedDoc.exists()) {
+                        callback.onFailure("This invitation is no longer active.");
+                        return;
+                    }
+
                     Map<String, Object> cancelledData = new HashMap<>();
                     cancelledData.put("deviceId", deviceId);
                     cancelledData.put("status", "declined");
 
-                    if (selectedDoc.exists()) {
-                        if (selectedDoc.getString("name") != null) {
-                            cancelledData.put("name", selectedDoc.getString("name"));
-                        }
-                        if (selectedDoc.getString("email") != null) {
-                            cancelledData.put("email", selectedDoc.getString("email"));
-                        }
+                    if (selectedDoc.getString("name") != null) {
+                        cancelledData.put("name", selectedDoc.getString("name"));
+                    }
+                    if (selectedDoc.getString("email") != null) {
+                        cancelledData.put("email", selectedDoc.getString("email"));
                     }
 
                     WriteBatch batch = db.batch();
