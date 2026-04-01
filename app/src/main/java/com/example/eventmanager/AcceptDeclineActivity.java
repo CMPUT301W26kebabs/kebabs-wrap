@@ -2,6 +2,7 @@ package com.example.eventmanager;
 
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,12 +37,21 @@ public class AcceptDeclineActivity extends AppCompatActivity {
         eventId   = getIntent().getStringExtra("eventId");
         eventName = getIntent().getStringExtra("eventName");
         deviceId  = getIntent().getStringExtra("deviceId");
+        if (eventId == null || deviceId == null) {
+            Toast.makeText(this, "Invitation data is missing.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
         eventRepository = new EventRepository();
 
         // Populate the event name on screen
         TextView textEventName = findViewById(R.id.text_event_name);
-        textEventName.setText(eventName);
+        textEventName.setText(eventName != null ? eventName : "Event");
+        ImageButton backButton = findViewById(R.id.btn_back);
+        if (backButton != null) {
+            backButton.setOnClickListener(v -> finish());
+        }
 
         Button btnAccept  = findViewById(R.id.btn_accept);
         Button btnDecline = findViewById(R.id.btn_decline);

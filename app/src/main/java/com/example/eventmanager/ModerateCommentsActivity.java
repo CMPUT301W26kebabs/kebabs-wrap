@@ -108,10 +108,9 @@ public class ModerateCommentsActivity extends AppCompatActivity {
 
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(eventDoc -> {
-                    String orgId = eventDoc != null ? eventDoc.getString("organizerId") : null;
-                    if (orgId != null && !orgId.trim().isEmpty() && !orgId.equals(deviceId)) {
+                    if (!OrganizerPermissionHelper.canActAsOrganizer(eventDoc, deviceId)) {
                         btnSendComment.setEnabled(true);
-                        Toast.makeText(this, "Only the event organizer can post here.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Only event organizers can post here.", Toast.LENGTH_LONG).show();
                         return;
                     }
                     db.collection("users").document(deviceId).get()

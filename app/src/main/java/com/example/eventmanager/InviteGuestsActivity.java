@@ -31,7 +31,9 @@ import java.util.Map;
 public class InviteGuestsActivity extends AppCompatActivity implements GuestInviteAdapter.OnGuestActionListener {
 
     private String eventId;
+    private String eventName;
     private FirebaseFirestore db;
+    private NotificationRepository notificationRepository;
     private EditText searchInput;
     private Button btnFilterName, btnFilterEmail, btnFilterPhone;
     private RecyclerView guestsRecyclerView;
@@ -52,7 +54,9 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
         setContentView(R.layout.activity_invite_guests);
 
         eventId = getIntent().getStringExtra("EVENT_ID");
+        eventName = getIntent().getStringExtra("EVENT_NAME");
         db = FirebaseFirestore.getInstance();
+        notificationRepository = new NotificationRepository();
 
         Toolbar toolbar = findViewById(R.id.inviteGuestsToolbar);
         if (toolbar != null) {
@@ -187,16 +191,16 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
             return;
         }
 
-        // Check if already on waiting list
-        db.collection("events").document(eventId).collection("waitingList")
+        // Check if already selected (already invited and pending response)
+        db.collection("events").document(eventId).collection("selected")
                 .document(targetDeviceId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
-                        Toast.makeText(this, "Already on the waiting list", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Already invited for this event", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    // Also check enrolled & selected to prevent duplicates
+                    // Check enrolled to prevent duplicate acceptance states.
                     db.collection("events").document(eventId).collection("enrolled")
                             .document(targetDeviceId).get()
                             .addOnSuccessListener(enrolledDoc -> {
@@ -205,37 +209,43 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
                                     return;
                                 }
 
-                                db.collection("events").document(eventId).collection("selected")
-                                        .document(targetDeviceId).get()
-                                        .addOnSuccessListener(selectedDoc -> {
-                                            if (selectedDoc.exists()) {
-                                                Toast.makeText(this, "Already selected for this event", Toast.LENGTH_SHORT).show();
-                                                return;
-                                            }
+                                // Re-invite flow: move user to selected, remove stale waiting/cancelled docs.
+                                Map<String, Object> data = new HashMap<>();
+                                data.put("deviceId", targetDeviceId);
+                                String name = userDoc.getString("name");
+                                String email = userDoc.getString("email");
+                                if (name != null) data.put("name", name);
+                                if (email != null) data.put("email", email);
+                                data.put("invitedAt", FieldValue.serverTimestamp());
+                                data.put("inviteSource", "organizer");
 
-                                            // Safe to add — build waitlist entry
-                                            Map<String, Object> data = new HashMap<>();
-                                            data.put("deviceId", targetDeviceId);
-                                            String name = userDoc.getString("name");
-                                            String email = userDoc.getString("email");
-                                            if (name != null) data.put("name", name);
-                                            if (email != null) data.put("email", email);
-                                            data.put("joinedAt", FieldValue.serverTimestamp());
+                                WriteBatch batch = db.batch();
+                                batch.set(db.collection("events").document(eventId)
+                                        .collection("selected").document(targetDeviceId), data);
+                                batch.delete(db.collection("events").document(eventId)
+                                        .collection("waitingList").document(targetDeviceId));
+                                batch.delete(db.collection("events").document(eventId)
+                                        .collection("cancelled").document(targetDeviceId));
 
-                                            db.collection("events").document(eventId)
-                                                    .collection("waitingList").document(targetDeviceId)
-                                                    .set(data)
-                                                    .addOnSuccessListener(aVoid ->
-                                                            Toast.makeText(this, (name != null ? name : "User") + " invited to waiting list", Toast.LENGTH_SHORT).show())
-                                                    .addOnFailureListener(e ->
-                                                            Toast.makeText(this, "Failed to invite: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                                        });
+                                batch.commit()
+                                        .addOnSuccessListener(aVoid -> {
+                                            String safeEventName = (eventName != null && !eventName.trim().isEmpty()) ? eventName : "Event";
+                                            Notification notification = new Notification(
+                                                    "You are invited!",
+                                                    "Tap to accept or decline your invitation to " + safeEventName + ".",
+                                                    safeEventName,
+                                                    eventId
+                                            );
+                                            notificationRepository.addNotification(targetDeviceId, notification);
+                                            Toast.makeText(this, (name != null ? name : "User") + " invited successfully", Toast.LENGTH_SHORT).show();
+                                        })
+                                        .addOnFailureListener(e ->
+                                                Toast.makeText(this, "Failed to invite: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                             });
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error checking waitlist", Toast.LENGTH_SHORT).show());
+                        Toast.makeText(this, "Error checking invite status", Toast.LENGTH_SHORT).show());
     }
-
     /**
      * Grants the target user full co-organizer permissions by atomically adding their ID to
      * the event document array via a Firestore Batch Write. Also removes them implicitly from the waiting list.
@@ -272,22 +282,34 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
                         return;
                     }
 
-                    // Batched write: add co-organizer + remove from waitingList
+                    // Batched write: add co-organizer + clear entrant-role subcollections for this user
                     WriteBatch batch = db.batch();
 
-                    // Add to coOrganizers array on event document
                     batch.update(db.collection("events").document(eventId),
                             "coOrganizers", FieldValue.arrayUnion(targetDeviceId));
 
-                    // Remove from waiting list if present (safe even if not there)
                     batch.delete(db.collection("events").document(eventId)
                             .collection("waitingList").document(targetDeviceId));
+                    batch.delete(db.collection("events").document(eventId)
+                            .collection("selected").document(targetDeviceId));
+                    batch.delete(db.collection("events").document(eventId)
+                            .collection("cancelled").document(targetDeviceId));
 
                     batch.commit()
-                            .addOnSuccessListener(aVoid ->
-                                    Toast.makeText(this,
-                                            (targetName != null ? targetName : "User") + " assigned as co-organizer",
-                                            Toast.LENGTH_SHORT).show())
+                            .addOnSuccessListener(aVoid -> {
+                                String safeEventName = (eventName != null && !eventName.trim().isEmpty())
+                                        ? eventName.trim() : "Event";
+                                Notification organizerNotification = new Notification(
+                                        "You are a co-organizer",
+                                        "You now have organizer access to " + safeEventName
+                                                + ". Open My Events to manage it.",
+                                        safeEventName
+                                );
+                                notificationRepository.addNotification(targetDeviceId, organizerNotification);
+                                Toast.makeText(this,
+                                        (targetName != null ? targetName : "User") + " assigned as co-organizer",
+                                        Toast.LENGTH_SHORT).show();
+                            })
                             .addOnFailureListener(e ->
                                     Toast.makeText(this,
                                             "Failed to assign co-organizer: " + e.getMessage(),
