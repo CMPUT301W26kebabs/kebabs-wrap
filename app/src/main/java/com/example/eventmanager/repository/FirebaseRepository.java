@@ -97,6 +97,13 @@ public class FirebaseRepository {
                     if (eventsSnapshot != null) {
                         for (DocumentSnapshot eventDoc : eventsSnapshot.getDocuments()) {
                             String eventId = eventDoc.getId();
+
+                            // Delete the entire event if the user being deleted is its organizer
+                            String organizerId = eventDoc.getString("organizerId");
+                            if (organizerId != null && organizerId.equals(deviceId)) {
+                                deleteTasks.add(db.collection("events").document(eventId).delete());
+                            }
+
                             for (String subCol : EVENT_SUB_COLLECTIONS) {
                                 // Delete the user's entry from each sub-collection of each event
                                 deleteTasks.add(
