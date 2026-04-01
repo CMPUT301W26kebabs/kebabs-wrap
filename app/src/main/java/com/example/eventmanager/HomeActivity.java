@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -28,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
+    private static final String TAG = "HomeActivity";
 
     private TextView tvWelcome;
     private RecyclerView rvUpcoming, rvNearby;
@@ -42,6 +44,7 @@ public class HomeActivity extends AppCompatActivity {
     private boolean filterOpenReg = false;
     private boolean filterHasCapacity = false;
     private ListenerRegistration eventsListener;
+    private boolean hasShownEventsLoadError = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -189,8 +192,17 @@ public class HomeActivity extends AppCompatActivity {
         eventsListener = mainRepo.getDb().collection("events")
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null || snapshot == null) {
+                        Log.e(TAG, "Failed to load events", error);
+                        if (!hasShownEventsLoadError) {
+                            Toast.makeText(this,
+                                    "Could not load events from Firebase: " +
+                                            (error != null && error.getMessage() != null ? error.getMessage() : "unknown error"),
+                                    Toast.LENGTH_LONG).show();
+                            hasShownEventsLoadError = true;
+                        }
                         return;
                     }
+                    hasShownEventsLoadError = false;
                     List<DocumentSnapshot> active = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         Boolean isDeleted = doc.getBoolean("isDeleted");
