@@ -136,6 +136,11 @@ public class ManageEventActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        MaterialButton btnCancelNonSignup = findViewById(R.id.btnCancelNonSignup);
+        if (btnCancelNonSignup != null) {
+            btnCancelNonSignup.setOnClickListener(v -> confirmCancelNonSignup());
+        }
+
         tabWaiting.setOnClickListener(v -> {
             currentTab = "waiting";
             loadAttendees();

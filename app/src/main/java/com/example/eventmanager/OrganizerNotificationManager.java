@@ -171,7 +171,7 @@ public class OrganizerNotificationManager {
             }
             for (String deviceId : deviceIds) {
                 Notification notification = new Notification(
-                        "Update regarding " + eventName,
+                        "Cancelled from " + eventName,
                         "The organizer has sent a message to cancelled entrants for " + eventName + ".",
                         eventName
                 );
