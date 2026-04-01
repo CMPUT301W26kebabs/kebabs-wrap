@@ -46,6 +46,7 @@ public class CreateEventActivity extends AppCompatActivity {
     private MaterialButton btnCreateEvent;
     private MaterialButton btnSaveEvent;
     private SwitchMaterial switchPrivateEvent;
+    private SwitchMaterial switchRequireGeolocation;
 
     private final SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy  hh:mm a", Locale.getDefault());
 
@@ -107,6 +108,7 @@ public class CreateEventActivity extends AppCompatActivity {
             btnCreateEvent = findViewById(R.id.btnCreateEvent);
             btnSaveEvent = findViewById(R.id.btnSaveEvent);
             switchPrivateEvent = findViewById(R.id.switchPrivateEvent);
+            switchRequireGeolocation = findViewById(R.id.switchRequireGeolocation);
 
             btnCreateEvent.setOnClickListener(v -> saveEvent(true));
             btnSaveEvent.setOnClickListener(v -> saveEvent(false));
@@ -178,6 +180,9 @@ public class CreateEventActivity extends AppCompatActivity {
         String waitlistStr = waitlistLimitInput.getText().toString().trim();
         if (!waitlistStr.isEmpty()) newEvent.setMaxWaitlistCapacity(Integer.parseInt(waitlistStr));
 
+        boolean geolocationRequired = switchRequireGeolocation != null && switchRequireGeolocation.isChecked();
+        newEvent.setGeolocationRequired(geolocationRequired);
+
         Toast.makeText(this, "Creating event...", Toast.LENGTH_SHORT).show();
 
         if (selectedImageUri != null) {
@@ -196,20 +201,9 @@ public class CreateEventActivity extends AppCompatActivity {
                             event.setPosterUrl(uri.toString());
                             saveEventToFirestore(event, generateQr);
                         })
-                        .addOnFailureListener(e -> {
-                            Log.e(TAG, "Poster uploaded but failed to fetch download URL", e);
-                            Toast.makeText(this,
-                                    "Uploaded poster, but failed to get URL. Creating event without poster.",
-                                    Toast.LENGTH_LONG).show();
-                            saveEventToFirestore(event, generateQr);
-                        }))
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Poster upload failed", e);
-                    Toast.makeText(this,
-                            "Image upload failed: " + e.getMessage() + ". Creating event without poster.",
-                            Toast.LENGTH_LONG).show();
-                    saveEventToFirestore(event, generateQr);
-                });
+                        .addOnFailureListener(e -> saveEventToFirestore(event, generateQr)))
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Image upload failed", Toast.LENGTH_LONG).show());
     }
 
     private void saveEventToFirestore(Event event, boolean generateQr) {

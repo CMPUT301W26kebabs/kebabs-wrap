@@ -36,7 +36,6 @@ public class ManageEventActivity extends AppCompatActivity {
 
     private String eventId;
     private String eventName;
-    private String eventLocation;
     private TextView textEventTitle;
     private TextView textListHeader;
     private TextView badgeTotal;
@@ -125,8 +124,8 @@ public class ManageEventActivity extends AppCompatActivity {
         btnDownload.setOnClickListener(v -> exportFinalRosterCsv()); // Now the blue icon downloads the CSV!
 
         ImageButton btnLocation = findViewById(R.id.btn_action_location);
-        btnLocation.setContentDescription("Open location in Maps");
-        btnLocation.setOnClickListener(v -> openLocationInMaps());
+        btnLocation.setContentDescription("Open entrant location map");
+        btnLocation.setOnClickListener(v -> openEntrantMap());
 
         ImageButton btnChat = findViewById(R.id.btn_action_chat);
         btnChat.setOnClickListener(v -> {
@@ -199,8 +198,6 @@ public class ManageEventActivity extends AppCompatActivity {
                         eventName = loadedName;
                         textEventTitle.setText(loadedName);
                     }
-                    String loc = doc.getString("location");
-                    eventLocation = loc != null ? loc.trim() : null;
                     Long cap = doc.getLong("capacity");
                     if (cap != null && cap > 0) {
                         eventCapacity = cap.intValue();
@@ -599,38 +596,11 @@ public class ManageEventActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void openLocationInMaps() {
-        if (eventLocation == null || eventLocation.isEmpty()) {
-            Toast.makeText(this, "Loading location…", Toast.LENGTH_SHORT).show();
-            db.collection("events").document(eventId).get()
-                    .addOnSuccessListener(doc -> {
-                        if (doc.exists()) {
-                            String loc = doc.getString("location");
-                            eventLocation = loc != null ? loc.trim() : null;
-                        }
-                        launchMapsForLocation();
-                    });
-            return;
-        }
-        launchMapsForLocation();
-    }
-
-    private void launchMapsForLocation() {
-        if (eventLocation == null || eventLocation.isEmpty()) {
-            Toast.makeText(this, "No location set for this event.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(eventLocation));
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        intent.setPackage("com.google.android.apps.maps");
-        if (intent.resolveActivity(getPackageManager()) == null) {
-            intent.setPackage(null);
-        }
-        try {
-            startActivity(intent);
-        } catch (Exception e) {
-            Toast.makeText(this, "Could not open maps.", Toast.LENGTH_SHORT).show();
-        }
+    private void openEntrantMap() {
+        Intent intent = new Intent(this, EntrantMapActivity.class);
+        intent.putExtra("EVENT_ID", eventId);
+        intent.putExtra("EVENT_NAME", eventName != null ? eventName : "Event");
+        startActivity(intent);
     }
 
     private void shareCurrentTabList() {

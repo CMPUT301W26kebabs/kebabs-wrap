@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,9 +25,11 @@ import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
+    private static final String TAG = "HomeActivity";
 
     private TextView tvWelcome;
     private RecyclerView rvUpcoming, rvNearby;
@@ -37,7 +41,10 @@ public class HomeActivity extends AppCompatActivity {
     private TextView tvLotteryEvent;
     private List<DocumentSnapshot> allEvents = new ArrayList<>();
     private String currentSearchQuery = "";
+    private boolean filterOpenReg = false;
+    private boolean filterHasCapacity = false;
     private ListenerRegistration eventsListener;
+    private boolean hasShownEventsLoadError = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,9 +89,8 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.see_all_upcoming).setOnClickListener(v -> openBrowse("Upcoming Events"));
         findViewById(R.id.see_all_nearby).setOnClickListener(v -> openBrowse("Nearby You"));
 
-        // Filters
-        findViewById(R.id.btn_filters).setOnClickListener(v ->
-                Toast.makeText(this, "Filter by date or location coming soon", Toast.LENGTH_SHORT).show());
+        // Filters — US 01.01.04: dialog with Open Registration + Has Capacity
+        findViewById(R.id.btn_filters).setOnClickListener(v -> showFilterDialog());
 
         // Lottery banner
         lotteryBanner.setOnClickListener(v -> openPendingInvite());
@@ -186,8 +192,17 @@ public class HomeActivity extends AppCompatActivity {
         eventsListener = mainRepo.getDb().collection("events")
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null || snapshot == null) {
+                        Log.e(TAG, "Failed to load events", error);
+                        if (!hasShownEventsLoadError) {
+                            Toast.makeText(this,
+                                    "Could not load events from Firebase: " +
+                                            (error != null && error.getMessage() != null ? error.getMessage() : "unknown error"),
+                                    Toast.LENGTH_LONG).show();
+                            hasShownEventsLoadError = true;
+                        }
                         return;
                     }
+                    hasShownEventsLoadError = false;
                     List<DocumentSnapshot> active = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
                         Boolean isDeleted = doc.getBoolean("isDeleted");
@@ -215,20 +230,65 @@ public class HomeActivity extends AppCompatActivity {
     private void filterAndUpdateLists(String query) {
         List<DocumentSnapshot> filtered = new ArrayList<>();
         String q = query.toLowerCase();
+        Date now = new Date();
+
         for (DocumentSnapshot doc : allEvents) {
-            if (q.isEmpty()) {
-                filtered.add(doc);
-            } else {
+            // Keyword search: match name, location, or description
+            if (!q.isEmpty()) {
                 String name = doc.getString("name");
                 String loc = doc.getString("location");
-                if ((name != null && name.toLowerCase().contains(q))
-                        || (loc != null && loc.toLowerCase().contains(q))) {
-                    filtered.add(doc);
-                }
+                String desc = doc.getString("description");
+                boolean match = (name != null && name.toLowerCase().contains(q))
+                        || (loc != null && loc.toLowerCase().contains(q))
+                        || (desc != null && desc.toLowerCase().contains(q));
+                if (!match) continue;
             }
+
+            // Filter: open registration
+            if (filterOpenReg) {
+                Timestamp regStart = doc.getTimestamp("registrationStart");
+                Timestamp regEnd = doc.getTimestamp("registrationEnd");
+                boolean hasWindow = regStart != null || regEnd != null;
+                if (!hasWindow) continue;
+                if (regStart != null && now.before(regStart.toDate())) continue;
+                if (regEnd != null && now.after(regEnd.toDate())) continue;
+            }
+
+            // Filter: has capacity
+            if (filterHasCapacity) {
+                Long capacity = doc.getLong("capacity");
+                if (capacity != null && capacity <= 0) continue;
+            }
+
+            filtered.add(doc);
         }
         upcomingAdapter.updateList(filtered);
         nearbyAdapter.updateList(filtered);
+    }
+
+    /**
+     * US 01.01.04 — Shows a filter dialog with checkboxes for Open Registration and Has Capacity.
+     */
+    private void showFilterDialog() {
+        String[] filterLabels = {"Open Registration", "Has Capacity"};
+        boolean[] checked = {filterOpenReg, filterHasCapacity};
+
+        new AlertDialog.Builder(this)
+                .setTitle("Filter Events")
+                .setMultiChoiceItems(filterLabels, checked, (dialog, which, isChecked) -> {
+                    checked[which] = isChecked;
+                })
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    filterOpenReg = checked[0];
+                    filterHasCapacity = checked[1];
+                    filterAndUpdateLists(currentSearchQuery);
+                })
+                .setNegativeButton("Reset", (dialog, which) -> {
+                    filterOpenReg = false;
+                    filterHasCapacity = false;
+                    filterAndUpdateLists(currentSearchQuery);
+                })
+                .show();
     }
 
     private void openEventDetails(DocumentSnapshot doc) {

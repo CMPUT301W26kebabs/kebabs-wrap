@@ -1,5 +1,7 @@
 package com.example.eventmanager;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -9,7 +11,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,10 +22,14 @@ import com.bumptech.glide.Glide;
 import com.example.eventmanager.adapters.EventCommentAdapter;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.EventComment;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 
@@ -32,6 +41,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Activity spanning comprehensive event interaction including viewing details,
+ * engaging with the waiting list, reviewing lottery guidelines, and browsing live comments.
+ * Supports User Stories: US 01.01.01 (View Details), US 01.01.02 (Leave Waitlist), US 01.05.05 (Guidelines).
+ */
 public class EventDetailsActivity extends AppCompatActivity {
 
     private String eventId;
@@ -40,6 +54,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private TextView tvEventName, tvEventDate, tvEventLocation;
     private TextView tvEventDescription, tvOrganizerName;
     private TextView tvGoingCount;
+    private TextView tvLotteryGuidelines;
     private Button btnJoinWaitlist;
     private ImageView ivPoster;
     private EditText commentInput;
@@ -49,15 +64,43 @@ public class EventDetailsActivity extends AppCompatActivity {
     private EventCommentAdapter commentAdapter;
     private ListenerRegistration commentsListener;
     private boolean alreadyJoined = false;
+    private boolean isOnWaitingList = false;
     private Date registrationStart;
     private Date registrationEnd;
+    private FusedLocationProviderClient fusedLocationClient;
+    private Runnable pendingLocationPermissionAction;
+    private final ActivityResultLauncher<String[]> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                boolean grantedFine = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_FINE_LOCATION));
+                boolean grantedCoarse = Boolean.TRUE.equals(result.get(Manifest.permission.ACCESS_COARSE_LOCATION));
+                if (grantedFine || grantedCoarse) {
+                    if (pendingLocationPermissionAction != null) {
+                        Runnable action = pendingLocationPermissionAction;
+                        pendingLocationPermissionAction = null;
+                        action.run();
+                    }
+                    return;
+                }
+                pendingLocationPermissionAction = null;
+                setJoinButtonState("LOCATION REQUIRED", true, R.drawable.bg_button_gradient_purple);
+                Toast.makeText(this, "Location permission is required to join this event.", Toast.LENGTH_LONG).show();
+            });
+    private int eventCapacity = 0;
+    private int eventMaxWaitlist = 0;
 
+    /**
+     * Bootstraps the visual layout and maps intent parameters to Firestore data loads.
+     * Hooks all button interactions and listeners.
+     *
+     * @param savedInstanceState Persisted bundle state during configuration changes.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_event_details);
 
         db = FirebaseFirestore.getInstance();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         eventId = getIntent().getStringExtra("EVENT_ID");
         deviceId = new DeviceAuthManager().getDeviceId(this);
 
@@ -71,6 +114,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         tvOrganizerName = findViewById(R.id.eventOrganizerText);
         tvGoingCount = findViewById(R.id.tvGoingCount);
         btnJoinWaitlist = findViewById(R.id.leaveWaitlistButton);
+        tvLotteryGuidelines = findViewById(R.id.tvLotteryGuidelines);
         commentInput = findViewById(R.id.commentInput);
         sendCommentButton = findViewById(R.id.sendCommentButton);
         commentsRecyclerView = findViewById(R.id.commentsRecyclerView);
@@ -96,8 +140,8 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
 
         if (btnJoinWaitlist != null) {
-            btnJoinWaitlist.setOnClickListener(v -> joinWaitingList());
-            setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
+            btnJoinWaitlist.setOnClickListener(v -> onWaitlistButtonClicked());
+            setJoinButtonState("LOADING...", false, R.drawable.bg_join_button);
         }
 
         if (eventId != null) {
@@ -140,6 +184,15 @@ public class EventDetailsActivity extends AppCompatActivity {
                         tvEventDate.setText("Date TBA");
                     }
 
+                    // Capacity fields for guidelines
+                    Long cap = doc.getLong("capacity");
+                    Long maxWl = doc.getLong("maxWaitlistCapacity");
+                    eventCapacity = cap != null ? cap.intValue() : 0;
+                    eventMaxWaitlist = maxWl != null ? maxWl.intValue() : 0;
+
+                    // US 01.05.05 — Dynamic lottery guidelines
+                    updateLotteryGuidelines();
+
                     // Location
                     String location = doc.getString("location");
                     tvEventLocation.setText(location != null && !location.trim().isEmpty()
@@ -176,6 +229,11 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Asynchronously discovers and loads the exact semantic name of the underlying organizer.
+     *
+     * @param organizerId The device ID of the user hosting this specific event.
+     */
     private void loadOrganizerName(String organizerId) {
         db.collection("users").document(organizerId).get()
                 .addOnSuccessListener(doc -> {
@@ -188,6 +246,10 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Ascertains the aggregated sum of entrants populating the waiting list sub-collection.
+     * Evaluates independently and attaches result strings into the UI counter.
+     */
     private void loadGoingCount() {
         if (eventId == null || tvGoingCount == null) return;
         db.collection("events").document(eventId).collection("waitingList").get()
@@ -200,13 +262,18 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Performs synchronized multi-query validation to ensure button states reflect
+     * correct contexts (e.g. Joined, Enrolled, Selected, Leaves).
+     */
     private void checkIfAlreadyJoined() {
         db.collection("events").document(eventId).collection("waitingList")
                 .document(deviceId).get()
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         alreadyJoined = true;
-                        setJoinButtonState("ON WAITING LIST", false, R.drawable.bg_joined_button);
+                        isOnWaitingList = true;
+                        setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
                     }
                 });
 
@@ -216,6 +283,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         alreadyJoined = true;
+                        isOnWaitingList = false;
                         setJoinButtonState("ENROLLED", false, R.drawable.bg_joined_button);
                     }
                 });
@@ -225,11 +293,55 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         alreadyJoined = true;
+                        isOnWaitingList = false;
                         setJoinButtonState("INVITED", false, R.drawable.bg_joined_button);
                     }
                 });
     }
 
+    /**
+     * Handles the waitlist button click — delegates to join or leave based on current state.
+     */
+    private void onWaitlistButtonClicked() {
+        if (isOnWaitingList) {
+            leaveWaitingList();
+        } else {
+            joinWaitingList();
+        }
+    }
+
+    /**
+     * US 01.01.02 — Removes the current entrant from the event's waiting list.
+     */
+    private void leaveWaitingList() {
+        if (eventId == null) {
+            Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        setJoinButtonState("LEAVING...", false, R.drawable.bg_join_button);
+
+        db.collection("events").document(eventId).collection("waitingList")
+                .document(deviceId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    alreadyJoined = false;
+                    isOnWaitingList = false;
+                    Toast.makeText(this, "You left the waiting list.", Toast.LENGTH_SHORT).show();
+                    loadGoingCount();
+                    updateJoinButtonForRegistrationWindow();
+                })
+                .addOnFailureListener(e -> {
+                    // Restore leave button on failure
+                    setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
+                    Toast.makeText(this, "Failed to leave: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    /**
+     * Executes robust pre-condition logic asserting the legitimacy of a user joining
+     * the event pool. Handles max waitlist scenarios and missing requirements.
+     */
     private void joinWaitingList() {
         if (eventId == null) {
             Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
@@ -251,11 +363,8 @@ public class EventDetailsActivity extends AppCompatActivity {
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(eventDoc -> {
                     Boolean geolocationRequired = eventDoc.getBoolean("geolocationRequired");
-                    if (Boolean.TRUE.equals(geolocationRequired) || Boolean.TRUE.equals(eventDoc.getBoolean("isGeolocationRequired"))) {
-                        setJoinButtonState("LOCATION REQUIRED", false, R.drawable.bg_join_button);
-                        Toast.makeText(this, "This event requires geolocation verification before joining.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
+                    boolean requiresGeo = Boolean.TRUE.equals(geolocationRequired)
+                            || Boolean.TRUE.equals(eventDoc.getBoolean("isGeolocationRequired"));
 
                     Long maxWaitlist = eventDoc.getLong("maxWaitlistCapacity");
 
@@ -266,7 +375,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                                         setJoinButtonState("WAITLIST FULL", false, R.drawable.bg_join_button);
                                         Toast.makeText(this, "Waiting list is full!", Toast.LENGTH_LONG).show();
                                     } else {
-                                        executeJoin();
+                                        executeJoin(requiresGeo);
                                     }
                                 })
                                 .addOnFailureListener(e -> {
@@ -274,7 +383,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                                     Toast.makeText(this, "Failed to verify waitlist size.", Toast.LENGTH_LONG).show();
                                 });
                     } else {
-                        executeJoin();
+                        executeJoin(requiresGeo);
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -283,10 +392,71 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
-    private void executeJoin() {
+    private void executeJoin(boolean geolocationRequired) {
+        if (geolocationRequired) {
+            collectLocationThenJoin();
+            return;
+        }
+        writeJoinToFirestore(null);
+    }
+
+    private void collectLocationThenJoin() {
+        if (hasLocationPermission()) {
+            fetchCurrentLocation();
+            return;
+        }
+        pendingLocationPermissionAction = this::fetchCurrentLocation;
+        locationPermissionLauncher.launch(new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        });
+    }
+
+    private boolean hasLocationPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void fetchCurrentLocation() {
+        setJoinButtonState("GETTING LOCATION...", false, R.drawable.bg_join_button);
+        CancellationTokenSource cts = new CancellationTokenSource();
+        fusedLocationClient.getCurrentLocation(com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, cts.getToken())
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        writeJoinToFirestore(new GeoPoint(location.getLatitude(), location.getLongitude()));
+                    } else {
+                        fetchLastKnownLocationFallback();
+                    }
+                })
+                .addOnFailureListener(e -> fetchLastKnownLocationFallback());
+    }
+
+    private void fetchLastKnownLocationFallback() {
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        writeJoinToFirestore(new GeoPoint(location.getLatitude(), location.getLongitude()));
+                    } else {
+                        setJoinButtonState("LOCATION REQUIRED", true, R.drawable.bg_button_gradient_purple);
+                        Toast.makeText(this, "Could not get your location. Please enable location and try again.", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    setJoinButtonState("LOCATION REQUIRED", true, R.drawable.bg_button_gradient_purple);
+                    Toast.makeText(this, "Could not get your location. Please try again.", Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private void writeJoinToFirestore(GeoPoint entrantGeoPoint) {
         Map<String, Object> data = new HashMap<>();
         data.put("deviceId", deviceId);
         data.put("joinedAt", FieldValue.serverTimestamp());
+        if (entrantGeoPoint != null) {
+            data.put("location", entrantGeoPoint);
+            data.put("latitude", entrantGeoPoint.getLatitude());
+            data.put("longitude", entrantGeoPoint.getLongitude());
+            data.put("locationCapturedAt", FieldValue.serverTimestamp());
+        }
 
         // Also fetch user name/email
         db.collection("users").document(deviceId).get()
@@ -303,7 +473,8 @@ public class EventDetailsActivity extends AppCompatActivity {
                             .set(data)
                             .addOnSuccessListener(aVoid -> {
                                 alreadyJoined = true;
-                                setJoinButtonState("ON WAITING LIST", false, R.drawable.bg_joined_button);
+                                isOnWaitingList = true;
+                                setJoinButtonState("LEAVE WAITING LIST", true, R.drawable.bg_primary_button);
                                 Toast.makeText(this, "You joined the waiting list!", Toast.LENGTH_SHORT).show();
                                 loadGoingCount();
                             })
@@ -314,6 +485,10 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Re-renders the core visual state of the waitlist button conditionally based upon
+     * overarching temporal constraints matching the registration period boundaries.
+     */
     private void updateJoinButtonForRegistrationWindow() {
         if (alreadyJoined) {
             return;
@@ -325,6 +500,12 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Extrapolates time metrics against the localized operating system clock to decide
+     * if the event spans its designated availability window.
+     *
+     * @return TRUE if the current moment lands within the event configuration dates.
+     */
     private boolean isRegistrationOpen() {
         Date now = new Date();
         if (registrationStart != null && now.before(registrationStart)) {
@@ -336,6 +517,12 @@ public class EventDetailsActivity extends AppCompatActivity {
         return registrationStart != null || registrationEnd != null;
     }
 
+    /**
+     * Composes specialized textual rationale clarifying why a user is prevented
+     * from engaging during periods of registration closure.
+     *
+     * @return Specific closure messaging matching the clock variance.
+     */
     private String buildRegistrationClosedMessage() {
         Date now = new Date();
         if (registrationStart != null && now.before(registrationStart)) {
@@ -347,6 +534,13 @@ public class EventDetailsActivity extends AppCompatActivity {
         return "Registration is not available right now.";
     }
 
+    /**
+     * Programmatic mutator enforcing consistent button theming via a direct resource switch.
+     *
+     * @param label         String descriptor inside the button face.
+     * @param enabled       Whether click events are routed through the view.
+     * @param backgroundRes Expected drawn background identifier.
+     */
     private void setJoinButtonState(String label, boolean enabled, int backgroundRes) {
         if (btnJoinWaitlist == null) return;
         btnJoinWaitlist.setText(label);
@@ -356,6 +550,43 @@ public class EventDetailsActivity extends AppCompatActivity {
         btnJoinWaitlist.setBackgroundResource(backgroundRes);
     }
 
+    /**
+     * US 01.05.05 — Builds dynamic lottery criteria/guidelines text from event data.
+     */
+    private void updateLotteryGuidelines() {
+        if (tvLotteryGuidelines == null) return;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\u2022 Attendees are selected via random lottery from the waiting list.\n");
+        sb.append("\u2022 Joining the waiting list does not guarantee entry.\n");
+
+        if (eventCapacity > 0) {
+            sb.append("\u2022 Event capacity: ").append(eventCapacity).append(" spots.\n");
+        }
+        if (eventMaxWaitlist > 0) {
+            sb.append("\u2022 Waiting list limit: ").append(eventMaxWaitlist).append(" entrants.\n");
+        }
+
+        SimpleDateFormat fmt = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+        if (registrationStart != null && registrationEnd != null) {
+            sb.append("\u2022 Registration window: ")
+              .append(fmt.format(registrationStart))
+              .append(" \u2013 ")
+              .append(fmt.format(registrationEnd)).append(".\n");
+        } else if (registrationEnd != null) {
+            sb.append("\u2022 Registration closes: ").append(fmt.format(registrationEnd)).append(".\n");
+        }
+
+        sb.append("\u2022 If a selected entrant declines, a replacement may be drawn.\n");
+        sb.append("\u2022 Winners will be notified via the app.");
+
+        tvLotteryGuidelines.setText(sb.toString());
+    }
+
+    /**
+     * Triggers active realtime synchronization polling the "comments" node beneath the event graph.
+     * Dispatches list parsing dynamically to update user impressions instantaneously.
+     */
     private void attachCommentsListener() {
         if (eventId == null || commentsRecyclerView == null || commentAdapter == null) {
             return;
@@ -385,6 +616,10 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Prepares and launches the structured data package capturing a textual review or inquiry
+     * about the event, directly attaching it securely into the sub-collection tree.
+     */
     private void submitComment() {
         if (eventId == null || commentInput == null) {
             return;
@@ -442,6 +677,10 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Shuts down UI processes cleanly and detaches realtime snapshot polling listeners,
+     * maintaining high operational memory standards.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

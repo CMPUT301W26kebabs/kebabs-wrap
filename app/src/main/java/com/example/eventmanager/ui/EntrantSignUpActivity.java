@@ -23,8 +23,8 @@ import com.google.android.material.textfield.TextInputLayout;
 
 public class EntrantSignUpActivity extends AppCompatActivity {
 
-    private TextInputLayout nameInputLayout, emailInputLayout, passwordInputLayout;
-    private TextInputEditText nameInput, emailInput, passwordInput;
+    private TextInputLayout nameInputLayout, emailInputLayout;
+    private TextInputEditText nameInput, emailInput;
     private FirebaseRepository repository;
     private DeviceAuthManager authManager;
     private String deviceId;
@@ -46,10 +46,8 @@ public class EntrantSignUpActivity extends AppCompatActivity {
 
         nameInputLayout = findViewById(R.id.nameInputLayout);
         emailInputLayout = findViewById(R.id.emailInputLayout);
-        passwordInputLayout = findViewById(R.id.passwordInputLayout);
         nameInput = findViewById(R.id.nameInput);
         emailInput = findViewById(R.id.emailInput);
-        passwordInput = findViewById(R.id.passwordInput);
 
         MaterialButton signUpButton = findViewById(R.id.signUpButton);
         TextView loginLink = findViewById(R.id.loginLink);
@@ -64,8 +62,6 @@ public class EntrantSignUpActivity extends AppCompatActivity {
             signUpTitle.setText(R.string.edit_profile_title);
             signUpSubtitle.setText(R.string.edit_profile_subtitle);
             signUpButton.setText(R.string.save_profile);
-            passwordInputLayout.setVisibility(android.view.View.GONE);
-            findViewById(R.id.passwordHelperText).setVisibility(android.view.View.GONE);
             findViewById(R.id.termsText).setVisibility(android.view.View.GONE);
             findViewById(R.id.orSignUpWithDivider).setVisibility(android.view.View.GONE);
             findViewById(R.id.socialButtonsContainer).setVisibility(android.view.View.GONE);
@@ -112,13 +108,13 @@ public class EntrantSignUpActivity extends AppCompatActivity {
         clearErrors();
         String name = getText(nameInput);
         String email = getText(emailInput);
-        String password = getText(passwordInput);
 
         boolean hasError = false;
         if (name.isEmpty()) { nameInputLayout.setError(getString(R.string.name_required_error)); hasError = true; }
-        if (email.isEmpty()) { emailInputLayout.setError(getString(R.string.email_required_error)); hasError = true; }
-        else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) { emailInputLayout.setError(getString(R.string.email_invalid_error)); hasError = true; }
-        if (!isEditProfileMode && password.length() < 8) { passwordInputLayout.setError(getString(R.string.password_required_error)); hasError = true; }
+        if (!email.isEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailInputLayout.setError(getString(R.string.email_invalid_error));
+            hasError = true;
+        }
         if (hasError) return;
 
         Entrant entrant = new Entrant(deviceId);
@@ -138,7 +134,12 @@ public class EntrantSignUpActivity extends AppCompatActivity {
             }
             @Override
             public void onError(Exception e) {
-                Toast.makeText(EntrantSignUpActivity.this, R.string.profile_save_error, Toast.LENGTH_SHORT).show();
+                String details = e != null && e.getMessage() != null ? e.getMessage() : "";
+                Toast.makeText(
+                        EntrantSignUpActivity.this,
+                        getString(R.string.profile_save_error) + (details.isEmpty() ? "" : (": " + details)),
+                        Toast.LENGTH_LONG
+                ).show();
             }
         });
     }
@@ -163,7 +164,6 @@ public class EntrantSignUpActivity extends AppCompatActivity {
     private void clearErrors() {
         nameInputLayout.setError(null);
         emailInputLayout.setError(null);
-        passwordInputLayout.setError(null);
     }
 
     private String getText(TextInputEditText input) {
