@@ -479,8 +479,15 @@ public class EventRepository {
                 });
     }
 
+    /**
+     * Resolves canonical device id for sub-collection docs. Matches {@link LotteryManager}
+     * ({@code deviceIdFromWaitlistDoc}): trim non-empty field, otherwise document id.
+     */
     private String extractDeviceId(@NonNull DocumentSnapshot doc) {
-        String deviceId = doc.getString("deviceId");
-        return deviceId != null ? deviceId : doc.getId();
+        String fromField = doc.getString("deviceId");
+        if (fromField != null && !fromField.trim().isEmpty()) {
+            return fromField.trim();
+        }
+        return doc.getId();
     }
 }

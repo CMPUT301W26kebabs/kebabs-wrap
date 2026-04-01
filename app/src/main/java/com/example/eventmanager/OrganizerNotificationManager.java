@@ -141,6 +141,10 @@ public class OrganizerNotificationManager {
      * Flow: getWinners() → loop → addNotification() for each deviceId
      *
      * US 02.05.01
+     * <p>
+     * <b>Note:</b> Running the lottery already sends the same template to new winners via
+     * {@link #notifyAfterLotteryDraw}. Using this right after a draw will duplicate those
+     * in-app notifications for everyone still in {@code selected}.
      *
      * @param eventId   The Firestore document ID of the event.
      * @param eventName The human-readable event name shown in the notification.
@@ -209,8 +213,11 @@ public class OrganizerNotificationManager {
         String body = "You were chosen to attend " + eventName + ". Tap to respond.";
 
         for (String deviceId : deviceIds) {
+            if (deviceId == null || deviceId.trim().isEmpty()) {
+                continue;
+            }
             Notification notification = new Notification(title, body, eventName, eventId);
-            sendIfOptedIn(deviceId, notification);
+            sendIfOptedIn(deviceId.trim(), notification);
         }
 
         Log.d(TAG, "Selected entrants notified (explicit list): " + deviceIds.size());
@@ -300,28 +307,32 @@ public class OrganizerNotificationManager {
             }
         }
 
-        notifySelectedDeviceIds(eventId, eventName, winnerDeviceIds, new NotificationDispatchCallback() {
-            @Override
-            public void onSuccess(int winnerCount) {
-                notifyNotChosenAfterLottery(eventId, eventName, excludeLosersForWinners,
-                        new NotificationDispatchCallback() {
-                            @Override
-                            public void onSuccess(int loserCount) {
-                                callback.onSuccess(winnerCount + loserCount);
-                            }
+        // Notify waitlist losers first, then winners. Same total sends as before, but the
+        // winner invite is written last so it sorts to the top (newest-first) and avoids an
+        // extra "selected" doc feeling like the primary update when something else also writes.
+        notifyNotChosenAfterLottery(eventId, eventName, excludeLosersForWinners,
+                new NotificationDispatchCallback() {
+                    @Override
+                    public void onSuccess(int loserCount) {
+                        notifySelectedDeviceIds(eventId, eventName, winnerDeviceIds,
+                                new NotificationDispatchCallback() {
+                                    @Override
+                                    public void onSuccess(int winnerCount) {
+                                        callback.onSuccess(winnerCount + loserCount);
+                                    }
 
-                            @Override
-                            public void onFailure(@NonNull String message) {
-                                callback.onSuccess(winnerCount);
-                            }
-                        });
-            }
+                                    @Override
+                                    public void onFailure(@NonNull String message) {
+                                        callback.onSuccess(loserCount);
+                                    }
+                                });
+                    }
 
-            @Override
-            public void onFailure(@NonNull String message) {
-                notifyNotChosenAfterLottery(eventId, eventName, excludeLosersForWinners, callback);
-            }
-        });
+                    @Override
+                    public void onFailure(@NonNull String message) {
+                        notifySelectedDeviceIds(eventId, eventName, winnerDeviceIds, callback);
+                    }
+                });
     }
 
     /**
