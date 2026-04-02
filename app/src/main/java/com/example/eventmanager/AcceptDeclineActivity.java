@@ -8,19 +8,21 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
- * Shown when a user taps a winner notification.
+ * Shown when a user taps an invitation notification.
  * Presents the event name and two choices: Accept or Decline.
  *
  * Accept flow:
- *   enrollUser() → removeFromWinners() → finish()
+ *   If private invite ({@code inviteeList}): {@code acceptInviteToWaitingList()}.
+ *   If lottery winner ({@code selected}): {@code enrollUser()} → enrolled.
  *
  * Decline flow:
- *   removeFromWinners() → removeFromWaitingList() → finish()
- *
- * Covers US 01.05.02 (Accept) and US 01.05.03 (Decline)
+ *   {@code declineInvitation()} (clears invitee or selected, records cancelled).
  */
 public class AcceptDeclineActivity extends AppCompatActivity {
 
@@ -58,35 +60,81 @@ public class AcceptDeclineActivity extends AppCompatActivity {
         Button btnAccept  = findViewById(R.id.btn_accept);
         Button btnDecline = findViewById(R.id.btn_decline);
 
-        FirebaseFirestore.getInstance()
-                .collection("events").document(eventId).collection("selected").document(deviceId)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) {
-                        btnAccept.setEnabled(false);
-                        btnDecline.setEnabled(false);
-                        Toast.makeText(this,
-                                "This invitation is no longer active.",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Task<DocumentSnapshot> taskInv =
+                db.collection("events").document(eventId).collection("inviteeList").document(deviceId).get();
+        Task<DocumentSnapshot> taskSel =
+                db.collection("events").document(eventId).collection("selected").document(deviceId).get();
+        Tasks.whenAllComplete(taskInv, taskSel).addOnCompleteListener(t -> {
+            if (!taskInv.isSuccessful() || !taskSel.isSuccessful()) {
+                return;
+            }
+            DocumentSnapshot inv = taskInv.getResult();
+            DocumentSnapshot sel = taskSel.getResult();
+            boolean active = (inv != null && inv.exists()) || (sel != null && sel.exists());
+            if (!active) {
+                btnAccept.setEnabled(false);
+                btnDecline.setEnabled(false);
+                Toast.makeText(this,
+                        "This invitation is no longer active.",
+                        Toast.LENGTH_LONG).show();
+            }
+        });
 
         // ── Accept ──────────────────────────────────────────────────────────
         btnAccept.setOnClickListener(v -> {
             btnAccept.setEnabled(false);
             btnDecline.setEnabled(false);
-            eventRepository.enrollUser(eventId, deviceId, new EventRepository.OperationCallback() {
-                @Override
-                public void onSuccess() {
-                    Toast.makeText(AcceptDeclineActivity.this, "Invitation accepted.", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-
-                @Override
-                public void onFailure(String message) {
+            Task<DocumentSnapshot> invGet = db.collection("events").document(eventId)
+                    .collection("inviteeList").document(deviceId).get();
+            Task<DocumentSnapshot> selGet = db.collection("events").document(eventId)
+                    .collection("selected").document(deviceId).get();
+            Tasks.whenAllComplete(invGet, selGet).addOnCompleteListener(ignored -> {
+                if (!invGet.isSuccessful() || !selGet.isSuccessful()) {
                     btnAccept.setEnabled(true);
                     btnDecline.setEnabled(true);
-                    Toast.makeText(AcceptDeclineActivity.this, message, Toast.LENGTH_LONG).show();
+                    Toast.makeText(AcceptDeclineActivity.this, "Could not verify invitation.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                DocumentSnapshot inv = invGet.getResult();
+                DocumentSnapshot sel = selGet.getResult();
+                boolean fromInvitee = inv != null && inv.exists();
+                boolean fromSelected = sel != null && sel.exists();
+                if (fromInvitee) {
+                    eventRepository.acceptInviteToWaitingList(eventId, deviceId, new EventRepository.OperationCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Toast.makeText(AcceptDeclineActivity.this, "You joined the waiting list.", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onFailure(String message) {
+                            btnAccept.setEnabled(true);
+                            btnDecline.setEnabled(true);
+                            Toast.makeText(AcceptDeclineActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } else if (fromSelected) {
+                    eventRepository.enrollUser(eventId, deviceId, new EventRepository.OperationCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Toast.makeText(AcceptDeclineActivity.this, "Invitation accepted.", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }
+
+                        @Override
+                        public void onFailure(String message) {
+                            btnAccept.setEnabled(true);
+                            btnDecline.setEnabled(true);
+                            Toast.makeText(AcceptDeclineActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } else {
+                    btnAccept.setEnabled(true);
+                    btnDecline.setEnabled(true);
+                    Toast.makeText(AcceptDeclineActivity.this,
+                            "This invitation is no longer active.", Toast.LENGTH_LONG).show();
                 }
             });
         });

@@ -12,6 +12,7 @@ public class RegistrationHistoryItem {
     public enum RegistrationStatus {
         WAITING_LIST,
         SELECTED,
+        INVITED,
         ENROLLED,
         CANCELLED
     }

@@ -387,6 +387,16 @@ public class EventDetailsActivity extends AppCompatActivity {
                         setJoinButtonState("INVITED", false, R.drawable.bg_joined_button);
                     }
                 });
+
+        db.collection("events").document(eventId).collection("inviteeList")
+                .document(deviceId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        alreadyJoined = true;
+                        isOnWaitingList = false;
+                        setJoinButtonState("INVITED", false, R.drawable.bg_joined_button);
+                    }
+                });
     }
 
     /**

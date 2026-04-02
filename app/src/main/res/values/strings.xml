@@ -61,6 +61,7 @@
     <string name="registration_status_not_selected">NOT SELECTED</string>
     <string name="registration_status_enrolled">ENROLLED</string>
     <string name="registration_status_cancelled">CANCELLED</string>
+    <string name="registration_status_invited">INVITED (PENDING)</string>
     <string name="registration_history_date_unknown">Date TBD</string>
     <string name="registration_history_load_error">Could not load registration history</string>
 

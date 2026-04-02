@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Activity for inviting specific entrants to a private event's waiting list
- * and assigning top-level system entrants as co-organizers.
+ * Activity for inviting specific entrants to a private event (stored in {@code inviteeList}
+ * until they accept or decline) and assigning users as co-organizers.
  * Supports User Stories: US 02.01.03 (Invite to Waiting List) and US 02.09.01 (Co-organizer Assignment).
  */
 public class InviteGuestsActivity extends AppCompatActivity implements GuestInviteAdapter.OnGuestActionListener {
@@ -178,8 +178,8 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
     }
 
     /**
-     * Invites the requested user directly to the event's localized waiting list securely.
-     * Conducts deep cross-validation to prevent inviting already-enrolled participants.
+     * Adds the user to {@code events/{eventId}/inviteeList} and sends a notification.
+     * Skips users already on the waiting list, invitee list, lottery selection, or enrolled.
      *
      * @param userDoc A Firestore DocumentSnapshot containing the exact user's data object.
      */
@@ -191,56 +191,66 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
             return;
         }
 
-        // Check if already selected (already invited and pending response)
-        db.collection("events").document(eventId).collection("selected")
+        db.collection("events").document(eventId).collection("inviteeList")
                 .document(targetDeviceId).get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
+                .addOnSuccessListener(inviteeDoc -> {
+                    if (inviteeDoc.exists()) {
                         Toast.makeText(this, "Already invited for this event", Toast.LENGTH_SHORT).show();
                         return;
                     }
-
-                    // Check enrolled to prevent duplicate acceptance states.
-                    db.collection("events").document(eventId).collection("enrolled")
+                    db.collection("events").document(eventId).collection("waitingList")
                             .document(targetDeviceId).get()
-                            .addOnSuccessListener(enrolledDoc -> {
-                                if (enrolledDoc.exists()) {
-                                    Toast.makeText(this, "Already enrolled in this event", Toast.LENGTH_SHORT).show();
+                            .addOnSuccessListener(waitDoc -> {
+                                if (waitDoc.exists()) {
+                                    Toast.makeText(this, "Already on the waiting list", Toast.LENGTH_SHORT).show();
                                     return;
                                 }
+                                db.collection("events").document(eventId).collection("selected")
+                                        .document(targetDeviceId).get()
+                                        .addOnSuccessListener(selectedDoc -> {
+                                            if (selectedDoc.exists()) {
+                                                Toast.makeText(this, "Already chosen from the lottery", Toast.LENGTH_SHORT).show();
+                                                return;
+                                            }
+                                            db.collection("events").document(eventId).collection("enrolled")
+                                                    .document(targetDeviceId).get()
+                                                    .addOnSuccessListener(enrolledDoc -> {
+                                                        if (enrolledDoc.exists()) {
+                                                            Toast.makeText(this, "Already enrolled in this event", Toast.LENGTH_SHORT).show();
+                                                            return;
+                                                        }
 
-                                // Re-invite flow: move user to selected, remove stale waiting/cancelled docs.
-                                Map<String, Object> data = new HashMap<>();
-                                data.put("deviceId", targetDeviceId);
-                                String name = userDoc.getString("name");
-                                String email = userDoc.getString("email");
-                                if (name != null) data.put("name", name);
-                                if (email != null) data.put("email", email);
-                                data.put("invitedAt", FieldValue.serverTimestamp());
-                                data.put("inviteSource", "organizer");
+                                                        Map<String, Object> data = new HashMap<>();
+                                                        data.put("deviceId", targetDeviceId);
+                                                        String name = userDoc.getString("name");
+                                                        String email = userDoc.getString("email");
+                                                        if (name != null) data.put("name", name);
+                                                        if (email != null) data.put("email", email);
+                                                        data.put("invitedAt", FieldValue.serverTimestamp());
+                                                        data.put("inviteSource", "organizer");
 
-                                WriteBatch batch = db.batch();
-                                batch.set(db.collection("events").document(eventId)
-                                        .collection("selected").document(targetDeviceId), data);
-                                batch.delete(db.collection("events").document(eventId)
-                                        .collection("waitingList").document(targetDeviceId));
-                                batch.delete(db.collection("events").document(eventId)
-                                        .collection("cancelled").document(targetDeviceId));
+                                                        WriteBatch batch = db.batch();
+                                                        batch.set(db.collection("events").document(eventId)
+                                                                .collection("inviteeList").document(targetDeviceId), data);
+                                                        batch.delete(db.collection("events").document(eventId)
+                                                                .collection("cancelled").document(targetDeviceId));
 
-                                batch.commit()
-                                        .addOnSuccessListener(aVoid -> {
-                                            String safeEventName = (eventName != null && !eventName.trim().isEmpty()) ? eventName : "Event";
-                                            Notification notification = new Notification(
-                                                    "You are invited!",
-                                                    "Tap to accept or decline your invitation to " + safeEventName + ".",
-                                                    safeEventName,
-                                                    eventId
-                                            );
-                                            notificationRepository.addNotification(targetDeviceId, notification);
-                                            Toast.makeText(this, (name != null ? name : "User") + " invited successfully", Toast.LENGTH_SHORT).show();
-                                        })
-                                        .addOnFailureListener(e ->
-                                                Toast.makeText(this, "Failed to invite: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                                                        batch.commit()
+                                                                .addOnSuccessListener(aVoid -> {
+                                                                    String safeEventName = (eventName != null && !eventName.trim().isEmpty()) ? eventName : "Event";
+                                                                    Notification notification = new Notification(
+                                                                            "You are invited!",
+                                                                            "Tap to accept or decline your invitation to " + safeEventName + ".",
+                                                                            safeEventName,
+                                                                            eventId
+                                                                    );
+                                                                    notificationRepository.addNotification(targetDeviceId, notification);
+                                                                    Toast.makeText(this, (name != null ? name : "User") + " invited successfully", Toast.LENGTH_SHORT).show();
+                                                                })
+                                                                .addOnFailureListener(e ->
+                                                                        Toast.makeText(this, "Failed to invite: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                                                    });
+                                        });
                             });
                 })
                 .addOnFailureListener(e ->
@@ -292,6 +302,8 @@ public class InviteGuestsActivity extends AppCompatActivity implements GuestInvi
                             .collection("waitingList").document(targetDeviceId));
                     batch.delete(db.collection("events").document(eventId)
                             .collection("selected").document(targetDeviceId));
+                    batch.delete(db.collection("events").document(eventId)
+                            .collection("inviteeList").document(targetDeviceId));
                     batch.delete(db.collection("events").document(eventId)
                             .collection("cancelled").document(targetDeviceId));
 

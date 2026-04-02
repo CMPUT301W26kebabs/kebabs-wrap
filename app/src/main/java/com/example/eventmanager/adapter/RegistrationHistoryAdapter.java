@@ -73,6 +73,11 @@ public class RegistrationHistoryAdapter extends RecyclerView.Adapter<Registratio
                 holder.tvStatus.setTextColor(ContextCompat.getColor(ctx, R.color.status_selected_text));
                 holder.tvStatus.setText(R.string.registration_status_selected);
                 break;
+            case INVITED:
+                holder.tvStatus.setBackgroundResource(R.drawable.bg_status_pill_amber);
+                holder.tvStatus.setTextColor(ContextCompat.getColor(ctx, R.color.status_waiting_text));
+                holder.tvStatus.setText(R.string.registration_status_invited);
+                break;
             case ENROLLED:
                 holder.tvStatus.setBackgroundResource(R.drawable.bg_status_pill_green);
                 holder.tvStatus.setTextColor(ContextCompat.getColor(ctx, R.color.status_enrolled_text));
