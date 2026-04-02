@@ -7,7 +7,10 @@ import androidx.annotation.NonNull;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Source;
@@ -15,15 +18,14 @@ import com.google.firebase.firestore.Source;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Handles all Firestore operations on event sub-collections.
- * Operates on: events/{eventId}/waitingList
- *              events/{eventId}/winners
- *              events/{eventId}/enrolled
+ * Operates on: events/{eventId}/waitingList, selected, inviteeList, enrolled, cancelled
  *
  * Called by:
  *   - OrganizerNotificationManager (reads waitingList and winners)
@@ -34,6 +36,8 @@ public class EventRepository {
     private static final String TAG = "EventRepository";
     private static final String COLLECTION_WAITING = "waitingList";
     private static final String COLLECTION_SELECTED = "selected";
+    /** Private-event organizer invites (pending accept/decline). Not used for lottery winners. */
+    private static final String COLLECTION_INVITEE_LIST = "inviteeList";
     private static final String COLLECTION_ENROLLED = "enrolled";
     private static final String COLLECTION_CANCELLED = "cancelled";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -162,33 +166,45 @@ public class EventRepository {
     }
 
     /**
-     * Fetches events where the user (deviceId) is in the selected subcollection
-     * (pending accept/decline). Used for the lottery banner on the home screen.
+     * Fetches events where the user (deviceId) has a pending invitation: either in
+     * {@code selected} (lottery winner pending enrollment) or {@code inviteeList}
+     * (private-event invite pending response). Used for the invitation banner on the home screen.
      */
     public void getEventsWhereUserIsSelected(@NonNull String deviceId,
                                              @NonNull PendingInvitesCallback callback) {
-        db.collectionGroup(COLLECTION_SELECTED)
-                .get()
-                .addOnSuccessListener(snapshots -> {
-                    List<String> eventIds = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        if (!doc.getId().equals(deviceId)) continue;
-                        CollectionReference selectedCol = doc.getReference().getParent();
-                        if (selectedCol == null) continue;
-                        DocumentReference eventRef = selectedCol.getParent();
-                        if (eventRef == null) continue;
-                        eventIds.add(eventRef.getId());
+        Task<QuerySnapshot> taskSelected = db.collectionGroup(COLLECTION_SELECTED).get();
+        Task<QuerySnapshot> taskInvitee = db.collectionGroup(COLLECTION_INVITEE_LIST).get();
+        Tasks.whenAllComplete(taskSelected, taskInvitee)
+                .addOnCompleteListener(done -> {
+                    if (!taskSelected.isSuccessful() || !taskInvitee.isSuccessful()) {
+                        Exception err = taskSelected.getException() != null
+                                ? taskSelected.getException() : taskInvitee.getException();
+                        Log.e(TAG, "Failed to fetch pending invites", err);
+                        callback.onResult(new ArrayList<>());
+                        return;
                     }
+                    Set<String> eventIds = new LinkedHashSet<>();
+                    addEventIdsFromGroup(taskSelected.getResult(), deviceId, eventIds);
+                    addEventIdsFromGroup(taskInvitee.getResult(), deviceId, eventIds);
                     if (eventIds.isEmpty()) {
                         callback.onResult(new ArrayList<>());
                         return;
                     }
-                    fetchEventNamesAndInvoke(eventIds, 0, new ArrayList<>(), callback);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to fetch pending invites", e);
-                    callback.onResult(new ArrayList<>());
+                    fetchEventNamesAndInvoke(new ArrayList<>(eventIds), 0, new ArrayList<>(), callback);
                 });
+    }
+
+    private static void addEventIdsFromGroup(@NonNull QuerySnapshot snapshots,
+                                             @NonNull String deviceId,
+                                             @NonNull Set<String> eventIds) {
+        for (QueryDocumentSnapshot doc : snapshots) {
+            if (!doc.getId().equals(deviceId)) continue;
+            CollectionReference col = doc.getReference().getParent();
+            if (col == null) continue;
+            DocumentReference eventRef = col.getParent();
+            if (eventRef == null) continue;
+            eventIds.add(eventRef.getId());
+        }
     }
 
     private void fetchEventNamesAndInvoke(List<String> eventIds, int index,
@@ -336,11 +352,9 @@ public class EventRepository {
     // -------------------------------------------------------------------------
 
     /**
-     * Writes the user into events/{eventId}/enrolled/{deviceId}.
-     * Called when the entrant accepts their winner invitation.
-     *
-     * @param eventId  The event the user is enrolling in.
-     * @param deviceId The device ID of the enrolling user.
+     * Writes the user into events/{eventId}/enrolled/{deviceId} and removes them from
+     * {@code selected}. Used when a lottery winner (in {@code selected}) accepts.
+     * Private-event invites use {@link #acceptInviteToWaitingList} instead.
      */
     public void enrollUser(@NonNull String eventId,
                            @NonNull String deviceId,
@@ -390,6 +404,55 @@ public class EventRepository {
     }
 
     /**
+     * Accepts a private-event invitation: moves the user from {@code inviteeList} to
+     * {@code waitingList}.
+     */
+    public void acceptInviteToWaitingList(@NonNull String eventId,
+                                          @NonNull String deviceId,
+                                          @NonNull OperationCallback callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection(COLLECTION_INVITEE_LIST)
+                .document(deviceId)
+                .get()
+                .addOnSuccessListener(inviteeDoc -> {
+                    if (!inviteeDoc.exists()) {
+                        callback.onFailure("This invitation is no longer active.");
+                        return;
+                    }
+                    Map<String, Object> waitData = new HashMap<>();
+                    waitData.put("deviceId", deviceId);
+                    if (inviteeDoc.getString("name") != null) {
+                        waitData.put("name", inviteeDoc.getString("name"));
+                    }
+                    if (inviteeDoc.getString("email") != null) {
+                        waitData.put("email", inviteeDoc.getString("email"));
+                    }
+
+                    WriteBatch batch = db.batch();
+                    batch.set(db.collection("events").document(eventId)
+                                    .collection(COLLECTION_WAITING).document(deviceId),
+                            waitData);
+                    batch.delete(db.collection("events").document(eventId)
+                            .collection(COLLECTION_INVITEE_LIST).document(deviceId));
+
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                Log.d(TAG, "Invite accepted to waiting list: " + deviceId + " event: " + eventId);
+                                callback.onSuccess();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to accept invite to waiting list: " + deviceId, e);
+                                callback.onFailure("Could not join waiting list.");
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to load invitee doc: " + deviceId, e);
+                    callback.onFailure("Failed to load invitation.");
+                });
+    }
+
+    /**
      * Deletes the user's document from events/{eventId}/winners/{deviceId}.
      * Called on both Accept (cleanup) and Decline.
      *
@@ -434,49 +497,63 @@ public class EventRepository {
     public void declineInvitation(@NonNull String eventId,
                                   @NonNull String deviceId,
                                   @NonNull OperationCallback callback) {
-        db.collection("events")
+        DocumentReference inviteeRef = db.collection("events")
+                .document(eventId)
+                .collection(COLLECTION_INVITEE_LIST)
+                .document(deviceId);
+        DocumentReference selectedRef = db.collection("events")
                 .document(eventId)
                 .collection(COLLECTION_SELECTED)
-                .document(deviceId)
-                .get()
-                .addOnSuccessListener(selectedDoc -> {
-                    if (!selectedDoc.exists()) {
-                        callback.onFailure("This invitation is no longer active.");
-                        return;
-                    }
+                .document(deviceId);
 
-                    Map<String, Object> cancelledData = new HashMap<>();
-                    cancelledData.put("deviceId", deviceId);
-                    cancelledData.put("status", "declined");
+        Task<DocumentSnapshot> t1 = inviteeRef.get();
+        Task<DocumentSnapshot> t2 = selectedRef.get();
+        Tasks.whenAllComplete(t1, t2).addOnCompleteListener(done -> {
+            if (!t1.isSuccessful() || !t2.isSuccessful()) {
+                callback.onFailure("Failed to load invitation data.");
+                return;
+            }
+            DocumentSnapshot inviteeDoc = t1.getResult();
+            DocumentSnapshot selectedDoc = t2.getResult();
+            DocumentSnapshot source = (inviteeDoc != null && inviteeDoc.exists())
+                    ? inviteeDoc
+                    : (selectedDoc != null && selectedDoc.exists() ? selectedDoc : null);
+            if (source == null) {
+                callback.onFailure("This invitation is no longer active.");
+                return;
+            }
 
-                    if (selectedDoc.getString("name") != null) {
-                        cancelledData.put("name", selectedDoc.getString("name"));
-                    }
-                    if (selectedDoc.getString("email") != null) {
-                        cancelledData.put("email", selectedDoc.getString("email"));
-                    }
+            Map<String, Object> cancelledData = new HashMap<>();
+            cancelledData.put("deviceId", deviceId);
+            cancelledData.put("status", "declined");
+            if (source.getString("name") != null) {
+                cancelledData.put("name", source.getString("name"));
+            }
+            if (source.getString("email") != null) {
+                cancelledData.put("email", source.getString("email"));
+            }
 
-                    WriteBatch batch = db.batch();
-                    batch.set(db.collection("events").document(eventId)
-                                    .collection(COLLECTION_CANCELLED).document(deviceId),
-                            cancelledData);
-                    batch.delete(db.collection("events").document(eventId)
-                            .collection(COLLECTION_SELECTED).document(deviceId));
+            WriteBatch batch = db.batch();
+            batch.set(db.collection("events").document(eventId)
+                            .collection(COLLECTION_CANCELLED).document(deviceId),
+                    cancelledData);
+            if (inviteeDoc != null && inviteeDoc.exists()) {
+                batch.delete(inviteeRef);
+            }
+            if (selectedDoc != null && selectedDoc.exists()) {
+                batch.delete(selectedRef);
+            }
 
-                    batch.commit()
-                            .addOnSuccessListener(unused -> {
-                                Log.d(TAG, "Declined invitation for: " + deviceId);
-                                callback.onSuccess();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to decline invitation for: " + deviceId, e);
-                                callback.onFailure("Failed to decline invitation.");
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to load selected entrant before decline: " + deviceId, e);
-                    callback.onFailure("Failed to load invitation data.");
-                });
+            batch.commit()
+                    .addOnSuccessListener(unused -> {
+                        Log.d(TAG, "Declined invitation for: " + deviceId);
+                        callback.onSuccess();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to decline invitation for: " + deviceId, e);
+                        callback.onFailure("Failed to decline invitation.");
+                    });
+        });
     }
 
     /**

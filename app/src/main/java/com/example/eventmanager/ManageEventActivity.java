@@ -45,6 +45,7 @@ public class ManageEventActivity extends AppCompatActivity {
     private TextView textEmptyList;
     private TextView tabWaiting;
     private TextView tabChosen;
+    private TextView tabInvitees;
     private TextView tabEnrolled;
     private TextView tabCancelled;
     private RecyclerView recyclerChosenEntrants;
@@ -61,6 +62,7 @@ public class ManageEventActivity extends AppCompatActivity {
     private boolean previewWaitingMode;
     private int waitingCount;
     private int chosenCount;
+    private int inviteeCount;
     private int enrolledCount;
     private int cancelledCount;
 
@@ -90,6 +92,7 @@ public class ManageEventActivity extends AppCompatActivity {
         textEmptyList = findViewById(R.id.text_empty_list);
         tabWaiting = findViewById(R.id.tab_waiting);
         tabChosen = findViewById(R.id.tab_chosen);
+        tabInvitees = findViewById(R.id.tab_invitees);
         tabEnrolled = findViewById(R.id.tab_enrolled);
         tabCancelled = findViewById(R.id.tab_cancelled);
 
@@ -196,6 +199,13 @@ public class ManageEventActivity extends AppCompatActivity {
             loadAttendees();
             highlightTab();
         });
+        if (tabInvitees != null) {
+            tabInvitees.setOnClickListener(v -> {
+                currentTab = "invitees";
+                loadAttendees();
+                highlightTab();
+            });
+        }
 
         loadEventMeta();
         loadCounts();
@@ -263,6 +273,12 @@ public class ManageEventActivity extends AppCompatActivity {
                     updateTabLabels();
                 });
 
+        db.collection("events").document(eventId).collection("inviteeList").get()
+                .addOnSuccessListener(qs -> {
+                    inviteeCount = qs.size();
+                    updateTabLabels();
+                });
+
         db.collection("events").document(eventId).collection("enrolled").get()
                 .addOnSuccessListener(qs -> {
                     enrolledCount = qs.size();
@@ -279,6 +295,9 @@ public class ManageEventActivity extends AppCompatActivity {
     private void updateTabLabels() {
         tabWaiting.setText(String.format(Locale.getDefault(), "Waiting (%d)", waitingCount));
         tabChosen.setText(String.format(Locale.getDefault(), "Chosen (%d)", chosenCount));
+        if (tabInvitees != null) {
+            tabInvitees.setText(String.format(Locale.getDefault(), "Invitees (%d)", inviteeCount));
+        }
         tabEnrolled.setText(String.format(Locale.getDefault(), "Enrolled (%d)", enrolledCount));
         tabCancelled.setText(String.format(Locale.getDefault(), "Cancelled (%d)", cancelledCount));
         highlightTab();
@@ -344,6 +363,8 @@ public class ManageEventActivity extends AppCompatActivity {
                 return "waitingList";
             case "selected":
                 return "selected";
+            case "invitees":
+                return "inviteeList";
             case "enrolled":
                 return "enrolled";
             case "cancelled":
@@ -356,6 +377,9 @@ public class ManageEventActivity extends AppCompatActivity {
     private void highlightTab() {
         setTabStyle(tabWaiting, "waiting".equals(currentTab));
         setTabStyle(tabChosen, "selected".equals(currentTab));
+        if (tabInvitees != null) {
+            setTabStyle(tabInvitees, "invitees".equals(currentTab));
+        }
         setTabStyle(tabEnrolled, "enrolled".equals(currentTab));
         setTabStyle(tabCancelled, "cancelled".equals(currentTab));
 
@@ -363,6 +387,8 @@ public class ManageEventActivity extends AppCompatActivity {
             textListHeader.setText("Waiting List");
         } else if ("selected".equals(currentTab)) {
             textListHeader.setText("Chosen Entrants");
+        } else if ("invitees".equals(currentTab)) {
+            textListHeader.setText("Invitees");
         } else if ("enrolled".equals(currentTab)) {
             textListHeader.setText("Enrolled Entrants");
         } else {
@@ -376,6 +402,9 @@ public class ManageEventActivity extends AppCompatActivity {
                 break;
             case "selected":
                 totalForBadge = chosenCount;
+                break;
+            case "invitees":
+                totalForBadge = inviteeCount;
                 break;
             case "enrolled":
                 totalForBadge = enrolledCount;
@@ -409,6 +438,9 @@ public class ManageEventActivity extends AppCompatActivity {
     private String getEmptyMessage() {
         if ("selected".equals(currentTab)) {
             return "No chosen entrants yet.";
+        }
+        if ("invitees".equals(currentTab)) {
+            return "No pending invitees yet.";
         }
         if ("enrolled".equals(currentTab)) {
             return "No enrolled entrants yet.";
@@ -713,6 +745,8 @@ public class ManageEventActivity extends AppCompatActivity {
                 return "Waiting list — " + (eventName != null ? eventName : "Event");
             case "selected":
                 return "Chosen entrants — " + (eventName != null ? eventName : "Event");
+            case "invitees":
+                return "Invitees — " + (eventName != null ? eventName : "Event");
             case "enrolled":
                 return "Enrolled entrants — " + (eventName != null ? eventName : "Event");
             case "cancelled":

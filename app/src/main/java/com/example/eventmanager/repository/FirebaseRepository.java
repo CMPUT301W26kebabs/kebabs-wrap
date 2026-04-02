@@ -28,7 +28,7 @@ import java.util.Map;
 public class FirebaseRepository {
 
     private static final String[] EVENT_SUB_COLLECTIONS =
-            {"waitingList", "selected", "enrolled", "cancelled"};
+            {"waitingList", "selected", "enrolled", "cancelled", "inviteeList"};
 
     private final FirebaseFirestore db;
 
@@ -78,7 +78,7 @@ public class FirebaseRepository {
 
     /**
      * Deletes the user profile AND removes the user from every event sub-collection
-     * (waitingList, selected, enrolled, cancelled) across all events.
+     * (waitingList, selected, enrolled, cancelled, inviteeList) across all events.
      * This satisfies the requirement that deleting a profile also erases all
      * registrations, registration history, and enrollments.
      *
@@ -163,7 +163,7 @@ public class FirebaseRepository {
 
     /**
      * Loads all events this entrant appears in across the waitingList, selected,
-     * enrolled, and cancelled sub-collections (US 01.02.03).
+     * enrolled, cancelled, and inviteeList sub-collections (US 01.02.03).
      *
      * Instead of collection-group queries (which require full document paths),
      * this fetches all events and checks each sub-collection directly by deviceId.
@@ -186,8 +186,8 @@ public class FirebaseRepository {
                         eventIds.add(doc.getId());
                     }
 
-                    // For each event, fire 4 document lookups (one per sub-collection)
-                    // Tasks are stored in order: [wait0, sel0, enr0, can0, wait1, sel1, ...]
+                    // For each event, fire 5 document lookups (one per sub-collection)
+                    // Tasks are stored in order: [wait0, sel0, enr0, can0, inv0, wait1, ...]
                     List<Task<DocumentSnapshot>> allTasks = new ArrayList<>();
                     for (String eventId : eventIds) {
                         DocumentReference eventRef =
@@ -201,24 +201,28 @@ public class FirebaseRepository {
                         Map<String, RegistrationHistoryItem.RegistrationStatus> statusByEvent =
                                 new LinkedHashMap<>();
 
-                        int subCount = EVENT_SUB_COLLECTIONS.length; // 4
+                        int subCount = EVENT_SUB_COLLECTIONS.length;
                         for (int i = 0; i < eventIds.size(); i++) {
                             String eventId = eventIds.get(i);
                             int base = i * subCount;
 
-                            // Indices: 0=waitingList, 1=selected, 2=enrolled, 3=cancelled
+                            // 0=waitingList, 1=selected, 2=enrolled, 3=cancelled, 4=inviteeList
                             boolean inWait = docExists(allTasks.get(base));
                             boolean inSel  = docExists(allTasks.get(base + 1));
                             boolean inEnr  = docExists(allTasks.get(base + 2));
                             boolean inCan  = docExists(allTasks.get(base + 3));
+                            boolean inInv  = docExists(allTasks.get(base + 4));
 
-                            // Priority: enrolled > selected > cancelled > waitingList
+                            // Priority: enrolled > selected > invitee > cancelled > waitingList
                             if (inEnr) {
                                 statusByEvent.put(eventId,
                                         RegistrationHistoryItem.RegistrationStatus.ENROLLED);
                             } else if (inSel) {
                                 statusByEvent.put(eventId,
                                         RegistrationHistoryItem.RegistrationStatus.SELECTED);
+                            } else if (inInv) {
+                                statusByEvent.put(eventId,
+                                        RegistrationHistoryItem.RegistrationStatus.INVITED);
                             } else if (inCan) {
                                 statusByEvent.put(eventId,
                                         RegistrationHistoryItem.RegistrationStatus.CANCELLED);
