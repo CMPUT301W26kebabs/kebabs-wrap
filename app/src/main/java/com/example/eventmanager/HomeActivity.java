@@ -25,11 +25,13 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.Timestamp;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class HomeActivity extends AppCompatActivity {
@@ -48,6 +50,9 @@ public class HomeActivity extends AppCompatActivity {
     private boolean filterOpenReg = false;
     private boolean filterHasCapacity = false;
     private boolean filterFollowing = false;
+    private Date filterStartDate = null;
+    private Date filterEndDate = null;
+    private SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy  hh:mm a", Locale.getDefault());
     private ListenerRegistration eventsListener;
     private boolean hasShownEventsLoadError = false;
     private FollowRepository followRepo;
@@ -328,6 +333,14 @@ public class HomeActivity extends AppCompatActivity {
                 if (capacity != null && capacity <= 0) continue;
             }
 
+            Timestamp regStart = doc.getTimestamp("registrationStart");
+            if (filterStartDate != null) {
+                if (regStart == null || regStart.toDate().before(filterStartDate)) continue;
+            }
+            if (filterEndDate != null) {
+                if (regStart == null || regStart.toDate().after(filterEndDate)) continue;
+            }
+
             filtered.add(doc);
         }
         upcomingAdapter.updateList(filtered);
@@ -343,25 +356,75 @@ public class HomeActivity extends AppCompatActivity {
      * US 01.01.04 — Shows a filter dialog with checkboxes for Open Registration and Has Capacity.
      */
     private void showFilterDialog() {
-        String[] filterLabels = {"Open Registration", "Has Capacity"};
-        boolean[] checked = {filterOpenReg, filterHasCapacity};
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, padding, padding, padding);
+
+        android.widget.CheckBox cbOpenReg = new android.widget.CheckBox(this);
+        cbOpenReg.setText("Open Registration");
+        cbOpenReg.setChecked(filterOpenReg);
+        layout.addView(cbOpenReg);
+
+        android.widget.CheckBox cbHasCap = new android.widget.CheckBox(this);
+        cbHasCap.setText("Has Capacity");
+        cbHasCap.setChecked(filterHasCapacity);
+        layout.addView(cbHasCap);
+
+        android.widget.TextView tvStart = new android.widget.TextView(this);
+        tvStart.setPadding(0, padding, 0, padding/2);
+        tvStart.setText(filterStartDate != null ? "Start: " + sdf.format(filterStartDate) : "Start Date/Time (Any)");
+        tvStart.setTextSize(16);
+        tvStart.setTextColor(getResources().getColor(android.R.color.black, null));
+        layout.addView(tvStart);
+
+        android.widget.TextView tvEnd = new android.widget.TextView(this);
+        tvEnd.setPadding(0, padding/2, 0, padding);
+        tvEnd.setText(filterEndDate != null ? "End: " + sdf.format(filterEndDate) : "End Date/Time (Any)");
+        tvEnd.setTextSize(16);
+        tvEnd.setTextColor(getResources().getColor(android.R.color.black, null));
+        layout.addView(tvEnd);
+
+        final Date[] tempStart = {filterStartDate};
+        final Date[] tempEnd = {filterEndDate};
+
+        tvStart.setOnClickListener(v -> showDateTimePicker(true, tempStart, tvStart));
+        tvEnd.setOnClickListener(v -> showDateTimePicker(false, tempEnd, tvEnd));
 
         new AlertDialog.Builder(this)
                 .setTitle("Filter Events")
-                .setMultiChoiceItems(filterLabels, checked, (dialog, which, isChecked) -> {
-                    checked[which] = isChecked;
-                })
+                .setView(layout)
                 .setPositiveButton("Apply", (dialog, which) -> {
-                    filterOpenReg = checked[0];
-                    filterHasCapacity = checked[1];
+                    filterOpenReg = cbOpenReg.isChecked();
+                    filterHasCapacity = cbHasCap.isChecked();
+                    filterStartDate = tempStart[0];
+                    filterEndDate = tempEnd[0];
                     filterAndUpdateLists(currentSearchQuery);
                 })
                 .setNegativeButton("Reset", (dialog, which) -> {
                     filterOpenReg = false;
                     filterHasCapacity = false;
+                    filterStartDate = null;
+                    filterEndDate = null;
                     filterAndUpdateLists(currentSearchQuery);
                 })
                 .show();
+    }
+
+    private void showDateTimePicker(boolean isStart, Date[] tempDate, android.widget.TextView tv) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        if (tempDate[0] != null) {
+            cal.setTime(tempDate[0]);
+        }
+        new android.app.DatePickerDialog(this, (view, year, month, day) -> {
+            new android.app.TimePickerDialog(this, (timeView, hour, minute) -> {
+                java.util.Calendar selected = java.util.Calendar.getInstance();
+                selected.set(year, month, day, hour, minute);
+                tempDate[0] = selected.getTime();
+                String prefix = isStart ? "Start: " : "End: ";
+                tv.setText(prefix + sdf.format(tempDate[0]));
+            }, cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE), false).show();
+        }, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH), cal.get(java.util.Calendar.DAY_OF_MONTH)).show();
     }
 
     private void openEventDetails(DocumentSnapshot doc) {

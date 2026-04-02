@@ -462,6 +462,19 @@ public class EventDetailsActivity extends AppCompatActivity {
 
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(eventDoc -> {
+                    String mainOrganizerId = eventDoc.getString("organizerId");
+                    @SuppressWarnings("unchecked")
+                    List<String> coOrganizers = (List<String>) eventDoc.get("coOrganizers");
+                    if (deviceId != null) {
+                        boolean isOrganizer = deviceId.equals(mainOrganizerId);
+                        boolean isCoOrganizer = coOrganizers != null && coOrganizers.contains(deviceId);
+                        if (isOrganizer || isCoOrganizer) {
+                            setJoinButtonState("TRY AGAIN", true, R.drawable.bg_button_gradient_purple);
+                            Toast.makeText(this, "You can't join your own event", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+
                     Boolean geolocationRequired = eventDoc.getBoolean("geolocationRequired");
                     boolean requiresGeo = Boolean.TRUE.equals(geolocationRequired)
                             || Boolean.TRUE.equals(eventDoc.getBoolean("isGeolocationRequired"));
