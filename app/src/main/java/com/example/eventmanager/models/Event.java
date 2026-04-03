@@ -12,6 +12,9 @@ public class Event {
     private String name;
     private String description;
     private String location;
+    /** When the event actually runs (distinct from registration window). */
+    private Date startDate;
+    private Date endDate;
     private Date registrationStart;
     private Date registrationEnd;
     private int capacity;
@@ -90,6 +93,22 @@ public class Event {
      */
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
     }
 
     /**
