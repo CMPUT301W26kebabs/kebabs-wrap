@@ -333,12 +333,21 @@ public class HomeActivity extends AppCompatActivity {
                 if (capacity != null && capacity <= 0) continue;
             }
 
-            Timestamp regStart = doc.getTimestamp("registrationStart");
-            if (filterStartDate != null) {
-                if (regStart == null || regStart.toDate().before(filterStartDate)) continue;
-            }
-            if (filterEndDate != null) {
-                if (regStart == null || regStart.toDate().after(filterEndDate)) continue;
+            // Date range: use event start/end (availability), not registration window
+            if (filterStartDate != null || filterEndDate != null) {
+                Timestamp eventStartTs = doc.getTimestamp("startDate");
+                Timestamp eventEndTs = doc.getTimestamp("endDate");
+                if (eventStartTs == null) continue;
+                Date eventStart = eventStartTs.toDate();
+                Date eventEnd = eventEndTs != null ? eventEndTs.toDate() : eventStart;
+
+                if (filterStartDate != null && filterEndDate != null) {
+                    if (eventEnd.before(filterStartDate) || eventStart.after(filterEndDate)) continue;
+                } else if (filterStartDate != null) {
+                    if (eventStart.before(filterStartDate)) continue;
+                } else {
+                    if (eventStart.after(filterEndDate)) continue;
+                }
             }
 
             filtered.add(doc);
