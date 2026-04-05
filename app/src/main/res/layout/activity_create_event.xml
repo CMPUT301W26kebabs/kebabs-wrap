@@ -29,6 +29,7 @@
                 app:tint="#000000" />
 
             <TextView
+                android:id="@+id/tv_create_event_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Create Event"
@@ -395,27 +396,41 @@
                 app:strokeColor="#D1D5DB"
                 app:strokeWidth="1dp">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:orientation="horizontal">
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:layout_marginEnd="8dp"
-                        android:src="@android:drawable/ic_menu_gallery"
-                        app:tint="#6B7280" />
+                        android:id="@+id/imagePosterPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:adjustViewBounds="true"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone" />
 
-                    <TextView
+                    <LinearLayout
+                        android:id="@+id/layoutUploadPlaceholder"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Upload Poster Image"
-                        android:textColor="#374151"
-                        android:textSize="16sp" />
-                </LinearLayout>
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginEnd="8dp"
+                            android:src="@android:drawable/ic_menu_gallery"
+                            app:tint="#6B7280" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Upload Poster Image"
+                            android:textColor="#374151"
+                            android:textSize="16sp" />
+                    </LinearLayout>
+                </FrameLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>

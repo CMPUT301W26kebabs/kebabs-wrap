@@ -12,6 +12,9 @@ public class Event {
     private String name;
     private String description;
     private String location;
+    /** When the event actually runs (distinct from registration window). */
+    private Date startDate;
+    private Date endDate;
     private Date registrationStart;
     private Date registrationEnd;
     private int capacity;
@@ -19,6 +22,8 @@ public class Event {
     private String posterUrl;
     private String organizerId;
     private boolean isGeolocationRequired;
+    /** Invitation-only / private: hide from public home & browse; not broadcast to followers. */
+    private boolean privateEvent;
 
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
@@ -88,6 +93,22 @@ public class Event {
      */
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
     }
 
     /**
@@ -200,5 +221,13 @@ public class Event {
      */
     public void setGeolocationRequired(boolean geolocationRequired) {
         isGeolocationRequired = geolocationRequired;
+    }
+
+    public boolean isPrivateEvent() {
+        return privateEvent;
+    }
+
+    public void setPrivateEvent(boolean privateEvent) {
+        this.privateEvent = privateEvent;
     }
 }

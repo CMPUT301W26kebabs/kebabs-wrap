@@ -10,6 +10,8 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -36,6 +38,7 @@ import java.util.Map;
  * Organizer UI screen for:
  *   US 02.05.02 – Sample a specified number of attendees from the waiting list.
  *   US 02.05.03 – Draw a replacement if someone cancels/declines.
+ *   Cancelled entrants are managed from Manage Event.
  *
  * Delegates all business logic to the existing {@link LotteryManager}.
  * Receives eventId + capacity via Intent extras.
@@ -56,6 +59,8 @@ public class RunLotteryActivity extends AppCompatActivity {
     private LinearProgressIndicator progressBar;
     private CardView                cardResults;
     private RecyclerView            rvWinners;
+    private RecyclerView            rvCancelled;
+    private TextView                tvCancelledCount;
 
     // ── State ─────────────────────────────────────────────────────────────────
     private String        eventId;
@@ -65,9 +70,10 @@ public class RunLotteryActivity extends AppCompatActivity {
     private int           waitlistSize = 0;
 
     // ── Collaborators ─────────────────────────────────────────────────────────
-    private LotteryManager      lotteryManager;
-    private WinnerAdapter       winnerAdapter;
-    private final List<Entrant> winnerList = new ArrayList<>();
+    private LotteryManager                  lotteryManager;
+    private WinnerAdapter                   winnerAdapter;
+    private final List<Entrant>             winnerList = new ArrayList<>();
+    private OrganizerNotificationManager    organizerNotificationManager;
 
     // ─────────────────────────────────────────────────────────────────────────
     @Override
@@ -93,10 +99,17 @@ public class RunLotteryActivity extends AppCompatActivity {
         }
 
         lotteryManager = new LotteryManager();
+        organizerNotificationManager = new OrganizerNotificationManager();
 
         bindViews();
         setupRecyclerView();
         setupClickListeners();
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBack();
+            }
+        });
         loadWaitlistCount();
     }
 
@@ -203,11 +216,6 @@ public class RunLotteryActivity extends AppCompatActivity {
                 });
     }
 
-    @Override
-    public void onBackPressed() {
-        navigateBack();
-    }
-
     // ── Load live waitlist count from Firestore ───────────────────────────────
     private void loadWaitlistCount() {
         FirebaseFirestore.getInstance()
@@ -248,7 +256,7 @@ public class RunLotteryActivity extends AppCompatActivity {
         // Uses your existing LotteryManager.drawWinners() + LotteryCallback exactly
         lotteryManager.drawWinners(eventId, winnerCount, new LotteryCallback() {
             @Override
-            public void onSuccess(List<Entrant> selectedWinners) {
+            public void onSuccess(List<Entrant> selectedWinners, List<String> winnerDeviceIds) {
                 setLoading(false);
 
                 winnerList.clear();
@@ -261,6 +269,23 @@ public class RunLotteryActivity extends AppCompatActivity {
 
                 showStatus("✓ " + selectedWinners.size() + " winner(s) selected!", false);
                 loadWaitlistCount(); // Refresh count after draw
+
+                String en = eventName != null ? eventName : "Event";
+                organizerNotificationManager.notifyAfterLotteryDraw(eventId, en, winnerDeviceIds,
+                        new OrganizerNotificationManager.NotificationDispatchCallback() {
+                            @Override
+                            public void onSuccess(int totalNotified) {
+                                runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                        "Notifications sent (winners + not chosen).",
+                                        Toast.LENGTH_SHORT).show());
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull String message) {
+                                runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                        message, Toast.LENGTH_LONG).show());
+                            }
+                        });
             }
 
             @Override
@@ -288,7 +313,7 @@ public class RunLotteryActivity extends AppCompatActivity {
         // Uses your existing LotteryManager.drawReplacement() which calls drawWinners(eventId, 1, ...)
         lotteryManager.drawReplacement(eventId, new LotteryCallback() {
             @Override
-            public void onSuccess(List<Entrant> selectedWinners) {
+            public void onSuccess(List<Entrant> selectedWinners, List<String> replacementWinnerIds) {
                 setLoading(false);
 
                 if (!selectedWinners.isEmpty()) {
@@ -310,6 +335,23 @@ public class RunLotteryActivity extends AppCompatActivity {
                         animateCardIn(cardResults);
                     }
                     loadWaitlistCount();
+
+                    String enRep = eventName != null ? eventName : "Event";
+                    organizerNotificationManager.notifyAfterLotteryDraw(eventId, enRep, replacementWinnerIds,
+                            new OrganizerNotificationManager.NotificationDispatchCallback() {
+                                @Override
+                                public void onSuccess(int totalNotified) {
+                                    runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                            "Notifications sent (winners + not chosen).",
+                                            Toast.LENGTH_SHORT).show());
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull String message) {
+                                    runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                            message, Toast.LENGTH_LONG).show());
+                                }
+                            });
                 }
             }
 

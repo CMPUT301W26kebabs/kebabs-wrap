@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    >
+    android:fillViewport="true"
+    android:background="#FFFFFF">
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="24dp">
 
     <ImageView
         android:id="@+id/btn_back"
@@ -50,15 +55,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_back" />
 
-    <LinearLayout
-        android:id="@+id/layout_action_buttons"
-        android:layout_width="match_parent"
+    <HorizontalScrollView
+        android:id="@+id/scroll_action_buttons"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        android:orientation="horizontal"
-        android:gravity="start"
+        android:fillViewport="false"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_event_title">
+
+        <LinearLayout
+            android:id="@+id/layout_action_buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start">
 
         <ImageButton
             android:id="@+id/btn_action_add"
@@ -66,7 +81,18 @@
             android:layout_height="48dp"
             android:layout_marginEnd="12dp"
             android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Invite guests"
             android:src="@android:drawable/ic_input_add"
+            app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/btn_action_qr"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Event QR code"
+            android:src="@drawable/ic_qr_code"
             app:tint="#FFFFFF" />
 
         <ImageButton
@@ -91,11 +117,22 @@
             android:id="@+id/btn_action_chat"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_marginEnd="12dp"
             android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Moderate comments"
             android:src="@android:drawable/sym_action_chat"
-            app:tint="#FFFFFF"
-            />
-    </LinearLayout>
+            app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/btn_action_edit"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_avatar_circle"
+            android:contentDescription="Edit event"
+            android:src="@android:drawable/ic_menu_edit"
+            app:tint="#FFFFFF" />
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <GridLayout
         android:id="@+id/grid_tabs"
@@ -103,72 +140,83 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        android:columnCount="2"
+        android:columnCount="3"
         android:rowCount="2"
         android:useDefaultMargins="true"
-        app:layout_constraintTop_toBottomOf="@+id/layout_action_buttons">
+        app:layout_constraintTop_toBottomOf="@+id/scroll_action_buttons">
 
         <TextView
             android:id="@+id/tab_waiting"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_tab_inactive"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="12dp"
             android:paddingVertical="8dp"
             android:text="Waiting (42)"
             android:textColor="#5A5C69"
-            android:textSize="14sp" />
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tab_chosen"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_tab_active"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="12dp"
             android:paddingVertical="8dp"
             android:text="Chosen (10) •"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tab_invitees"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_tab_inactive"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:text="Invitees (0)"
+            android:textColor="#5A5C69"
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tab_enrolled"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_tab_inactive"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="12dp"
             android:paddingVertical="8dp"
             android:text="Enrolled (8)"
             android:textColor="#5A5C69"
-            android:textSize="14sp" />
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/tab_cancelled"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_tab_inactive"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="12dp"
             android:paddingVertical="8dp"
             android:text="Cancelled (5)"
             android:textColor="#5A5C69"
-            android:textSize="14sp" />
+            android:textSize="13sp" />
     </GridLayout>
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_entrants_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="24dp"
-        android:layout_marginBottom="16dp"
         app:cardBackgroundColor="#F8F9FA"
         app:cardCornerRadius="24dp"
         app:cardElevation="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/layout_bottom_buttons"
-        app:layout_constraintTop_toBottomOf="@+id/grid_tabs">
+        app:layout_constraintTop_toBottomOf="@+id/grid_tabs"
+        app:layout_constraintBottom_toTopOf="@+id/layout_follow_actions">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:padding="20dp">
 
             <TextView
@@ -200,13 +248,13 @@
             <TextView
                 android:id="@+id/text_empty_list"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="120dp"
                 android:layout_marginTop="16dp"
                 android:gravity="center"
                 android:textColor="#7A7C87"
                 android:textSize="15sp"
                 android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_list_header" />
@@ -214,10 +262,12 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_chosen_entrants"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:nestedScrollingEnabled="false"
+                android:minHeight="160dp"
+                android:maxHeight="420dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_list_header"
                 tools:listitem="@layout/item_chosen_entrant" />
 
@@ -225,15 +275,61 @@
     </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
+        android:id="@+id/layout_follow_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@+id/card_entrants_list"
+        app:layout_constraintBottom_toTopOf="@+id/layout_bottom_buttons">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_broadcast_followers"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="@string/broadcast_to_followers"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            app:backgroundTint="@color/follow_button_bg"
+            app:cornerRadius="14dp"
+            app:icon="@android:drawable/ic_menu_send"
+            app:iconSize="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_invite_followers"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="@string/invite_followers"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            app:backgroundTint="#FF9063"
+            app:cornerRadius="14dp"
+            app:icon="@android:drawable/ic_input_add"
+            app:iconSize="16dp" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/layout_bottom_buttons"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="24dp"
-        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/layout_follow_actions"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <com.google.android.material.button.MaterialButton
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_run_lottery"
             android:layout_width="0dp"
             android:layout_height="60dp"
@@ -246,7 +342,7 @@
             app:cornerRadius="16dp"
             app:icon="@android:drawable/ic_menu_rotate" />
 
-        <com.google.android.material.button.MaterialButton
+            <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_notify"
             android:layout_width="0dp"
             android:layout_height="60dp"
@@ -260,6 +356,25 @@
             app:cornerRadius="16dp"
             app:icon="@android:drawable/ic_popup_reminder"
             app:iconTint="#3F38DD" />
+
+        </LinearLayout>
+
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelNonSignup"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="Cancel invited entrants who did not enroll"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            style="@style/Widget.MaterialComponents.Button"
+            app:backgroundTint="#E57373"
+            app:cornerRadius="24dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -24,9 +24,4 @@ public class BookedEventsActivity extends AppCompatActivity {
                 startActivity(new Intent(this, QrAccessActivity.class)));
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-    }
 }

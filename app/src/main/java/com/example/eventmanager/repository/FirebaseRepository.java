@@ -4,12 +4,31 @@ import androidx.annotation.NonNull;
 
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.models.Event;
+import com.example.eventmanager.models.RegistrationHistoryItem;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Central repository for reading and writing entrant and event data in Firestore.
  */
 public class FirebaseRepository {
+
+    private static final String[] EVENT_SUB_COLLECTIONS =
+            {"waitingList", "selected", "enrolled", "cancelled", "inviteeList"};
 
     private final FirebaseFirestore db;
 
@@ -34,8 +53,7 @@ public class FirebaseRepository {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if (snapshot.exists()) {
-                        Entrant entrant = snapshot.toObject(Entrant.class);
-                        callback.onSuccess(entrant);
+                        callback.onSuccess(snapshot.toObject(Entrant.class));
                     } else {
                         callback.onSuccess(null);
                     }
@@ -44,24 +62,73 @@ public class FirebaseRepository {
     }
 
     /**
-     * Saves or overwrites an entrant profile in Firestore.
+     * Saves or updates an entrant profile in Firestore using merge so existing
+     * fields (e.g. isAdmin, isOrganizer) are not accidentally overwritten.
      *
-     * @param entrant entrant profile to persist
-     * @param callback callback notified when the write completes or fails
+     * @param entrant  entrant profile to persist
+     * @param callback callback notified when write completes or fails
      */
     public void saveUser(Entrant entrant, RepoCallback<Void> callback) {
         db.collection("users")
                 .document(entrant.getDeviceId())
-                .set(entrant)
+                .set(entrant, SetOptions.merge())
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Deletes the user profile AND removes the user from every event sub-collection
+     * (waitingList, selected, enrolled, cancelled, inviteeList) across all events.
+     * This satisfies the requirement that deleting a profile also erases all
+     * registrations, registration history, and enrollments.
+     *
+     * @param deviceId device identifier of the user to delete
+     * @param callback callback notified when all deletes complete or any fails
+     */
+    public void deleteUserAndAllRegistrations(String deviceId, RepoCallback<Void> callback) {
+        // First load all events so we know which sub-collections to clean
+        db.collection("events").get()
+                .addOnSuccessListener(eventsSnapshot -> {
+                    List<Task<Void>> deleteTasks = new ArrayList<>();
+
+                    // Delete user document
+                    deleteTasks.add(db.collection("users").document(deviceId).delete());
+
+                    if (eventsSnapshot != null) {
+                        for (DocumentSnapshot eventDoc : eventsSnapshot.getDocuments()) {
+                            String eventId = eventDoc.getId();
+
+                            // Delete the entire event if the user being deleted is its organizer
+                            String organizerId = eventDoc.getString("organizerId");
+                            if (organizerId != null && organizerId.equals(deviceId)) {
+                                deleteTasks.add(db.collection("events").document(eventId).delete());
+                            }
+
+                            for (String subCol : EVENT_SUB_COLLECTIONS) {
+                                // Delete the user's entry from each sub-collection of each event
+                                deleteTasks.add(
+                                        db.collection("events")
+                                                .document(eventId)
+                                                .collection(subCol)
+                                                .document(deviceId)
+                                                .delete()
+                                );
+                            }
+                        }
+                    }
+
+                    Tasks.whenAll(deleteTasks)
+                            .addOnSuccessListener(unused -> callback.onSuccess(null))
+                            .addOnFailureListener(callback::onError);
+                })
                 .addOnFailureListener(callback::onError);
     }
 
     /**
      * Loads an event document by its identifier.
      *
-     * @param eventId event document id
-     * @param callback callback that receives the event or {@code null} when it does not exist
+     * @param eventId  event document id
+     * @param callback callback that receives the event or {@code null} when not found
      */
     public void getEventById(String eventId, RepoCallback<Event> callback) {
         db.collection("events")
@@ -69,8 +136,7 @@ public class FirebaseRepository {
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if (snapshot.exists()) {
-                        Event event = snapshot.toObject(Event.class);
-                        callback.onSuccess(event);
+                        callback.onSuccess(snapshot.toObject(Event.class));
                     } else {
                         callback.onSuccess(null);
                     }
@@ -79,11 +145,11 @@ public class FirebaseRepository {
     }
 
     /**
-     * Adds an entrant to an event waiting list.
+     * Adds an entrant to an event waiting list sub-collection.
      *
-     * @param eventId event document id
-     * @param entrant entrant being added to the waiting list
-     * @param callback callback notified when the sign-up write completes or fails
+     * @param eventId  event document id
+     * @param entrant  entrant being added to the waiting list
+     * @param callback callback notified when the write completes or fails
      */
     public void signUpForEvent(String eventId, Entrant entrant, RepoCallback<Void> callback) {
         db.collection("events")
@@ -94,4 +160,199 @@ public class FirebaseRepository {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onError);
     }
+
+    /**
+     * Loads all events this entrant appears in across the waitingList, selected,
+     * enrolled, cancelled, and inviteeList sub-collections (US 01.02.03).
+     *
+     * Instead of collection-group queries (which require full document paths),
+     * this fetches all events and checks each sub-collection directly by deviceId.
+     *
+     * @param deviceId device identifier of the entrant
+     * @param callback callback that receives the ordered history list
+     */
+    public void getRegistrationHistoryForEntrant(String deviceId,
+                                                 RepoCallback<List<RegistrationHistoryItem>> callback) {
+
+        db.collection("events").get()
+                .addOnSuccessListener(eventsSnapshot -> {
+                    if (eventsSnapshot == null || eventsSnapshot.isEmpty()) {
+                        callback.onSuccess(Collections.emptyList());
+                        return;
+                    }
+
+                    List<String> eventIds = new ArrayList<>();
+                    for (DocumentSnapshot doc : eventsSnapshot.getDocuments()) {
+                        eventIds.add(doc.getId());
+                    }
+
+                    // For each event, fire 5 document lookups (one per sub-collection)
+                    // Tasks are stored in order: [wait0, sel0, enr0, can0, inv0, wait1, ...]
+                    List<Task<DocumentSnapshot>> allTasks = new ArrayList<>();
+                    for (String eventId : eventIds) {
+                        DocumentReference eventRef =
+                                db.collection("events").document(eventId);
+                        for (String subCol : EVENT_SUB_COLLECTIONS) {
+                            allTasks.add(eventRef.collection(subCol).document(deviceId).get());
+                        }
+                    }
+
+                    Tasks.whenAllComplete(allTasks).addOnCompleteListener(done -> {
+                        Map<String, RegistrationHistoryItem.RegistrationStatus> statusByEvent =
+                                new LinkedHashMap<>();
+
+                        int subCount = EVENT_SUB_COLLECTIONS.length;
+                        for (int i = 0; i < eventIds.size(); i++) {
+                            String eventId = eventIds.get(i);
+                            int base = i * subCount;
+
+                            // 0=waitingList, 1=selected, 2=enrolled, 3=cancelled, 4=inviteeList
+                            boolean inWait = docExists(allTasks.get(base));
+                            boolean inSel  = docExists(allTasks.get(base + 1));
+                            boolean inEnr  = docExists(allTasks.get(base + 2));
+                            boolean inCan  = docExists(allTasks.get(base + 3));
+                            boolean inInv  = docExists(allTasks.get(base + 4));
+
+                            // Priority: enrolled > selected > invitee > cancelled > waitingList
+                            if (inEnr) {
+                                statusByEvent.put(eventId,
+                                        RegistrationHistoryItem.RegistrationStatus.ENROLLED);
+                            } else if (inSel) {
+                                statusByEvent.put(eventId,
+                                        RegistrationHistoryItem.RegistrationStatus.SELECTED);
+                            } else if (inInv) {
+                                statusByEvent.put(eventId,
+                                        RegistrationHistoryItem.RegistrationStatus.INVITED);
+                            } else if (inCan) {
+                                statusByEvent.put(eventId,
+                                        RegistrationHistoryItem.RegistrationStatus.CANCELLED);
+                            } else if (inWait) {
+                                statusByEvent.put(eventId,
+                                        RegistrationHistoryItem.RegistrationStatus.WAITING_LIST);
+                            }
+                        }
+
+                        if (statusByEvent.isEmpty()) {
+                            callback.onSuccess(Collections.emptyList());
+                            return;
+                        }
+
+                        // Fetch full event documents for matched events only
+                        List<String> matchedIds = new ArrayList<>(statusByEvent.keySet());
+                        List<Task<DocumentSnapshot>> fetchTasks = new ArrayList<>();
+                        for (String eid : matchedIds) {
+                            fetchTasks.add(db.collection("events").document(eid).get());
+                        }
+
+                        Tasks.whenAllComplete(fetchTasks).addOnCompleteListener(fetchDone -> {
+                            List<RegistrationHistoryItem> items = new ArrayList<>();
+                            for (int i = 0; i < matchedIds.size(); i++) {
+                                Task<DocumentSnapshot> ft = fetchTasks.get(i);
+                                if (!ft.isSuccessful()) continue;
+                                DocumentSnapshot snap = ft.getResult();
+                                if (snap == null || !snap.exists()) continue;
+                                Event ev = snap.toObject(Event.class);
+                                if (ev == null) continue;
+                                String eid = matchedIds.get(i);
+                                ev.setEventId(eid);
+                                items.add(new RegistrationHistoryItem(
+                                        ev, statusByEvent.get(eid)));
+                            }
+                            sortHistoryByDate(items);
+                            callback.onSuccess(items);
+                        });
+                    });
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
+    /**
+     * Returns true if the task completed successfully and the document exists.
+     */
+    private static boolean docExists(Task<DocumentSnapshot> task) {
+        if (!task.isSuccessful()) return false;
+        DocumentSnapshot snap = task.getResult();
+        return snap != null && snap.exists();
+    }
+
+    private static void sortHistoryByDate(List<RegistrationHistoryItem> items) {
+        Collections.sort(items, new Comparator<RegistrationHistoryItem>() {
+            @Override
+            public int compare(RegistrationHistoryItem a, RegistrationHistoryItem b) {
+                Date da = a.getEvent().getRegistrationStart();
+                Date db = b.getEvent().getRegistrationStart();
+                if (da == null && db == null) return 0;
+                if (da == null) return 1;
+                if (db == null) return -1;
+                return db.compareTo(da);
+            }
+        });
+    }
+
+    /**
+     * After a profile update, propagates the entrant's latest name, email,
+     * and phoneNumber into every event sub-collection (waitingList, selected,
+     * enrolled, cancelled) where the entrant has a document.
+     *
+     * This ensures organizers see up-to-date entrant info in their lists.
+     *
+     * @param entrant  the updated entrant profile
+     * @param callback optional — notified when sync completes or fails
+     */
+    public void syncEntrantAcrossEvents(Entrant entrant, RepoCallback<Void> callback) {
+        String deviceId = entrant.getDeviceId();
+
+        // Build the map of fields to update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", entrant.getName());
+        updates.put("email", entrant.getEmail());
+        if (entrant.getPhoneNumber() != null) {
+            updates.put("phoneNumber", entrant.getPhoneNumber());
+        }
+
+        db.collection("events").get()
+                .addOnSuccessListener(eventsSnapshot -> {
+                    if (eventsSnapshot == null || eventsSnapshot.isEmpty()) {
+                        if (callback != null) callback.onSuccess(null);
+                        return;
+                    }
+
+                    List<Task<Void>> updateTasks = new ArrayList<>();
+
+                    for (DocumentSnapshot eventDoc : eventsSnapshot.getDocuments()) {
+                        String eventId = eventDoc.getId();
+                        for (String subCol : EVENT_SUB_COLLECTIONS) {
+                            DocumentReference ref = db.collection("events")
+                                    .document(eventId)
+                                    .collection(subCol)
+                                    .document(deviceId);
+
+                            // Use a get-then-update approach so we only write
+                            // to documents that actually exist
+                            updateTasks.add(
+                                    ref.get().continueWithTask(task -> {
+                                        if (task.isSuccessful()
+                                                && task.getResult() != null
+                                                && task.getResult().exists()) {
+                                            return ref.update(updates);
+                                        }
+                                        return Tasks.forResult(null);
+                                    })
+                            );
+                        }
+                    }
+
+                    Tasks.whenAll(updateTasks)
+                            .addOnSuccessListener(unused -> {
+                                if (callback != null) callback.onSuccess(null);
+                            })
+                            .addOnFailureListener(e -> {
+                                if (callback != null) callback.onError(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
+    }
 }
+

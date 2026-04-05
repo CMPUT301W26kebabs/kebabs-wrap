@@ -82,11 +82,15 @@ public class AdminEventsActivity extends AppCompatActivity implements EventAdapt
         progressBar.setVisibility(View.VISIBLE); recyclerView.setVisibility(View.GONE);
         repository.fetchAllEvents(new FirebaseRepository.OnDocumentsLoadedListener() {
             public void onLoaded(List<DocumentSnapshot> docs) {
-                allEvents = docs; filterEvents(searchBar.getText().toString().trim());
+                allEvents = docs != null ? docs : new ArrayList<>();
+                String q = searchBar != null && searchBar.getText() != null
+                        ? searchBar.getText().toString().trim() : "";
+                filterEvents(q);
                 progressBar.setVisibility(View.GONE); recyclerView.setVisibility(View.VISIBLE);
             }
             public void onError(Exception e) {
-                Toast.makeText(AdminEventsActivity.this, "Failed to load events", Toast.LENGTH_SHORT).show();
+                String msg = e != null && e.getMessage() != null ? e.getMessage() : "Unknown error";
+                Toast.makeText(AdminEventsActivity.this, "Failed to load events: " + msg, Toast.LENGTH_LONG).show();
                 progressBar.setVisibility(View.GONE); emptyState.setVisibility(View.VISIBLE);
             }
         });
@@ -125,7 +129,10 @@ public class AdminEventsActivity extends AppCompatActivity implements EventAdapt
                 String aid = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
                 repository.softDeleteEvent(doc.getId(), aid, new FirebaseRepository.OnOperationCompleteListener() {
                     public void onSuccess() { Toast.makeText(AdminEventsActivity.this, "Event removed", Toast.LENGTH_SHORT).show(); loadEvents(); }
-                    public void onError(Exception e) { Toast.makeText(AdminEventsActivity.this, "Failed", Toast.LENGTH_LONG).show(); }
+                    public void onError(Exception e) {
+                        String msg = e != null && e.getMessage() != null ? e.getMessage() : "Unknown error";
+                        Toast.makeText(AdminEventsActivity.this, "Failed to remove event: " + msg, Toast.LENGTH_LONG).show();
+                    }
                 });
             }).setNegativeButton("Cancel", null).show();
     }

@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,15 +18,24 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventmanager.adapter.HomeEventAdapter;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
+import com.example.eventmanager.repository.FollowRepository;
 import com.example.eventmanager.ui.ProfileActivity;
+import com.example.eventmanager.ui.SplashActivity;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.Timestamp;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class HomeActivity extends AppCompatActivity {
+    private static final String TAG = "HomeActivity";
 
     private TextView tvWelcome;
     private RecyclerView rvUpcoming, rvNearby;
@@ -35,6 +46,18 @@ public class HomeActivity extends AppCompatActivity {
     private View lotteryBanner;
     private TextView tvLotteryEvent;
     private List<DocumentSnapshot> allEvents = new ArrayList<>();
+    private String currentSearchQuery = "";
+    private boolean filterOpenReg = false;
+    private boolean filterHasCapacity = false;
+    private boolean filterFollowing = false;
+    private Date filterStartDate = null;
+    private Date filterEndDate = null;
+    private SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy  hh:mm a", Locale.getDefault());
+    private ListenerRegistration eventsListener;
+    private boolean hasShownEventsLoadError = false;
+    private FollowRepository followRepo;
+    private Set<String> followingOrganizerIds = new HashSet<>();
+    private TextView chipAllEvents, chipFollowing, tvNoFollowing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +93,8 @@ public class HomeActivity extends AppCompatActivity {
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(Editable s) {
-                filterAndUpdateLists(s != null ? s.toString().trim() : "");
+                currentSearchQuery = s != null ? s.toString().trim() : "";
+                filterAndUpdateLists(currentSearchQuery);
             }
         });
 
@@ -78,9 +102,8 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.see_all_upcoming).setOnClickListener(v -> openBrowse("Upcoming Events"));
         findViewById(R.id.see_all_nearby).setOnClickListener(v -> openBrowse("Nearby You"));
 
-        // Filters
-        findViewById(R.id.btn_filters).setOnClickListener(v ->
-                Toast.makeText(this, "Filter by date or location coming soon", Toast.LENGTH_SHORT).show());
+        // Filters — US 01.01.04: dialog with Open Registration + Has Capacity
+        findViewById(R.id.btn_filters).setOnClickListener(v -> showFilterDialog());
 
         // Lottery banner
         lotteryBanner.setOnClickListener(v -> openPendingInvite());
@@ -108,9 +131,68 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.btn_create_event).setOnClickListener(v ->
                 startActivity(new Intent(this, CreateEventActivity.class)));
 
+        followRepo = new FollowRepository();
+        chipAllEvents = findViewById(R.id.chip_all_events);
+        chipFollowing = findViewById(R.id.chip_following);
+        tvNoFollowing = findViewById(R.id.tv_no_following);
+
+        chipAllEvents.setOnClickListener(v -> {
+            filterFollowing = false;
+            updateChipUI();
+            filterAndUpdateLists(currentSearchQuery);
+        });
+        chipFollowing.setOnClickListener(v -> {
+            filterFollowing = true;
+            updateChipUI();
+            filterAndUpdateLists(currentSearchQuery);
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadUserName();
-        loadEvents();
         loadPendingInvites();
+        loadFollowingList();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        attachEventsListener();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
+    }
+
+    private void loadFollowingList() {
+        String devId = new DeviceAuthManager().getDeviceId(this);
+        followRepo.getFollowingList(devId, organizerIds -> runOnUiThread(() -> {
+            followingOrganizerIds = new HashSet<>(organizerIds);
+            if (filterFollowing) {
+                filterAndUpdateLists(currentSearchQuery);
+            }
+        }));
+    }
+
+    private void updateChipUI() {
+        if (filterFollowing) {
+            chipFollowing.setBackgroundResource(R.drawable.bg_chip_selected);
+            chipFollowing.setTextColor(0xFFFFFFFF);
+            chipAllEvents.setBackgroundResource(R.drawable.bg_chip_unselected);
+            chipAllEvents.setTextColor(0xFF4A43EC);
+        } else {
+            chipAllEvents.setBackgroundResource(R.drawable.bg_chip_selected);
+            chipAllEvents.setTextColor(0xFFFFFFFF);
+            chipFollowing.setBackgroundResource(R.drawable.bg_chip_unselected);
+            chipFollowing.setTextColor(0xFF4A43EC);
+        }
     }
 
     private void openBrowse(String title) {
@@ -152,28 +234,53 @@ public class HomeActivity extends AppCompatActivity {
         repo.getUser(deviceId, new com.example.eventmanager.repository.FirebaseRepository.RepoCallback<Entrant>() {
             @Override
             public void onSuccess(Entrant result) {
-                if (result != null && result.getName() != null) {
+                if (result == null || result.isProfileDisabled()) {
+                    Intent intent = new Intent(HomeActivity.this, SplashActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                    return;
+                }
+                if (result.getName() != null) {
                     tvWelcome.setText("Welcome back " + result.getName() + " \uD83D\uDC4B,");
                 } else {
                     tvWelcome.setText("Welcome \uD83D\uDC4B,");
                 }
             }
             @Override
-            public void onError(Exception e) { tvWelcome.setText("Welcome \uD83D\uDC4B,"); }
+            public void onError(Exception e) {
+                tvWelcome.setText("Welcome \uD83D\uDC4B,");
+            }
         });
     }
 
-    private void loadEvents() {
-        mainRepo.fetchAllActiveEvents(new FirebaseRepository.OnDocumentsLoadedListener() {
-            @Override
-            public void onLoaded(List<DocumentSnapshot> docs) {
-                allEvents = docs != null ? docs : new ArrayList<>();
-                sortByDate(allEvents);
-                filterAndUpdateLists("");
-            }
-            @Override
-            public void onError(Exception e) { }
-        });
+    private void attachEventsListener() {
+        if (eventsListener != null) return;
+        eventsListener = mainRepo.getDb().collection("events")
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null || snapshot == null) {
+                        Log.e(TAG, "Failed to load events", error);
+                        if (!hasShownEventsLoadError) {
+                            Toast.makeText(this,
+                                    "Could not load events from Firebase: " +
+                                            (error != null && error.getMessage() != null ? error.getMessage() : "unknown error"),
+                                    Toast.LENGTH_LONG).show();
+                            hasShownEventsLoadError = true;
+                        }
+                        return;
+                    }
+                    hasShownEventsLoadError = false;
+                    List<DocumentSnapshot> active = new ArrayList<>();
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        Boolean isDeleted = doc.getBoolean("isDeleted");
+                        if (isDeleted != null && isDeleted) continue;
+                        if (Boolean.TRUE.equals(doc.getBoolean("privateEvent"))) continue;
+                        active.add(doc);
+                    }
+                    allEvents = active;
+                    sortByDate(allEvents);
+                    filterAndUpdateLists(currentSearchQuery);
+                });
     }
 
     private void sortByDate(List<DocumentSnapshot> docs) {
@@ -190,20 +297,143 @@ public class HomeActivity extends AppCompatActivity {
     private void filterAndUpdateLists(String query) {
         List<DocumentSnapshot> filtered = new ArrayList<>();
         String q = query.toLowerCase();
+        Date now = new Date();
+
         for (DocumentSnapshot doc : allEvents) {
-            if (q.isEmpty()) {
-                filtered.add(doc);
-            } else {
+            // Keyword search: match name, location, or description
+            if (!q.isEmpty()) {
                 String name = doc.getString("name");
                 String loc = doc.getString("location");
-                if ((name != null && name.toLowerCase().contains(q))
-                        || (loc != null && loc.toLowerCase().contains(q))) {
-                    filtered.add(doc);
+                String desc = doc.getString("description");
+                boolean match = (name != null && name.toLowerCase().contains(q))
+                        || (loc != null && loc.toLowerCase().contains(q))
+                        || (desc != null && desc.toLowerCase().contains(q));
+                if (!match) continue;
+            }
+
+            // Following filter
+            if (filterFollowing) {
+                String orgId = doc.getString("organizerId");
+                if (orgId == null || !followingOrganizerIds.contains(orgId)) continue;
+            }
+
+            // Filter: open registration
+            if (filterOpenReg) {
+                Timestamp regStart = doc.getTimestamp("registrationStart");
+                Timestamp regEnd = doc.getTimestamp("registrationEnd");
+                boolean hasWindow = regStart != null || regEnd != null;
+                if (!hasWindow) continue;
+                if (regStart != null && now.before(regStart.toDate())) continue;
+                if (regEnd != null && now.after(regEnd.toDate())) continue;
+            }
+
+            // Filter: has capacity
+            if (filterHasCapacity) {
+                Long capacity = doc.getLong("capacity");
+                if (capacity != null && capacity <= 0) continue;
+            }
+
+            // Date range: use event start/end (availability), not registration window
+            if (filterStartDate != null || filterEndDate != null) {
+                Timestamp eventStartTs = doc.getTimestamp("startDate");
+                Timestamp eventEndTs = doc.getTimestamp("endDate");
+                if (eventStartTs == null) continue;
+                Date eventStart = eventStartTs.toDate();
+                Date eventEnd = eventEndTs != null ? eventEndTs.toDate() : eventStart;
+
+                if (filterStartDate != null && filterEndDate != null) {
+                    if (eventEnd.before(filterStartDate) || eventStart.after(filterEndDate)) continue;
+                } else if (filterStartDate != null) {
+                    if (eventStart.before(filterStartDate)) continue;
+                } else {
+                    if (eventStart.after(filterEndDate)) continue;
                 }
             }
+
+            filtered.add(doc);
         }
         upcomingAdapter.updateList(filtered);
         nearbyAdapter.updateList(filtered);
+
+        if (tvNoFollowing != null) {
+            boolean showEmpty = filterFollowing && filtered.isEmpty();
+            tvNoFollowing.setVisibility(showEmpty ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    /**
+     * US 01.01.04 — Shows a filter dialog with checkboxes for Open Registration and Has Capacity.
+     */
+    private void showFilterDialog() {
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(padding, padding, padding, padding);
+
+        android.widget.CheckBox cbOpenReg = new android.widget.CheckBox(this);
+        cbOpenReg.setText("Open Registration");
+        cbOpenReg.setChecked(filterOpenReg);
+        layout.addView(cbOpenReg);
+
+        android.widget.CheckBox cbHasCap = new android.widget.CheckBox(this);
+        cbHasCap.setText("Has Capacity");
+        cbHasCap.setChecked(filterHasCapacity);
+        layout.addView(cbHasCap);
+
+        android.widget.TextView tvStart = new android.widget.TextView(this);
+        tvStart.setPadding(0, padding, 0, padding/2);
+        tvStart.setText(filterStartDate != null ? "Start: " + sdf.format(filterStartDate) : "Start Date/Time (Any)");
+        tvStart.setTextSize(16);
+        tvStart.setTextColor(getResources().getColor(android.R.color.black, null));
+        layout.addView(tvStart);
+
+        android.widget.TextView tvEnd = new android.widget.TextView(this);
+        tvEnd.setPadding(0, padding/2, 0, padding);
+        tvEnd.setText(filterEndDate != null ? "End: " + sdf.format(filterEndDate) : "End Date/Time (Any)");
+        tvEnd.setTextSize(16);
+        tvEnd.setTextColor(getResources().getColor(android.R.color.black, null));
+        layout.addView(tvEnd);
+
+        final Date[] tempStart = {filterStartDate};
+        final Date[] tempEnd = {filterEndDate};
+
+        tvStart.setOnClickListener(v -> showDateTimePicker(true, tempStart, tvStart));
+        tvEnd.setOnClickListener(v -> showDateTimePicker(false, tempEnd, tvEnd));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Filter Events")
+                .setView(layout)
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    filterOpenReg = cbOpenReg.isChecked();
+                    filterHasCapacity = cbHasCap.isChecked();
+                    filterStartDate = tempStart[0];
+                    filterEndDate = tempEnd[0];
+                    filterAndUpdateLists(currentSearchQuery);
+                })
+                .setNegativeButton("Reset", (dialog, which) -> {
+                    filterOpenReg = false;
+                    filterHasCapacity = false;
+                    filterStartDate = null;
+                    filterEndDate = null;
+                    filterAndUpdateLists(currentSearchQuery);
+                })
+                .show();
+    }
+
+    private void showDateTimePicker(boolean isStart, Date[] tempDate, android.widget.TextView tv) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        if (tempDate[0] != null) {
+            cal.setTime(tempDate[0]);
+        }
+        new android.app.DatePickerDialog(this, (view, year, month, day) -> {
+            new android.app.TimePickerDialog(this, (timeView, hour, minute) -> {
+                java.util.Calendar selected = java.util.Calendar.getInstance();
+                selected.set(year, month, day, hour, minute);
+                tempDate[0] = selected.getTime();
+                String prefix = isStart ? "Start: " : "End: ";
+                tv.setText(prefix + sdf.format(tempDate[0]));
+            }, cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE), false).show();
+        }, cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH), cal.get(java.util.Calendar.DAY_OF_MONTH)).show();
     }
 
     private void openEventDetails(DocumentSnapshot doc) {

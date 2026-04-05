@@ -47,29 +47,37 @@ public class MyEventsActivity extends AppCompatActivity {
     }
 
     private void loadMyEvents() {
-        repository.getEventsByOrganizer(deviceId,
-                querySnapshot -> {
-                    if (querySnapshot != null && !querySnapshot.isEmpty()) {
-                        List<Event> events = new ArrayList<>();
-                        for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+        repository.getEventsForOrganizerDashboard(deviceId,
+                documents -> {
+                    List<Event> events = new ArrayList<>();
+                    if (documents != null) {
+                        for (DocumentSnapshot doc : documents) {
+                            Boolean deleted = doc.getBoolean("isDeleted");
+                            if (Boolean.TRUE.equals(deleted)) {
+                                continue;
+                            }
                             Event event = doc.toObject(Event.class);
                             if (event != null) {
                                 if (event.getEventId() == null || event.getEventId().trim().isEmpty()) {
-                                    // Firestore document ids are the safest source of truth for downstream screens.
                                     event.setEventId(doc.getId());
                                 }
+                                event.setDeleted(Boolean.TRUE.equals(doc.getBoolean("isDeleted")));
                                 events.add(event);
                             }
                         }
-                        EventAdapter adapter = new EventAdapter(events);
-                        adapter.setOnItemClickListener(event -> {
-                            Intent intent = new Intent(this, ManageEventActivity.class);
-                            intent.putExtra("EVENT_ID", event.getEventId());
-                            intent.putExtra("EVENT_NAME", event.getName());
-                            startActivity(intent);
-                        });
-                        rvEvents.setAdapter(adapter);
                     }
+                    if (events.isEmpty()) {
+                        rvEvents.setAdapter(null);
+                        return;
+                    }
+                    EventAdapter adapter = new EventAdapter(events);
+                    adapter.setOnItemClickListener(event -> {
+                        Intent intent = new Intent(this, ManageEventActivity.class);
+                        intent.putExtra("EVENT_ID", event.getEventId());
+                        intent.putExtra("EVENT_NAME", event.getName());
+                        startActivity(intent);
+                    });
+                    rvEvents.setAdapter(adapter);
                 },
                 e -> Toast.makeText(this, "Failed to load events", Toast.LENGTH_SHORT).show()
         );

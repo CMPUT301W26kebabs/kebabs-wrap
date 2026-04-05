@@ -19,6 +19,7 @@ import com.google.firebase.firestore.SetOptions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -86,6 +87,12 @@ public class FirebaseRepository {
                 .addOnSuccessListener(success).addOnFailureListener(failure);
     }
 
+    /** Merge-updates an existing event (organizer edit flow). */
+    public void updateEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
+        db.collection("events").document(event.getEventId()).set(event, SetOptions.merge())
+                .addOnSuccessListener(success).addOnFailureListener(failure);
+    }
+
     public void updateEventPosterUrl(String eventId, String posterUrl,
                                      OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
         db.collection("events").document(eventId).update("posterUrl", posterUrl)
@@ -96,6 +103,35 @@ public class FirebaseRepository {
                                      OnSuccessListener<QuerySnapshot> onSuccess, OnFailureListener onFailure) {
         db.collection("events").whereEqualTo("organizerId", organizerId).get()
                 .addOnSuccessListener(onSuccess).addOnFailureListener(onFailure);
+    }
+
+    /**
+     * Events the user can manage: primary organizer ({@code organizerId}) or co-organizer ({@code coOrganizers}).
+     * Merges two queries and de-duplicates by document id.
+     */
+    public void getEventsForOrganizerDashboard(@NonNull String deviceId,
+                                              @NonNull OnSuccessListener<List<DocumentSnapshot>> onSuccess,
+                                              @NonNull OnFailureListener onFailure) {
+        db.collection("events").whereEqualTo("organizerId", deviceId).get()
+                .addOnSuccessListener(qPrimary -> {
+                    db.collection("events").whereArrayContains("coOrganizers", deviceId).get()
+                            .addOnSuccessListener(qCo -> {
+                                Map<String, DocumentSnapshot> byId = new LinkedHashMap<>();
+                                if (qPrimary != null) {
+                                    for (DocumentSnapshot d : qPrimary.getDocuments()) {
+                                        byId.put(d.getId(), d);
+                                    }
+                                }
+                                if (qCo != null) {
+                                    for (DocumentSnapshot d : qCo.getDocuments()) {
+                                        byId.put(d.getId(), d);
+                                    }
+                                }
+                                onSuccess.onSuccess(new ArrayList<>(byId.values()));
+                            })
+                            .addOnFailureListener(onFailure);
+                })
+                .addOnFailureListener(onFailure);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -154,7 +190,9 @@ public class FirebaseRepository {
             List<DocumentSnapshot> active = new ArrayList<>();
             for (DocumentSnapshot doc : qs.getDocuments()) {
                 Boolean isDeleted = doc.getBoolean("isDeleted");
-                if (isDeleted == null || !isDeleted) active.add(doc);
+                if (isDeleted != null && isDeleted) continue;
+                if (Boolean.TRUE.equals(doc.getBoolean("privateEvent"))) continue;
+                active.add(doc);
             }
             listener.onLoaded(active);
         }).addOnFailureListener(listener::onError);

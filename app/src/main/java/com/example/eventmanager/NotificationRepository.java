@@ -4,14 +4,17 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Handles all Firestore operations related to in-app notifications.
@@ -61,9 +64,29 @@ public class NotificationRepository {
                 .collection("notifications")
                 .document();
 
-        notification.setNotificationId(ref.getId());
+        String id = ref.getId();
+        notification.setNotificationId(id);
 
-        ref.set(notification)
+        // Write explicit fields so documents match the team's schema and deserialize reliably
+        // (toObject() breaks on alternate keys like eventID / isread / read).
+        Timestamp ts = notification.getTimestamp() != null
+                ? notification.getTimestamp()
+                : Timestamp.now();
+        Map<String, Object> data = new HashMap<>();
+        data.put("notificationId", id);
+        data.put("title", notification.getTitle());
+        data.put("body", notification.getBody());
+        data.put("eventName", notification.getEventName());
+        String eid = notification.getEventId();
+        data.put("eventId", eid);
+        data.put("eventID", eid);
+        boolean readFlag = notification.isRead();
+        data.put("isRead", readFlag);
+        data.put("isread", readFlag);
+        data.put("read", false);
+        data.put("timestamp", ts);
+
+        ref.set(data)
                 .addOnSuccessListener(unused ->
                         Log.d(TAG, "Notification added for deviceId: " + deviceId))
                 .addOnFailureListener(e ->
@@ -73,7 +96,8 @@ public class NotificationRepository {
     /**
      * Attaches a real-time Firestore listener to the user's notifications sub-collection.
      * The callback fires immediately with current data, then again on every change.
-     * Notifications are ordered newest-first by timestamp.
+     * Results are sorted newest-first by timestamp on the client (no orderBy —
+     * avoids index issues and includes docs while serverTimestamp is still resolving).
      *
      * The caller must store the returned ListenerRegistration and call .remove()
      * on it when the Activity is destroyed to avoid memory leaks.
@@ -88,7 +112,6 @@ public class NotificationRepository {
         return db.collection("users")
                 .document(deviceId)
                 .collection("notifications")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, error) -> {
 
                     if (error != null) {
@@ -98,15 +121,65 @@ public class NotificationRepository {
 
                     if (snapshots == null) return;
 
-                    // Convert each Firestore document into a Notification object
                     List<Notification> notifications = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        Notification n = doc.toObject(Notification.class);
-                        notifications.add(n);
+                        notifications.add(notificationFromDocument(doc));
                     }
+
+                    notifications.sort((a, b) -> {
+                        Timestamp ta = a.getTimestamp();
+                        Timestamp tb = b.getTimestamp();
+                        if (ta == null && tb == null) return 0;
+                        if (ta == null) return 1;
+                        if (tb == null) return -1;
+                        int cmp = Long.compare(tb.getSeconds(), ta.getSeconds());
+                        if (cmp != 0) return cmp;
+                        return Integer.compare(tb.getNanoseconds(), ta.getNanoseconds());
+                    });
 
                     callback.onNotificationsUpdated(notifications);
                 });
+    }
+
+    /**
+     * Maps Firestore notification docs to {@link Notification}, tolerating field name variants
+     * used across the project and in the database (eventId vs eventID, isRead vs isread, read).
+     */
+    static Notification notificationFromDocument(@NonNull DocumentSnapshot doc) {
+        Notification n = new Notification();
+        n.setNotificationId(doc.getId());
+
+        String storedId = doc.getString("notificationId");
+        if (storedId != null && !storedId.isEmpty()) {
+            n.setNotificationId(storedId);
+        }
+
+        n.setTitle(doc.getString("title"));
+        n.setBody(doc.getString("body"));
+        n.setEventName(doc.getString("eventName"));
+
+        String eventId = doc.getString("eventId");
+        if (eventId == null) {
+            eventId = doc.getString("eventID");
+        }
+        n.setEventId(eventId);
+
+        boolean read = false;
+        if (doc.contains("isRead")) {
+            Boolean v = doc.getBoolean("isRead");
+            read = Boolean.TRUE.equals(v);
+        } else if (doc.contains("isread")) {
+            Boolean v = doc.getBoolean("isread");
+            read = Boolean.TRUE.equals(v);
+        } else if (doc.contains("read")) {
+            Boolean v = doc.getBoolean("read");
+            read = Boolean.TRUE.equals(v);
+        }
+        n.setRead(read);
+
+        Timestamp ts = doc.getTimestamp("timestamp");
+        n.setTimestamp(ts);
+        return n;
     }
 
     /**
@@ -119,11 +192,16 @@ public class NotificationRepository {
     public void markAsRead(@NonNull String deviceId,
                            @NonNull String notificationId) {
 
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isRead", true);
+        updates.put("isread", true);
+        updates.put("read", true);
+
         db.collection("users")
                 .document(deviceId)
                 .collection("notifications")
                 .document(notificationId)
-                .update("isRead", true)
+                .update(updates)
                 .addOnFailureListener(e ->
                         Log.e(TAG, "Failed to mark notification as read: " + notificationId, e));
     }

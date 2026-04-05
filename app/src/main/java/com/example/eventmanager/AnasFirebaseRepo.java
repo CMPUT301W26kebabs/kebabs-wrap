@@ -59,7 +59,8 @@ public class AnasFirebaseRepo {
         data.put("deviceId", deviceId);
         data.put("declinedAt", FieldValue.serverTimestamp());
         return eventRef.collection("cancelled").document(deviceId).set(data)
-                .continueWithTask(task -> eventRef.collection("selected").document(deviceId).delete());
+                .continueWithTask(task -> eventRef.collection("selected").document(deviceId).delete())
+                .continueWithTask(task -> eventRef.collection("inviteeList").document(deviceId).delete());
     }
 
     public void getWaitingList(String eventId, StatusCallback callback) {

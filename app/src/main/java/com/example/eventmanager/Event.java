@@ -18,6 +18,7 @@ public class Event {
     private String posterUrl;
     private String organizerId;
     private boolean isGeolocationRequired;
+    private boolean isDeleted;
 
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
@@ -183,5 +184,21 @@ public class Event {
      */
     public void setGeolocationRequired(boolean geolocationRequired) {
         isGeolocationRequired = geolocationRequired;
+    }
+
+    /**
+     * Checks whether this event has been soft-deleted by admin.
+     * @return true if deleted/removed from public browsing.
+     */
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    /**
+     * Sets the soft-delete flag for this event.
+     * @param deleted true to mark removed, false to restore.
+     */
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

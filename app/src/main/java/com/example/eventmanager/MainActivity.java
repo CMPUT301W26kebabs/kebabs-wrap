@@ -2,13 +2,13 @@ package com.example.eventmanager;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventmanager.admin.AdminCommentsActivity;
 import com.example.eventmanager.admin.AdminEventsActivity;
 import com.example.eventmanager.admin.AdminImagesActivity;
+import com.example.eventmanager.admin.AdminNotificationLogsActivity;
 import com.example.eventmanager.admin.AdminProfilesActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -31,6 +31,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.card_comments).setOnClickListener(v ->
                 startActivity(new Intent(this, AdminCommentsActivity.class)));
         findViewById(R.id.card_notification_logs).setOnClickListener(v ->
-                Toast.makeText(this, "Notification log UI coming soon.", Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(this, AdminNotificationLogsActivity.class)));
     }
 }
