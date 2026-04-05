@@ -1,4 +1,6 @@
 package com.example.eventmanager.admin;
+import com.example.eventmanager.models.Entrant;
+import com.example.eventmanager.models.Event;
 
 import android.text.format.DateUtils;
 

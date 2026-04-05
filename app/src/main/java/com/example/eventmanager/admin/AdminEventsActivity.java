@@ -1,4 +1,5 @@
 package com.example.eventmanager.admin;
+import com.example.eventmanager.models.Event;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -15,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.eventmanager.FirebaseRepository;
+import com.example.eventmanager.repository.FirebaseRepository;
 import com.example.eventmanager.R;
 import com.example.eventmanager.adapter.EventAdapter;
 import com.google.android.material.chip.Chip;

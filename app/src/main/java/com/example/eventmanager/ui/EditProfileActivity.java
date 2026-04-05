@@ -1,4 +1,5 @@
 package com.example.eventmanager.ui;
+import com.example.eventmanager.models.Event;
 
 import android.content.Intent;
 import android.net.Uri;
