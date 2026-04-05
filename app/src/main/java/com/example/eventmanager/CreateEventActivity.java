@@ -179,6 +179,17 @@ public class CreateEventActivity extends AppCompatActivity {
                 persistedMaxWaitlist = wl != null ? wl.intValue() : null;
                 if (wl != null && wl > 0) waitlistLimitInput.setText(String.valueOf(wl));
 
+                Timestamp sd = document.getTimestamp("startDate");
+                Timestamp ed = document.getTimestamp("endDate");
+                if (sd != null) {
+                    startDate = sd.toDate();
+                    startDateInput.setText(sdf.format(startDate));
+                }
+                if (ed != null) {
+                    endDate = ed.toDate();
+                    endDateInput.setText(sdf.format(endDate));
+                }
+
                 Timestamp rs = document.getTimestamp("registrationStart");
                 Timestamp re = document.getTimestamp("registrationEnd");
                 if (rs != null) {
@@ -270,6 +281,10 @@ public class CreateEventActivity extends AppCompatActivity {
 
         if (nameStr.isEmpty()) { Toast.makeText(this, "Enter event name", Toast.LENGTH_SHORT).show(); return; }
         if (capacityStr.isEmpty()) { Toast.makeText(this, "Enter capacity", Toast.LENGTH_SHORT).show(); return; }
+        if (startDate == null || endDate == null) {
+            Toast.makeText(this, "Set event start and end date/time", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         String eventId = UUID.randomUUID().toString();
         String deviceId = new DeviceAuthManager().getDeviceId(this);
@@ -285,11 +300,11 @@ public class CreateEventActivity extends AppCompatActivity {
         String loc = locationInput.getText().toString().trim();
         if (!loc.isEmpty()) newEvent.setLocation(loc);
 
-        // Registration window is stored in the Event model.
-        Date regStart = registrationStartDate != null ? registrationStartDate : startDate;
-        Date regEnd = registrationEndDate != null ? registrationEndDate : endDate;
-        if (regStart != null) newEvent.setRegistrationStart(regStart);
-        if (regEnd != null) newEvent.setRegistrationEnd(regEnd);
+        newEvent.setStartDate(startDate);
+        newEvent.setEndDate(endDate);
+
+        if (registrationStartDate != null) newEvent.setRegistrationStart(registrationStartDate);
+        if (registrationEndDate != null) newEvent.setRegistrationEnd(registrationEndDate);
 
         String waitlistStr = waitlistLimitInput.getText().toString().trim();
         if (!waitlistStr.isEmpty()) newEvent.setMaxWaitlistCapacity(Integer.parseInt(waitlistStr));
@@ -315,6 +330,10 @@ public class CreateEventActivity extends AppCompatActivity {
 
         if (nameStr.isEmpty()) { Toast.makeText(this, "Enter event name", Toast.LENGTH_SHORT).show(); return; }
         if (capacityStr.isEmpty()) { Toast.makeText(this, "Enter capacity", Toast.LENGTH_SHORT).show(); return; }
+        if (startDate == null || endDate == null) {
+            Toast.makeText(this, "Set event start and end date/time", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Event event = new Event();
         event.setEventId(editEventId);
@@ -329,10 +348,11 @@ public class CreateEventActivity extends AppCompatActivity {
         String loc = locationInput.getText().toString().trim();
         if (!loc.isEmpty()) event.setLocation(loc);
 
-        Date regStart = registrationStartDate != null ? registrationStartDate : startDate;
-        Date regEnd = registrationEndDate != null ? registrationEndDate : endDate;
-        if (regStart != null) event.setRegistrationStart(regStart);
-        if (regEnd != null) event.setRegistrationEnd(regEnd);
+        event.setStartDate(startDate);
+        event.setEndDate(endDate);
+
+        if (registrationStartDate != null) event.setRegistrationStart(registrationStartDate);
+        if (registrationEndDate != null) event.setRegistrationEnd(registrationEndDate);
 
         String waitlistStr = waitlistLimitInput.getText().toString().trim();
         if (!waitlistStr.isEmpty()) {

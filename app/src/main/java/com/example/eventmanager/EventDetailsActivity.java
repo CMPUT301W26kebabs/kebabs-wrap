@@ -187,14 +187,16 @@ public class EventDetailsActivity extends AppCompatActivity {
                     tvEventDescription.setText(desc != null && !desc.isEmpty() ? desc :
                             "Experience this amazing event! Join the waiting list to secure your spot.");
 
-                    // Registration date and time window
+                    Timestamp eventStartTs = doc.getTimestamp("startDate");
                     Timestamp regStart = doc.getTimestamp("registrationStart");
                     Timestamp regEnd = doc.getTimestamp("registrationEnd");
                     registrationStart = regStart != null ? regStart.toDate() : null;
                     registrationEnd = regEnd != null ? regEnd.toDate() : null;
-                    if (registrationStart != null) {
+                    Date when = eventStartTs != null ? eventStartTs.toDate()
+                            : (registrationStart != null ? registrationStart : null);
+                    if (when != null) {
                         tvEventDate.setText(new SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault())
-                                .format(registrationStart));
+                                .format(when));
                     } else {
                         tvEventDate.setText("Date TBA");
                     }
