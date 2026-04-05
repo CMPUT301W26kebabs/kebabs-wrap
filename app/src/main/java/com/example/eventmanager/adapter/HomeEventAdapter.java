@@ -1,4 +1,5 @@
 package com.example.eventmanager.adapter;
+import com.example.eventmanager.models.Event;
 
 import android.content.Context;
 import android.view.LayoutInflater;

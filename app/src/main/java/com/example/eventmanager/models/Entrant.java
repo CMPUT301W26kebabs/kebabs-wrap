@@ -1,5 +1,7 @@
 package com.example.eventmanager.models;
 
+import com.example.eventmanager.ui.ManageEventActivity;
+
 /**
  * Represents a user of the application, encompassing both standard entrants and organizers/admins.
  * This class serves as a pure data model (POJO) to be serialized and deserialized by Firestore.
@@ -24,6 +26,10 @@ public class Entrant {
      */
     private Boolean isDisabled;
 
+    // Transient UI properties used by ManageEventActivity adapters
+    private transient String statusTabLabel;
+    private transient boolean isSectionHeader;
+
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
      */
@@ -40,6 +46,20 @@ public class Entrant {
         this.isAdmin = false;
         this.isOrganizer = false;
     }
+
+    public Entrant(String deviceId, String name, String email, String statusTabLabel) {
+        this();
+        this.deviceId = deviceId;
+        this.name = name;
+        this.email = email;
+        this.statusTabLabel = statusTabLabel;
+    }
+
+    public String getStatusTabLabel() { return statusTabLabel; }
+    public void setStatusTabLabel(String statusTabLabel) { this.statusTabLabel = statusTabLabel; }
+
+    public boolean isSectionHeader() { return isSectionHeader; }
+    public void setSectionHeader(boolean sectionHeader) { this.isSectionHeader = sectionHeader; }
 
     /**
      * Gets the user's unique device ID.

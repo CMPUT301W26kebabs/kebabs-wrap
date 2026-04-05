@@ -1,4 +1,5 @@
 package com.example.eventmanager.admin;
+import com.example.eventmanager.models.Entrant;
 
 import android.os.Bundle;
 import android.provider.Settings;
@@ -14,7 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
-import com.example.eventmanager.FirebaseRepository;
+import com.example.eventmanager.repository.FirebaseRepository;
 import com.example.eventmanager.R;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.firebase.firestore.DocumentSnapshot;
