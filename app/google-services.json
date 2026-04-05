@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "383832527748",
+    "project_id": "cmput302-eventmanager",
+    "storage_bucket": "cmput302-eventmanager.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383832527748:android:65cb7f501e90885cbf03d1",
+        "android_client_info": {
+          "package_name": "com.example.eventmanager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVzfWaPjb5KGJhKD8T8k6LjU86n0HLW_4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

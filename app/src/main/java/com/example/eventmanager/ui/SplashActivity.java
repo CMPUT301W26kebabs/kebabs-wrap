@@ -93,7 +93,7 @@ public class SplashActivity extends AppCompatActivity {
         repository.getUser(deviceId, new FirebaseRepository.RepoCallback<Entrant>() {
             @Override
             public void onSuccess(Entrant result) {
-                if (result != null && result.getName() != null && !result.getName().trim().isEmpty()) {
+                if (isActiveProfile(result)) {
                     checkingText.setText(R.string.splash_welcome_back);
                     handler.postDelayed(() -> navigateToHome(), SPLASH_DELAY_MS);
                 } else {
@@ -130,10 +130,14 @@ public class SplashActivity extends AppCompatActivity {
         repository.getUser(deviceId, new FirebaseRepository.RepoCallback<Entrant>() {
             @Override
             public void onSuccess(Entrant result) {
-                if (result != null && result.getName() != null && !result.getName().trim().isEmpty()) {
+                if (isActiveProfile(result)) {
                     navigateToHome();
                 } else {
-                    Toast.makeText(SplashActivity.this, R.string.profile_missing_error, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SplashActivity.this,
+                            result != null && result.isProfileDisabled()
+                                    ? R.string.profile_removed_or_disabled
+                                    : R.string.profile_missing_error,
+                            Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -152,6 +156,13 @@ public class SplashActivity extends AppCompatActivity {
         Intent intent = new Intent(this, EntrantSignUpActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private static boolean isActiveProfile(Entrant result) {
+        return result != null
+                && !result.isProfileDisabled()
+                && result.getName() != null
+                && !result.getName().trim().isEmpty();
     }
 
     private void navigateToHome() {

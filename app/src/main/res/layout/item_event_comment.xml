@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:padding="8dp">
 
     <TextView
         android:id="@+id/commentAuthorInitial"
@@ -20,12 +22,36 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/commentAuthorName"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#2E2C59"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/commentAuthorName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#2E2C59"
+                android:textStyle="bold"
+                tools:text="Muhammad" />
+
+            <TextView
+                android:id="@+id/text_role_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_tab_active"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="Organizer"
+                tools:visibility="visible" />
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/commentText"
@@ -33,7 +59,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textColor="#7E789B"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            tools:text="This is a sample comment for the event."/>
+
     </LinearLayout>
 
     <TextView
@@ -41,5 +69,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="#B0ABC7"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        tools:text="2m ago" />
+
 </LinearLayout>

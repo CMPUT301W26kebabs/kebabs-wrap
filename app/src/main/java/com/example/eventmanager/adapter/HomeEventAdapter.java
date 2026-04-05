@@ -66,7 +66,9 @@ public class HomeEventAdapter extends RecyclerView.Adapter<HomeEventAdapter.Home
             h.tvMonth.setText("---");
         }
 
-        h.tvGoing.setText("+20 Going");
+        if (h.tvGoing != null) {
+            h.tvGoing.setVisibility(View.GONE);
+        }
         String location = doc.getString("location");
         h.tvLocation.setText(location != null && !location.trim().isEmpty()
                 ? location

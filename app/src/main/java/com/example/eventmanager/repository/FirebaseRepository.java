@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import java.util.Map;
 public class FirebaseRepository {
 
     private static final String[] EVENT_SUB_COLLECTIONS =
-            {"waitingList", "selected", "enrolled", "cancelled"};
+            {"waitingList", "selected", "enrolled", "cancelled", "inviteeList"};
 
     private final FirebaseFirestore db;
 
@@ -77,7 +78,7 @@ public class FirebaseRepository {
 
     /**
      * Deletes the user profile AND removes the user from every event sub-collection
-     * (waitingList, selected, enrolled, cancelled) across all events.
+     * (waitingList, selected, enrolled, cancelled, inviteeList) across all events.
      * This satisfies the requirement that deleting a profile also erases all
      * registrations, registration history, and enrollments.
      *
@@ -96,6 +97,13 @@ public class FirebaseRepository {
                     if (eventsSnapshot != null) {
                         for (DocumentSnapshot eventDoc : eventsSnapshot.getDocuments()) {
                             String eventId = eventDoc.getId();
+
+                            // Delete the entire event if the user being deleted is its organizer
+                            String organizerId = eventDoc.getString("organizerId");
+                            if (organizerId != null && organizerId.equals(deviceId)) {
+                                deleteTasks.add(db.collection("events").document(eventId).delete());
+                            }
+
                             for (String subCol : EVENT_SUB_COLLECTIONS) {
                                 // Delete the user's entry from each sub-collection of each event
                                 deleteTasks.add(
@@ -155,7 +163,7 @@ public class FirebaseRepository {
 
     /**
      * Loads all events this entrant appears in across the waitingList, selected,
-     * enrolled, and cancelled sub-collections (US 01.02.03).
+     * enrolled, cancelled, and inviteeList sub-collections (US 01.02.03).
      *
      * Instead of collection-group queries (which require full document paths),
      * this fetches all events and checks each sub-collection directly by deviceId.
@@ -178,8 +186,8 @@ public class FirebaseRepository {
                         eventIds.add(doc.getId());
                     }
 
-                    // For each event, fire 4 document lookups (one per sub-collection)
-                    // Tasks are stored in order: [wait0, sel0, enr0, can0, wait1, sel1, ...]
+                    // For each event, fire 5 document lookups (one per sub-collection)
+                    // Tasks are stored in order: [wait0, sel0, enr0, can0, inv0, wait1, ...]
                     List<Task<DocumentSnapshot>> allTasks = new ArrayList<>();
                     for (String eventId : eventIds) {
                         DocumentReference eventRef =
@@ -193,24 +201,28 @@ public class FirebaseRepository {
                         Map<String, RegistrationHistoryItem.RegistrationStatus> statusByEvent =
                                 new LinkedHashMap<>();
 
-                        int subCount = EVENT_SUB_COLLECTIONS.length; // 4
+                        int subCount = EVENT_SUB_COLLECTIONS.length;
                         for (int i = 0; i < eventIds.size(); i++) {
                             String eventId = eventIds.get(i);
                             int base = i * subCount;
 
-                            // Indices: 0=waitingList, 1=selected, 2=enrolled, 3=cancelled
+                            // 0=waitingList, 1=selected, 2=enrolled, 3=cancelled, 4=inviteeList
                             boolean inWait = docExists(allTasks.get(base));
                             boolean inSel  = docExists(allTasks.get(base + 1));
                             boolean inEnr  = docExists(allTasks.get(base + 2));
                             boolean inCan  = docExists(allTasks.get(base + 3));
+                            boolean inInv  = docExists(allTasks.get(base + 4));
 
-                            // Priority: enrolled > selected > cancelled > waitingList
+                            // Priority: enrolled > selected > invitee > cancelled > waitingList
                             if (inEnr) {
                                 statusByEvent.put(eventId,
                                         RegistrationHistoryItem.RegistrationStatus.ENROLLED);
                             } else if (inSel) {
                                 statusByEvent.put(eventId,
                                         RegistrationHistoryItem.RegistrationStatus.SELECTED);
+                            } else if (inInv) {
+                                statusByEvent.put(eventId,
+                                        RegistrationHistoryItem.RegistrationStatus.INVITED);
                             } else if (inCan) {
                                 statusByEvent.put(eventId,
                                         RegistrationHistoryItem.RegistrationStatus.CANCELLED);
@@ -276,4 +288,71 @@ public class FirebaseRepository {
             }
         });
     }
+
+    /**
+     * After a profile update, propagates the entrant's latest name, email,
+     * and phoneNumber into every event sub-collection (waitingList, selected,
+     * enrolled, cancelled) where the entrant has a document.
+     *
+     * This ensures organizers see up-to-date entrant info in their lists.
+     *
+     * @param entrant  the updated entrant profile
+     * @param callback optional — notified when sync completes or fails
+     */
+    public void syncEntrantAcrossEvents(Entrant entrant, RepoCallback<Void> callback) {
+        String deviceId = entrant.getDeviceId();
+
+        // Build the map of fields to update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", entrant.getName());
+        updates.put("email", entrant.getEmail());
+        if (entrant.getPhoneNumber() != null) {
+            updates.put("phoneNumber", entrant.getPhoneNumber());
+        }
+
+        db.collection("events").get()
+                .addOnSuccessListener(eventsSnapshot -> {
+                    if (eventsSnapshot == null || eventsSnapshot.isEmpty()) {
+                        if (callback != null) callback.onSuccess(null);
+                        return;
+                    }
+
+                    List<Task<Void>> updateTasks = new ArrayList<>();
+
+                    for (DocumentSnapshot eventDoc : eventsSnapshot.getDocuments()) {
+                        String eventId = eventDoc.getId();
+                        for (String subCol : EVENT_SUB_COLLECTIONS) {
+                            DocumentReference ref = db.collection("events")
+                                    .document(eventId)
+                                    .collection(subCol)
+                                    .document(deviceId);
+
+                            // Use a get-then-update approach so we only write
+                            // to documents that actually exist
+                            updateTasks.add(
+                                    ref.get().continueWithTask(task -> {
+                                        if (task.isSuccessful()
+                                                && task.getResult() != null
+                                                && task.getResult().exists()) {
+                                            return ref.update(updates);
+                                        }
+                                        return Tasks.forResult(null);
+                                    })
+                            );
+                        }
+                    }
+
+                    Tasks.whenAll(updateTasks)
+                            .addOnSuccessListener(unused -> {
+                                if (callback != null) callback.onSuccess(null);
+                            })
+                            .addOnFailureListener(e -> {
+                                if (callback != null) callback.onError(e);
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e);
+                });
+    }
 }
+

@@ -174,13 +174,18 @@
                     android:orientation="horizontal">
 
                     <LinearLayout
+                        android:id="@+id/organizerRow"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <TextView
+                            android:id="@+id/organizerAvatarInitial"
                             android:layout_width="42dp"
                             android:layout_height="42dp"
                             android:gravity="center"
@@ -217,12 +222,15 @@
                         android:id="@+id/followButton"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:minWidth="88dp"
-                        android:background="@drawable/bg_follow_button"
-                        android:text="Follow"
+                        android:minWidth="100dp"
+                        android:background="@drawable/bg_follow_button_active"
+                        android:text="@string/follow"
                         android:textAllCaps="false"
                         android:textColor="#FFFFFF"
-                        android:textStyle="bold" />
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -291,6 +299,7 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvLotteryGuidelines"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"

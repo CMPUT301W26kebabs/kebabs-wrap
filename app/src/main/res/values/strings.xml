@@ -30,6 +30,12 @@
     <string name="profile_save_error">Error saving profile</string>
     <string name="profile_load_error">Failed to load profile</string>
     <string name="profile_missing_error">No saved profile found for this device</string>
+    <string name="profile_removed_or_disabled">This profile is no longer active. Set up a new profile to continue.</string>
+    <string name="admin_delete_profile_title">Delete profile?</string>
+    <string name="admin_delete_profile_message">This removes the user from the app and all event lists. They will not be able to sign in on any device.</string>
+    <string name="admin_profile_deleted">Profile deleted</string>
+    <string name="admin_cannot_delete_self">You cannot delete your own account here.</string>
+    <string name="admin_delete_profile_button">Delete profile</string>
     <string name="edit_profile_title">Edit Profile</string>
     <string name="edit_profile_subtitle">Update your information</string>
     <string name="save_profile">Save Profile</string>
@@ -55,6 +61,32 @@
     <string name="registration_status_not_selected">NOT SELECTED</string>
     <string name="registration_status_enrolled">ENROLLED</string>
     <string name="registration_status_cancelled">CANCELLED</string>
+    <string name="registration_status_invited">INVITED (PENDING)</string>
     <string name="registration_history_date_unknown">Date TBD</string>
     <string name="registration_history_load_error">Could not load registration history</string>
+
+    <!-- Follow System -->
+    <string name="follow">Follow</string>
+    <string name="following">Following</string>
+    <string name="unfollow">Unfollow</string>
+    <string name="followers">Followers</string>
+    <string name="follow_success">You are now following this organizer</string>
+    <string name="unfollow_success">You unfollowed this organizer</string>
+    <string name="all_events">All Events</string>
+    <string name="following_feed">Following</string>
+    <string name="no_following_events">No events from organizers you follow yet.\nFollow organizers to see their events here!</string>
+    <string name="organizer_profile">Organizer Profile</string>
+    <string name="active_events">Active Events</string>
+    <string name="no_active_events">No active events from this organizer.</string>
+    <string name="broadcast_to_followers">Broadcast to Followers</string>
+    <string name="broadcast_title_hint">Notification title</string>
+    <string name="broadcast_body_hint">Write your message…</string>
+    <string name="send_broadcast">Send Broadcast</string>
+    <string name="broadcast_sent">Broadcast sent to your followers!</string>
+    <string name="broadcast_empty_fields">Please fill in both title and message</string>
+    <string name="invite_followers">Invite Followers</string>
+    <string name="invite_followers_confirm">Invite all %1$d followers to this event\'s waiting list?</string>
+    <string name="invite_followers_success">All followers have been invited!</string>
+    <string name="invite_followers_empty">You have no followers to invite.</string>
+    <string name="view_organizer_profile">View profile</string>
 </resources>

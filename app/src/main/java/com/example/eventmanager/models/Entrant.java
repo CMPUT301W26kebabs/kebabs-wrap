@@ -18,6 +18,11 @@ public class Entrant {
     private boolean isAdmin;
     private boolean isOrganizer;
     private String photoUrl;
+    /**
+     * Legacy soft-disable by admin; when true, sign-in should be blocked.
+     * Hard-deleted users have no document instead.
+     */
+    private Boolean isDisabled;
 
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
@@ -153,5 +158,18 @@ public class Entrant {
      */
     public void setOrganizer(boolean organizer) {
         isOrganizer = organizer;
+    }
+
+    public Boolean getIsDisabled() {
+        return isDisabled;
+    }
+
+    public void setIsDisabled(Boolean disabled) {
+        this.isDisabled = disabled;
+    }
+
+    /** True when admin soft-disabled this profile (still in Firestore). */
+    public boolean isProfileDisabled() {
+        return isDisabled != null && isDisabled;
     }
 }

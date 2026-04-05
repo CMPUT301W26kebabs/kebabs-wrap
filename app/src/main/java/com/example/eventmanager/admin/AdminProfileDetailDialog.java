@@ -1,6 +1,7 @@
 package com.example.eventmanager.admin;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +18,15 @@ import com.example.eventmanager.FirebaseRepository;
 import com.example.eventmanager.R;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
 
 public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
 
     private static final String ARG_DEVICE_ID = "device_id";
     private String deviceId;
     private FirebaseRepository repository;
+    private final com.example.eventmanager.repository.FirebaseRepository userDataRepository =
+            new com.example.eventmanager.repository.FirebaseRepository();
     private Runnable onProfileRemovedListener;
 
     private TextView tvInitials, tvName, tvEmail, tvPhone, tvDeviceId, tvRoleBadge, tvStatus;
@@ -59,7 +63,7 @@ public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
         statusBadge = view.findViewById(R.id.status_badge);
         btnDisable = view.findViewById(R.id.btn_disable_profile);
         btnRestore = view.findViewById(R.id.btn_restore_profile);
-        btnDisable.setOnClickListener(v -> confirmDisable());
+        btnDisable.setOnClickListener(v -> confirmDeleteProfile());
         btnRestore.setOnClickListener(v -> restoreProfile());
         loadProfileData();
     }
@@ -100,15 +104,43 @@ public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
         }
     }
 
-    private void confirmDisable() {
-        new AlertDialog.Builder(requireContext()).setTitle("Disable Profile").setMessage("This user won't be able to join waiting lists.")
-            .setPositiveButton("Disable", (d, w) -> {
-                String aid = android.provider.Settings.Secure.getString(requireContext().getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-                repository.softDeleteProfile(deviceId, aid, new FirebaseRepository.OnOperationCompleteListener() {
-                    public void onSuccess() { if (isAdded()) { Toast.makeText(getContext(), "Profile disabled", Toast.LENGTH_SHORT).show(); if (onProfileRemovedListener != null) onProfileRemovedListener.run(); dismiss(); } }
-                    public void onError(Exception e) { if (isAdded()) Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show(); }
-                });
-            }).setNegativeButton("Cancel", null).show();
+    private void confirmDeleteProfile() {
+        String myId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+        if (myId != null && myId.equals(deviceId)) {
+            Toast.makeText(requireContext(), R.string.admin_cannot_delete_self, Toast.LENGTH_LONG).show();
+            return;
+        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.admin_delete_profile_title)
+                .setMessage(R.string.admin_delete_profile_message)
+                .setPositiveButton(R.string.admin_comments_remove_confirm, (d, w) ->
+                        userDataRepository.deleteUserAndAllRegistrations(deviceId,
+                                new com.example.eventmanager.repository.FirebaseRepository.RepoCallback<Void>() {
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        FirebaseStorage.getInstance().getReference()
+                                                .child("users/" + deviceId + "/avatar.jpg")
+                                                .delete();
+                                        if (isAdded()) {
+                                            Toast.makeText(getContext(), R.string.admin_profile_deleted, Toast.LENGTH_SHORT).show();
+                                            if (onProfileRemovedListener != null) {
+                                                onProfileRemovedListener.run();
+                                            }
+                                            dismiss();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        if (isAdded()) {
+                                            Toast.makeText(getContext(),
+                                                    e.getMessage() != null ? e.getMessage() : "Delete failed",
+                                                    Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                }))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void restoreProfile() {

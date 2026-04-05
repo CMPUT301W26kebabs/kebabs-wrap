@@ -1,6 +1,7 @@
 package com.example.eventmanager.admin;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -18,6 +19,7 @@ import com.example.eventmanager.FirebaseRepository;
 import com.example.eventmanager.R;
 import com.example.eventmanager.adapter.ProfileAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,8 @@ public class AdminProfilesActivity extends AppCompatActivity implements ProfileA
     private ProfileAdapter adapter;
     private List<DocumentSnapshot> allProfiles = new ArrayList<>();
     private FirebaseRepository repository;
+    private final com.example.eventmanager.repository.FirebaseRepository userDataRepository =
+            new com.example.eventmanager.repository.FirebaseRepository();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,14 +96,38 @@ public class AdminProfilesActivity extends AppCompatActivity implements ProfileA
     }
 
     @Override public void onProfileRemoveClick(DocumentSnapshot doc) {
-        new AlertDialog.Builder(this).setTitle("Disable Profile")
-            .setMessage("Disable \"" + doc.getString("name") + "\"?\nThey won't be able to join waiting lists.")
-            .setPositiveButton("Disable", (dg, w) -> {
-                String aid = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-                repository.softDeleteProfile(doc.getId(), aid, new FirebaseRepository.OnOperationCompleteListener() {
-                    public void onSuccess() { Toast.makeText(AdminProfilesActivity.this, "Profile disabled", Toast.LENGTH_SHORT).show(); loadProfiles(); }
-                    public void onError(Exception e) { Toast.makeText(AdminProfilesActivity.this, "Failed", Toast.LENGTH_LONG).show(); }
-                });
-            }).setNegativeButton("Cancel", null).show();
+        String targetId = doc.getId();
+        String myId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        if (myId != null && myId.equals(targetId)) {
+            Toast.makeText(this, R.string.admin_cannot_delete_self, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String name = doc.getString("name");
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.admin_delete_profile_title)
+                .setMessage(getString(R.string.admin_delete_profile_message)
+                        + (name != null ? "\n\n" + name : ""))
+                .setPositiveButton(R.string.admin_comments_remove_confirm, (dg, w) ->
+                        userDataRepository.deleteUserAndAllRegistrations(targetId,
+                                new com.example.eventmanager.repository.FirebaseRepository.RepoCallback<Void>() {
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        FirebaseStorage.getInstance().getReference()
+                                                .child("users/" + targetId + "/avatar.jpg")
+                                                .delete();
+                                        Toast.makeText(AdminProfilesActivity.this,
+                                                R.string.admin_profile_deleted, Toast.LENGTH_SHORT).show();
+                                        loadProfiles();
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        Toast.makeText(AdminProfilesActivity.this,
+                                                e.getMessage() != null ? e.getMessage() : "Delete failed",
+                                                Toast.LENGTH_LONG).show();
+                                    }
+                                }))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 }

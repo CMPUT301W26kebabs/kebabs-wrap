@@ -3,7 +3,6 @@ package com.example.eventmanager;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
@@ -11,11 +10,11 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,14 +23,10 @@ import com.example.eventmanager.models.Entrant;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,10 +38,7 @@ import java.util.Map;
  * Organizer UI screen for:
  *   US 02.05.02 – Sample a specified number of attendees from the waiting list.
  *   US 02.05.03 – Draw a replacement if someone cancels/declines.
- *   US 02.06.02 – List cancelled entrants.
- *   US 02.06.04 – Cancel invited entrants who never enrolled.
- *   US 02.06.05 – Export final enrolled roster as CSV.
- *   US 02.07.03 – Notify all cancelled entrants.
+ *   Cancelled entrants are managed from Manage Event.
  *
  * Delegates all business logic to the existing {@link LotteryManager}.
  * Receives eventId + capacity via Intent extras.
@@ -69,9 +61,6 @@ public class RunLotteryActivity extends AppCompatActivity {
     private RecyclerView            rvWinners;
     private RecyclerView            rvCancelled;
     private TextView                tvCancelledCount;
-    private MaterialButton          btnNotifyCancelled;
-    private MaterialButton          btnExportCsv;
-    private MaterialButton          btnCancelNonSignup;
 
     // ── State ─────────────────────────────────────────────────────────────────
     private String        eventId;
@@ -83,11 +72,8 @@ public class RunLotteryActivity extends AppCompatActivity {
     // ── Collaborators ─────────────────────────────────────────────────────────
     private LotteryManager                  lotteryManager;
     private WinnerAdapter                   winnerAdapter;
-    private WinnerAdapter                   cancelledAdapter;
     private final List<Entrant>             winnerList = new ArrayList<>();
-    private final List<Entrant>             cancelledList = new ArrayList<>();
     private OrganizerNotificationManager    organizerNotificationManager;
-    private EventRepository                 eventRepository;
 
     // ─────────────────────────────────────────────────────────────────────────
     @Override
@@ -114,20 +100,17 @@ public class RunLotteryActivity extends AppCompatActivity {
 
         lotteryManager = new LotteryManager();
         organizerNotificationManager = new OrganizerNotificationManager();
-        eventRepository = new EventRepository();
 
         bindViews();
         setupRecyclerView();
-        setupCancelledRecycler();
         setupClickListeners();
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateBack();
+            }
+        });
         loadWaitlistCount();
-        loadCancelledList();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadCancelledList();
     }
 
     // ── Bind views ────────────────────────────────────────────────────────────
@@ -145,11 +128,6 @@ public class RunLotteryActivity extends AppCompatActivity {
         progressBar        = findViewById(R.id.progressBarDraw);
         cardResults        = findViewById(R.id.cardResults);
         rvWinners          = findViewById(R.id.rvWinners);
-        rvCancelled        = findViewById(R.id.rvCancelled);
-        tvCancelledCount   = findViewById(R.id.tvCancelledCount);
-        btnNotifyCancelled = findViewById(R.id.btnNotifyCancelled);
-        btnExportCsv       = findViewById(R.id.btnExportCsv);
-        btnCancelNonSignup = findViewById(R.id.btnCancelNonSignup);
 
         tvWinnerCount.setText(String.valueOf(winnerCount));
     }
@@ -160,13 +138,6 @@ public class RunLotteryActivity extends AppCompatActivity {
         rvWinners.setLayoutManager(new LinearLayoutManager(this));
         rvWinners.setAdapter(winnerAdapter);
         rvWinners.setNestedScrollingEnabled(false);
-    }
-
-    private void setupCancelledRecycler() {
-        cancelledAdapter = new WinnerAdapter(cancelledList);
-        rvCancelled.setLayoutManager(new LinearLayoutManager(this));
-        rvCancelled.setAdapter(cancelledAdapter);
-        rvCancelled.setNestedScrollingEnabled(false);
     }
 
     // ── Click listeners ───────────────────────────────────────────────────────
@@ -202,150 +173,6 @@ public class RunLotteryActivity extends AppCompatActivity {
 
         // Debug: seed waitlist with test entrants (no extra devices needed)
         btnSeedWaitlist.setOnClickListener(v -> confirmSeedWaitlist());
-
-        btnNotifyCancelled.setOnClickListener(v -> confirmNotifyCancelled());
-        btnExportCsv.setOnClickListener(v -> exportFinalRosterCsv());
-        btnCancelNonSignup.setOnClickListener(v -> confirmCancelNonSignup());
-    }
-
-    /** US 02.06.02 — live list from {@code cancelled} sub-collection. */
-    private void loadCancelledList() {
-        FirebaseFirestore.getInstance()
-                .collection("events").document(eventId)
-                .collection("cancelled")
-                .get()
-                .addOnSuccessListener(qs -> {
-                    cancelledList.clear();
-                    for (DocumentSnapshot doc : qs.getDocuments()) {
-                        Entrant e = new Entrant();
-                        String did = doc.getString("deviceId");
-                        e.setDeviceId(did != null ? did : doc.getId());
-                        e.setName(doc.getString("name"));
-                        e.setEmail(doc.getString("email"));
-                        cancelledList.add(e);
-                    }
-                    cancelledAdapter.notifyDataSetChanged();
-                    tvCancelledCount.setText(cancelledList.size() + " cancelled");
-                })
-                .addOnFailureListener(e ->
-                        tvCancelledCount.setText("Could not load cancelled list"));
-    }
-
-    private void confirmNotifyCancelled() {
-        String label = eventName != null ? eventName : "this event";
-        new AlertDialog.Builder(this)
-                .setTitle("Notify cancelled entrants")
-                .setMessage("Send an in-app notification to everyone in the cancelled list for "
-                        + label + "?")
-                .setPositiveButton("Send", (d, w) -> {
-                    organizerNotificationManager.notifyCancelled(
-                            eventId,
-                            eventName != null ? eventName : "Event",
-                            new OrganizerNotificationManager.NotificationDispatchCallback() {
-                                @Override
-                                public void onSuccess(int recipientCount) {
-                                    Toast.makeText(RunLotteryActivity.this,
-                                            "Notification sent to " + recipientCount + " cancelled entrants.",
-                                            Toast.LENGTH_SHORT).show();
-                                }
-
-                                @Override
-                                public void onFailure(@NonNull String message) {
-                                    Toast.makeText(RunLotteryActivity.this, message, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
-    /** US 02.06.05 — enrolled roster as CSV (final attendees). */
-    private void exportFinalRosterCsv() {
-        showStatus("Building CSV…", false);
-        FirebaseFirestore.getInstance()
-                .collection("events").document(eventId)
-                .collection("enrolled")
-                .get()
-                .addOnSuccessListener(qs -> {
-                    hideStatus();
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("name,email,deviceId\n");
-                    for (DocumentSnapshot doc : qs.getDocuments()) {
-                        sb.append(escapeCsvField(doc.getString("name")))
-                                .append(',')
-                                .append(escapeCsvField(doc.getString("email")))
-                                .append(',')
-                                .append(escapeCsvField(doc.getString("deviceId") != null
-                                        ? doc.getString("deviceId") : doc.getId()))
-                                .append('\n');
-                    }
-                    String safeName = (eventName != null ? eventName : "event")
-                            .replaceAll("[^a-zA-Z0-9_-]", "_");
-                    File file = new File(getCacheDir(), "roster_" + safeName + ".csv");
-                    try (FileWriter fw = new FileWriter(file)) {
-                        fw.write(sb.toString());
-                    } catch (IOException e) {
-                        Toast.makeText(this, "Could not write CSV file.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    Uri uri = FileProvider.getUriForFile(this,
-                            getPackageName() + ".fileprovider", file);
-                    Intent share = new Intent(Intent.ACTION_SEND);
-                    share.setType("text/csv");
-                    share.putExtra(Intent.EXTRA_SUBJECT, "Final roster — "
-                            + (eventName != null ? eventName : "Event"));
-                    share.putExtra(Intent.EXTRA_STREAM, uri);
-                    share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    startActivity(Intent.createChooser(share, "Export CSV"));
-                })
-                .addOnFailureListener(e -> {
-                    hideStatus();
-                    Toast.makeText(this, "Could not load enrolled list.", Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    private static String escapeCsvField(String value) {
-        if (value == null) {
-            return "";
-        }
-        if (value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
-        }
-        return value;
-    }
-
-    private void confirmCancelNonSignup() {
-        new AlertDialog.Builder(this)
-                .setTitle("Cancel non-enrolled invitees")
-                .setMessage("Move everyone who is still in “chosen” but has not enrolled into the cancelled list? "
-                        + "This matches invited entrants who never completed enrollment.")
-                .setPositiveButton("Cancel them", (d, w) -> executeCancelNonSignup())
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
-    private void executeCancelNonSignup() {
-        btnCancelNonSignup.setEnabled(false);
-        showStatus("Updating roster…", false);
-        eventRepository.cancelSelectedWithoutEnrollment(eventId, new EventRepository.OperationCallback() {
-            @Override
-            public void onSuccess() {
-                btnCancelNonSignup.setEnabled(true);
-                hideStatus();
-                Toast.makeText(RunLotteryActivity.this,
-                        "Non-enrolled invitees moved to cancelled.",
-                        Toast.LENGTH_SHORT).show();
-                loadCancelledList();
-                loadWaitlistCount();
-            }
-
-            @Override
-            public void onFailure(@NonNull String message) {
-                btnCancelNonSignup.setEnabled(true);
-                hideStatus();
-                Toast.makeText(RunLotteryActivity.this, message, Toast.LENGTH_LONG).show();
-            }
-        });
     }
 
     /** Debug: add 10 test entrants to the current event's waiting list. */
@@ -389,11 +216,6 @@ public class RunLotteryActivity extends AppCompatActivity {
                 });
     }
 
-    @Override
-    public void onBackPressed() {
-        navigateBack();
-    }
-
     // ── Load live waitlist count from Firestore ───────────────────────────────
     private void loadWaitlistCount() {
         FirebaseFirestore.getInstance()
@@ -434,7 +256,7 @@ public class RunLotteryActivity extends AppCompatActivity {
         // Uses your existing LotteryManager.drawWinners() + LotteryCallback exactly
         lotteryManager.drawWinners(eventId, winnerCount, new LotteryCallback() {
             @Override
-            public void onSuccess(List<Entrant> selectedWinners) {
+            public void onSuccess(List<Entrant> selectedWinners, List<String> winnerDeviceIds) {
                 setLoading(false);
 
                 winnerList.clear();
@@ -447,6 +269,23 @@ public class RunLotteryActivity extends AppCompatActivity {
 
                 showStatus("✓ " + selectedWinners.size() + " winner(s) selected!", false);
                 loadWaitlistCount(); // Refresh count after draw
+
+                String en = eventName != null ? eventName : "Event";
+                organizerNotificationManager.notifyAfterLotteryDraw(eventId, en, winnerDeviceIds,
+                        new OrganizerNotificationManager.NotificationDispatchCallback() {
+                            @Override
+                            public void onSuccess(int totalNotified) {
+                                runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                        "Notifications sent (winners + not chosen).",
+                                        Toast.LENGTH_SHORT).show());
+                            }
+
+                            @Override
+                            public void onFailure(@NonNull String message) {
+                                runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                        message, Toast.LENGTH_LONG).show());
+                            }
+                        });
             }
 
             @Override
@@ -474,7 +313,7 @@ public class RunLotteryActivity extends AppCompatActivity {
         // Uses your existing LotteryManager.drawReplacement() which calls drawWinners(eventId, 1, ...)
         lotteryManager.drawReplacement(eventId, new LotteryCallback() {
             @Override
-            public void onSuccess(List<Entrant> selectedWinners) {
+            public void onSuccess(List<Entrant> selectedWinners, List<String> replacementWinnerIds) {
                 setLoading(false);
 
                 if (!selectedWinners.isEmpty()) {
@@ -496,6 +335,23 @@ public class RunLotteryActivity extends AppCompatActivity {
                         animateCardIn(cardResults);
                     }
                     loadWaitlistCount();
+
+                    String enRep = eventName != null ? eventName : "Event";
+                    organizerNotificationManager.notifyAfterLotteryDraw(eventId, enRep, replacementWinnerIds,
+                            new OrganizerNotificationManager.NotificationDispatchCallback() {
+                                @Override
+                                public void onSuccess(int totalNotified) {
+                                    runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                            "Notifications sent (winners + not chosen).",
+                                            Toast.LENGTH_SHORT).show());
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull String message) {
+                                    runOnUiThread(() -> Toast.makeText(RunLotteryActivity.this,
+                                            message, Toast.LENGTH_LONG).show());
+                                }
+                            });
                 }
             }
 
