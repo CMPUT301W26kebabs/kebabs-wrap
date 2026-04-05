@@ -19,6 +19,12 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Admin screen for viewing and removing event poster images displayed in a grid.
+ * Fetches poster URLs from Firestore and allows deletion with confirmation.
+ *
+ * <p>Covers user story US 03.03.</p>
+ */
 public class AdminImagesActivity extends AppCompatActivity implements ImageAdapter.OnImageActionListener {
 
     private RecyclerView recyclerView;

@@ -13,6 +13,10 @@ import com.example.eventmanager.admin.AdminImagesActivity;
 import com.example.eventmanager.admin.AdminNotificationLogsActivity;
 import com.example.eventmanager.admin.AdminProfilesActivity;
 
+/**
+ * Admin dashboard screen providing navigation to all administrative functions.
+ * Presents cards for managing events, profiles, images, notification logs, and comments.
+ */
 public class MainActivity extends AppCompatActivity {
 
     @Override

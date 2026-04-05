@@ -25,6 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Public-facing organizer profile page that displays the organizer's information,
+ * their hosted events, and a follow/unfollow button for entrants.
+ */
 public class OrganizerProfileActivity extends AppCompatActivity {
 
     private String organizerId;

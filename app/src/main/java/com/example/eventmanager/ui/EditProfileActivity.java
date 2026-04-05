@@ -30,6 +30,11 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Editable profile screen where the user can update their name, email, phone number,
+ * avatar image, and notification preferences. Also displays the user's registration
+ * history for events they have joined.
+ */
 public class EditProfileActivity extends AppCompatActivity {
 
     private ShapeableImageView ivAvatar;

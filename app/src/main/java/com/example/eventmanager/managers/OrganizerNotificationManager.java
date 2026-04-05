@@ -53,6 +53,10 @@ public class OrganizerNotificationManager {
     private final NotificationRepository notificationRepository;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    /**
+     * Callback for notification dispatch operations. Reports how many recipients
+     * were sent notifications on success, or a descriptive error message on failure.
+     */
     public interface NotificationDispatchCallback {
         void onSuccess(int recipientCount);
         void onFailure(@NonNull String message);
@@ -131,6 +135,12 @@ public class OrganizerNotificationManager {
         });
     }
 
+    /**
+     * Fire-and-forget overload of {@link #notifyWaitingList(String, String, NotificationDispatchCallback)}.
+     *
+     * @param eventId   Firestore event document ID
+     * @param eventName human-readable event name
+     */
     public void notifyWaitingList(@NonNull String eventId, @NonNull String eventName) {
         notifyWaitingList(eventId, eventName, new NotificationDispatchCallback() {
             @Override
@@ -185,12 +195,25 @@ public class OrganizerNotificationManager {
         });
     }
 
+    /**
+     * Alias for {@link #notifySelected(String, String, NotificationDispatchCallback)}.
+     *
+     * @param eventId   Firestore event document ID
+     * @param eventName human-readable event name
+     * @param callback  notified with the recipient count or an error
+     */
     public void notifyWinners(@NonNull String eventId,
                               @NonNull String eventName,
                               @NonNull NotificationDispatchCallback callback) {
         notifySelected(eventId, eventName, callback);
     }
 
+    /**
+     * Fire-and-forget overload of {@link #notifyWinners(String, String, NotificationDispatchCallback)}.
+     *
+     * @param eventId   Firestore event document ID
+     * @param eventName human-readable event name
+     */
     public void notifyWinners(@NonNull String eventId, @NonNull String eventName) {
         notifySelected(eventId, eventName, new NotificationDispatchCallback() {
             @Override
@@ -237,6 +260,11 @@ public class OrganizerNotificationManager {
     /**
      * Notifies everyone still on the waiting list that they were not selected in the lottery.
      * {@code excludeWinnerDeviceIds} skips devices who were just chosen (safety if waitlist data overlaps).
+     *
+     * @param eventId                Firestore event document ID
+     * @param eventName              human-readable event name
+     * @param excludeWinnerDeviceIds device IDs to skip (current draw winners), may be {@code null}
+     * @param callback               notified with the count of notified entrants
      */
     public void notifyNotChosenAfterLottery(@NonNull String eventId,
                                             @NonNull String eventName,
@@ -281,6 +309,11 @@ public class OrganizerNotificationManager {
      * and everyone still on the waiting list that they were not chosen.
      * <p>
      * Does not re-query {@code selected}: that would also match prior invitees and duplicate winner alerts.
+     *
+     * @param eventId          Firestore event document ID
+     * @param eventName        human-readable event name
+     * @param winnerDeviceIds  device IDs drawn in this lottery run
+     * @param callback         notified with the total recipient count (winners + losers)
      */
     public void notifyAfterLotteryDraw(@NonNull String eventId,
                                        @NonNull String eventName,
@@ -345,6 +378,11 @@ public class OrganizerNotificationManager {
     /**
      * Organizer removed chosen entrants who never completed enrollment — informational only
      * (no {@code eventId} on notification so accept/decline does not open).
+     *
+     * @param eventId   Firestore event document ID
+     * @param eventName human-readable event name
+     * @param deviceIds device IDs of entrants who were revoked
+     * @param callback  notified with the count of revoked entrants
      */
     public void notifyOrganizerRevokedNonEnrollment(@NonNull String eventId,
                                                     @NonNull String eventName,
@@ -370,6 +408,14 @@ public class OrganizerNotificationManager {
                 "Revoked (no enrollment)", deviceIds.size(), title, body);
     }
 
+    /**
+     * Sends an informational update notification to all entrants in the
+     * {@code enrolled} sub-collection of the given event.
+     *
+     * @param eventId   Firestore event document ID
+     * @param eventName human-readable event name
+     * @param callback  notified with the recipient count or an error
+     */
     public void notifyEnrolled(@NonNull String eventId,
                                @NonNull String eventName,
                                @NonNull NotificationDispatchCallback callback) {
@@ -399,6 +445,10 @@ public class OrganizerNotificationManager {
 
     /**
      * US 02.07.03 — notify everyone in {@code events/{eventId}/cancelled}.
+     *
+     * @param eventId   Firestore event document ID
+     * @param eventName human-readable event name
+     * @param callback  notified with the recipient count or an error
      */
     public void notifyCancelled(@NonNull String eventId,
                                 @NonNull String eventName,

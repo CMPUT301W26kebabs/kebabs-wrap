@@ -35,6 +35,17 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
 
+/**
+ * Form screen for creating a new event or editing an existing one. Organizers can set
+ * the event name, description, start/end dates, capacity, waitlist limit, poster image,
+ * geolocation requirement, and private-event toggle.
+ *
+ * <p>When {@link #EXTRA_EDIT_EVENT_ID} is supplied via the launching Intent, the activity
+ * loads the existing event data and updates it instead of creating a new document.
+ *
+ * <p>Covers US 02.01.01 (create event), US 02.01.02 (edit event details),
+ * US 02.07.01 (poster upload), US 02.02.01 (geolocation toggle).
+ */
 public class CreateEventActivity extends AppCompatActivity {
     private static final String TAG = "CreateEventActivity";
 

@@ -26,37 +26,34 @@ public class GuestInviteAdapter extends RecyclerView.Adapter<GuestInviteAdapter.
     private List<DocumentSnapshot> users = new ArrayList<>();
     private OnGuestActionListener listener;
 
+    /**
+     * Listener for the two per-row actions: inviting a guest to the waiting
+     * list and assigning a user as co-organizer.
+     */
     public interface OnGuestActionListener {
+        /** Called when the organizer taps the "invite to waiting list" button. */
         void onInvite(DocumentSnapshot userDoc);
+        /** Called when the organizer taps the "assign co-organizer" button. */
         void onAssignCoOrganizer(DocumentSnapshot userDoc);
     }
 
     /**
-     * Constructs the adapter with a callback interface to handle action clicks.
-     *
-     * @param listener The interface listening for click interactions on the item buttons.
+     * @param listener callback to handle invite and co-organizer assignment actions.
      */
     public GuestInviteAdapter(OnGuestActionListener listener) {
         this.listener = listener;
     }
 
     /**
-     * Replaces the currently displayed active dataset and refreshes the RecyclerView.
+     * Replaces the user list and refreshes the RecyclerView.
      *
-     * @param newList The new list of Firestore DocumentSnapshots to iterate over.
+     * @param newList updated search results from Firestore.
      */
     public void updateList(List<DocumentSnapshot> newList) {
         this.users = newList;
         notifyDataSetChanged();
     }
 
-    /**
-     * Inflates the specific guest selection layout XML layout resource.
-     *
-     * @param parent   The enclosing container holding the views.
-     * @param viewType The standard categorical view type integer.
-     * @return Extracted logic encapsulated into the GuestVH inner class layout bounds.
-     */
     @NonNull
     @Override
     public GuestVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -65,13 +62,6 @@ public class GuestInviteAdapter extends RecyclerView.Adapter<GuestInviteAdapter.
         return new GuestVH(v);
     }
 
-    /**
-     * Evaluates data indices array offsets into visual UI components, initializing formatting logic.
-     * Provides initials-parsing validation for blank user records.
-     *
-     * @param h   The target Guest ViewHolder representing the list iteration boundary constraint.
-     * @param pos The integer list offset of the dataset pointer.
-     */
     @Override
     public void onBindViewHolder(@NonNull GuestVH h, int pos) {
         DocumentSnapshot doc = users.get(pos);
@@ -114,11 +104,6 @@ public class GuestInviteAdapter extends RecyclerView.Adapter<GuestInviteAdapter.
         });
     }
 
-    /**
-     * Identifies the precise limit bounding the scrolling dimensions length.
-     *
-     * @return Raw integer depth representation of rendered list components.
-     */
     @Override
     public int getItemCount() {
         return users.size();

@@ -34,25 +34,43 @@ public class FollowRepository {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final NotificationRepository notificationRepo = new NotificationRepository();
 
+    /**
+     * Callback for follow/unfollow and broadcast operations.
+     */
     public interface FollowCallback {
         void onSuccess();
         void onFailure(@NonNull String message);
     }
 
+    /**
+     * Callback that delivers a single boolean result (e.g. "is following?").
+     */
     public interface BooleanCallback {
         void onResult(boolean value);
     }
 
+    /**
+     * Callback that delivers an integer count (e.g. follower count).
+     */
     public interface CountCallback {
         void onResult(int count);
     }
 
+    /**
+     * Callback that delivers a list of organizer IDs the entrant follows.
+     */
     public interface FollowingListCallback {
         void onResult(@NonNull List<String> organizerIds);
     }
 
     /**
      * Follow an organizer. Writes to both subcollections atomically and increments the counter.
+     *
+     * @param entrantId     device ID of the entrant who is following
+     * @param entrantName   display name of the entrant (stored in the follower doc)
+     * @param organizerId   device ID of the organizer being followed
+     * @param organizerName display name of the organizer (stored in the following doc)
+     * @param callback      notified on success or failure
      */
     public void follow(@NonNull String entrantId, @NonNull String entrantName,
                        @NonNull String organizerId, @NonNull String organizerName,
@@ -86,6 +104,10 @@ public class FollowRepository {
 
     /**
      * Unfollow an organizer. Removes both subcollection docs and decrements the counter.
+     *
+     * @param entrantId   device ID of the entrant who is unfollowing
+     * @param organizerId device ID of the organizer being unfollowed
+     * @param callback    notified on success or failure
      */
     public void unfollow(@NonNull String entrantId, @NonNull String organizerId,
                          @NonNull FollowCallback callback) {
@@ -108,6 +130,12 @@ public class FollowRepository {
 
     /**
      * Toggle follow state: if currently following, unfollow; otherwise follow.
+     *
+     * @param entrantId     device ID of the entrant
+     * @param entrantName   display name of the entrant
+     * @param organizerId   device ID of the organizer
+     * @param organizerName display name of the organizer
+     * @param callback      notified on success or failure
      */
     public void toggleFollow(@NonNull String entrantId, @NonNull String entrantName,
                              @NonNull String organizerId, @NonNull String organizerName,
@@ -123,6 +151,10 @@ public class FollowRepository {
 
     /**
      * Check if an entrant is following a specific organizer.
+     *
+     * @param entrantId   device ID of the entrant
+     * @param organizerId device ID of the organizer
+     * @param callback    receives {@code true} if the follow relationship exists
      */
     public void isFollowing(@NonNull String entrantId, @NonNull String organizerId,
                             @NonNull BooleanCallback callback) {
@@ -138,6 +170,9 @@ public class FollowRepository {
 
     /**
      * Get the follower count for an organizer from the cached field.
+     *
+     * @param organizerId device ID of the organizer
+     * @param callback    receives the follower count (0 if the field is absent)
      */
     public void getFollowerCount(@NonNull String organizerId, @NonNull CountCallback callback) {
         db.collection("users").document(organizerId).get()
@@ -153,6 +188,9 @@ public class FollowRepository {
 
     /**
      * Get all organizer IDs that an entrant follows.
+     *
+     * @param entrantId device ID of the entrant
+     * @param callback  receives the list of followed organizer IDs
      */
     public void getFollowingList(@NonNull String entrantId,
                                  @NonNull FollowingListCallback callback) {
@@ -178,6 +216,11 @@ public class FollowRepository {
 
     /**
      * Send a notification to all followers of an organizer about a new event.
+     * Each follower's notification opt-in preference is checked before delivery.
+     *
+     * @param organizerId device ID of the organizer who published the event
+     * @param eventName   human-readable event name shown in the notification
+     * @param eventId     Firestore event document ID (attached so the notification is tappable)
      */
     public void notifyFollowersOfNewEvent(@NonNull String organizerId,
                                           @NonNull String eventName,
@@ -198,6 +241,11 @@ public class FollowRepository {
 
     /**
      * Send a custom broadcast notification to all followers.
+     *
+     * @param organizerId device ID of the organizer broadcasting
+     * @param title       notification title
+     * @param body        notification body text
+     * @param callback    notified on success or failure
      */
     public void broadcastToFollowers(@NonNull String organizerId,
                                      @NonNull String title,
@@ -222,6 +270,11 @@ public class FollowRepository {
 
     /**
      * Mass-invite all followers to a specific event's waiting list.
+     * Writes are batched (up to 450 per batch) to stay within Firestore limits.
+     *
+     * @param eventId     Firestore event document ID to add followers to
+     * @param organizerId device ID of the organizer whose followers are being invited
+     * @param callback    notified on success or failure
      */
     public void inviteAllFollowersToWaitlist(@NonNull String eventId,
                                              @NonNull String organizerId,

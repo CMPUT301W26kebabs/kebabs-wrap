@@ -19,6 +19,11 @@ import com.journeyapps.barcodescanner.BarcodeCallback;
 import com.journeyapps.barcodescanner.BarcodeResult;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 
+/**
+ * Camera-based QR code scanner that reads event QR codes and launches the
+ * corresponding event details screen. Handles camera permission requests and
+ * validates the scanned payload against the expected event URI format.
+ */
 public class QRScannerActivity extends AppCompatActivity {
 
     private static final int CAMERA_PERMISSION_CODE = 101;

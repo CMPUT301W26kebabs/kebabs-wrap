@@ -25,6 +25,12 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Admin screen for browsing, searching, and soft-deleting events.
+ * Supports filtering by active/deleted status via chips.
+ *
+ * <p>Covers user stories US 03.01 and US 03.04.</p>
+ */
 public class AdminEventsActivity extends AppCompatActivity implements EventAdapter.OnEventClickListener {
 
     private RecyclerView recyclerView;

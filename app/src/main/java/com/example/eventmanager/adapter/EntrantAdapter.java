@@ -16,6 +16,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * RecyclerView adapter that displays entrant rows in ManageEventActivity.
+ * Supports two row types: section headers (bold labels separating groups
+ * such as "Selected", "Waiting List") and regular entrant rows showing
+ * an avatar, name, and email or device ID.
+ *
+ * @see Entrant#isSectionHeader()
+ */
 public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.ViewHolder> {
 
     private List<Entrant> entrants;
@@ -24,6 +32,11 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.ViewHold
         this.entrants = entrants;
     }
 
+    /**
+     * Replaces the backing entrant list and refreshes the RecyclerView.
+     *
+     * @param newList the updated list (may include section-header entries).
+     */
     public void updateList(List<Entrant> newList) {
         this.entrants = newList;
         notifyDataSetChanged();

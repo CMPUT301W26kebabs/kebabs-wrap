@@ -20,6 +20,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * RecyclerView adapter for the entrant's registration history list.
+ * Each row shows the event name, date, location, and a colour-coded
+ * status pill (waiting, selected, invited, enrolled, or cancelled).
+ *
+ * @see RegistrationHistoryItem
+ */
 public class RegistrationHistoryAdapter extends RecyclerView.Adapter<RegistrationHistoryAdapter.ViewHolder> {
 
     private final List<RegistrationHistoryItem> historyList;

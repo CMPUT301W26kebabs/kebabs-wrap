@@ -44,6 +44,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Organizer dashboard for managing a single event after creation. Displays entrant
+ * lists filtered by tab (waiting / chosen / enrolled / cancelled), allows the organizer
+ * to run the lottery draw, send notifications to specific audiences, cancel non-signing-up
+ * entrants, export the entrant list as CSV, and navigate to the entrant map.
+ *
+ * <p>Covers US 02.05.01 (view entrant lists), US 02.06.01 (notify waiting list),
+ * US 02.06.02 (notify selected entrants), US 02.06.03 (notify cancelled entrants),
+ * US 02.02.02 (view entrant map).
+ */
 public class ManageEventActivity extends AppCompatActivity {
 
     private String eventId;

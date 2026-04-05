@@ -24,6 +24,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Admin screen for browsing, searching, and soft-deleting user profiles.
+ * Displays a searchable list of all registered entrants.
+ *
+ * <p>Covers user stories US 03.02 and US 03.05.</p>
+ */
 public class AdminProfilesActivity extends AppCompatActivity implements ProfileAdapter.OnProfileClickListener {
 
     private RecyclerView recyclerView;

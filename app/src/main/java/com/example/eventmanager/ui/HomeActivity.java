@@ -40,6 +40,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Main home screen displayed after login. Shows upcoming events, nearby events,
+ * and an active-lottery banner. Provides navigation to browse events, profile,
+ * admin panel, notifications, and event creation.
+ *
+ * <p>Covers US 01.01.03 (browse upcoming events), US 01.08.01 (lottery status banner).
+ */
 public class HomeActivity extends AppCompatActivity {
     private static final String TAG = "HomeActivity";
 

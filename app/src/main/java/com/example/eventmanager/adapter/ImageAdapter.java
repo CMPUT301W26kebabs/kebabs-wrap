@@ -18,8 +18,16 @@ import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.List;
 
+/**
+ * Admin-facing RecyclerView adapter for the image management screen.
+ * Displays event poster thumbnails alongside event names, with a remove
+ * button that lets the admin delete a poster image from an event.
+ */
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHolder> {
 
+    /**
+     * Callback invoked when the admin taps the remove button on a poster.
+     */
     public interface OnImageActionListener {
         void onImageRemoveClick(DocumentSnapshot eventDoc);
     }
@@ -34,6 +42,11 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         this.listener = listener;
     }
 
+    /**
+     * Replaces the backing event list and refreshes all poster cards.
+     *
+     * @param newList fresh list of event snapshots from Firestore.
+     */
     public void updateList(List<DocumentSnapshot> newList) {
         this.events = newList;
         notifyDataSetChanged();

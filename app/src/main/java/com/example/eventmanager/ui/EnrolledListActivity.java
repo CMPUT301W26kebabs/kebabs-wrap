@@ -19,6 +19,10 @@ import com.example.eventmanager.models.Entrant;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Displays the list of entrants who are currently enrolled in a specific event.
+ * Receives the event ID via intent extras and loads entrant data from Firestore.
+ */
 public class EnrolledListActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;

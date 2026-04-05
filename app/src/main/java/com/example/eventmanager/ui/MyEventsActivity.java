@@ -19,6 +19,13 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Lists all events created by the current organizer. Tapping an event opens
+ * {@link ManageEventActivity} for that event. A floating action button navigates
+ * to {@link CreateEventActivity} for new event creation.
+ *
+ * <p>Covers US 02.01.04 (view my events as organizer).
+ */
 public class MyEventsActivity extends AppCompatActivity {
 
     private RecyclerView rvEvents;

@@ -148,6 +148,9 @@ public class NotificationRepository {
     /**
      * Maps Firestore notification docs to {@link Notification}, tolerating field name variants
      * used across the project and in the database (eventId vs eventID, isRead vs isread, read).
+     *
+     * @param doc the Firestore document snapshot to deserialize
+     * @return a fully populated {@link Notification} instance
      */
     static Notification notificationFromDocument(@NonNull DocumentSnapshot doc) {
         Notification n = new Notification();

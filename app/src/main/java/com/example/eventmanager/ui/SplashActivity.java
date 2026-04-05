@@ -22,6 +22,11 @@ import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.repository.FirebaseRepository;
 import com.google.android.material.button.MaterialButton;
 
+/**
+ * App entry point and splash screen displayed on launch.
+ * Checks whether a user profile already exists for the current device and routes
+ * to either the sign-up flow or the home screen accordingly.
+ */
 public class SplashActivity extends AppCompatActivity {
 
     private static final long SPLASH_DELAY_MS = 1700L;

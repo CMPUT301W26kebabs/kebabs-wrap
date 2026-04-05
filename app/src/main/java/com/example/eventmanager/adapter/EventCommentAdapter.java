@@ -19,6 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * RecyclerView adapter for displaying user comments on an event.
+ * Used in both the event detail screen and the admin moderation view.
+ * Each item shows the author's initial, name, comment body, and a
+ * relative timestamp (e.g. "3 min ago").
+ */
 public class EventCommentAdapter extends RecyclerView.Adapter<EventCommentAdapter.CommentViewHolder> {
 
     private List<EventComment> comments = new ArrayList<>();
@@ -71,6 +77,11 @@ public class EventCommentAdapter extends RecyclerView.Adapter<EventCommentAdapte
         return comments.size();
     }
 
+    /**
+     * Replaces the displayed comments with a fresh list and refreshes the view.
+     *
+     * @param newComments the new list of comments; {@code null} is treated as empty.
+     */
     public void updateData(List<EventComment> newComments) {
         this.comments = newComments != null ? newComments : new ArrayList<>();
         notifyDataSetChanged();

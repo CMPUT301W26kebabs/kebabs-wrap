@@ -13,6 +13,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.firestore.ListenerRegistration;
 
+/**
+ * Legacy event detail screen that loads event data using {@link FirebaseRepository}.
+ * Superseded by {@code EventDetailsActivity} but still referenced by tests.
+ */
 public class EventActivity extends AppCompatActivity {
 
     private FirebaseRepository repository;

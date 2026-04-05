@@ -97,18 +97,38 @@ public class Event {
         this.location = location;
     }
 
+    /**
+     * Gets the date/time when the event itself begins (not the registration window).
+     *
+     * @return the event start date, or {@code null} if unset.
+     */
     public Date getStartDate() {
         return startDate;
     }
 
+    /**
+     * Sets the date/time when the event itself begins.
+     *
+     * @param startDate the event start date.
+     */
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
     }
 
+    /**
+     * Gets the date/time when the event ends.
+     *
+     * @return the event end date, or {@code null} if unset.
+     */
     public Date getEndDate() {
         return endDate;
     }
 
+    /**
+     * Sets the date/time when the event ends.
+     *
+     * @param endDate the event end date.
+     */
     public void setEndDate(Date endDate) {
         this.endDate = endDate;
     }
@@ -225,10 +245,20 @@ public class Event {
         isGeolocationRequired = geolocationRequired;
     }
 
+    /**
+     * Checks whether this event is invitation-only (hidden from public browse/home feeds).
+     *
+     * @return {@code true} if the event is private, {@code false} otherwise.
+     */
     public boolean isPrivateEvent() {
         return privateEvent;
     }
 
+    /**
+     * Sets whether this event is invitation-only.
+     *
+     * @param privateEvent {@code true} to make the event private, {@code false} for public.
+     */
     public void setPrivateEvent(boolean privateEvent) {
         this.privateEvent = privateEvent;
     }

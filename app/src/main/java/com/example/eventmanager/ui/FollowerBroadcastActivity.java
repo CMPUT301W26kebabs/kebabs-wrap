@@ -15,6 +15,10 @@ import com.google.android.material.button.MaterialButton;
 
 import java.util.Locale;
 
+/**
+ * Allows an organizer to compose and send a broadcast notification to all of their
+ * followers. Displays a preview of the current follower count before sending.
+ */
 public class FollowerBroadcastActivity extends AppCompatActivity {
 
     private EditText etTitle, etBody;

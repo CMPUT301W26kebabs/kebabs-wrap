@@ -12,7 +12,10 @@ import com.example.eventmanager.models.Entrant; // Ensure this matches your pack
 import java.util.List;
 
 /**
- * Adapter to bind a list of Entrant objects to a RecyclerView.
+ * RecyclerView adapter for displaying enrolled entrants in an event.
+ * Each row shows the entrant's name and email address. Used by the
+ * organizer to review which entrants have accepted their invitation
+ * and are confirmed for the event.
  */
 public class EnrolledEntrantAdapter extends RecyclerView.Adapter<EnrolledEntrantAdapter.EntrantViewHolder> {
 

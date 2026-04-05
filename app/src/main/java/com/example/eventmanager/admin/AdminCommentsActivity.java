@@ -21,8 +21,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Admin: all comments across events ({@code collectionGroup("comments")}), with delete.
- * Uses client-side sort (no orderBy) so Firestore does not require a collection-group index.
+ * Admin screen for moderating comments across all events.
+ * Loads comments via a Firestore {@code collectionGroup("comments")} query and allows
+ * deletion with confirmation. Uses client-side sorting to avoid requiring a
+ * collection-group index.
  */
 public class AdminCommentsActivity extends AppCompatActivity {
 

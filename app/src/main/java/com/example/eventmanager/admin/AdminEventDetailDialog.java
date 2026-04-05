@@ -25,6 +25,10 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+/**
+ * Bottom-sheet dialog displayed when an admin taps an event card.
+ * Shows event details (title, date, poster) and provides soft-delete and restore actions.
+ */
 public class AdminEventDetailDialog extends BottomSheetDialogFragment {
 
     private static final String ARG_EVENT_ID = "event_id";

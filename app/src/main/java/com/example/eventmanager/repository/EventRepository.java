@@ -60,6 +60,9 @@ public class EventRepository {
         void onResult(List<String> deviceIds);
     }
 
+    /**
+     * Callback for write/delete operations that either succeed or fail with a message.
+     */
     public interface OperationCallback {
         void onSuccess();
         void onFailure(@NonNull String message);
@@ -72,18 +75,27 @@ public class EventRepository {
     }
 
     /**
-     * Result for events where the user is in the selected (pending accept/decline) list.
+     * Lightweight value object representing an event where the user has a pending
+     * invitation (lottery winner awaiting accept/decline, or private-event invite).
      */
     public static class PendingInvite {
         public final String eventId;
         public final String eventName;
 
+        /**
+         * @param eventId   Firestore document ID of the event
+         * @param eventName human-readable event name displayed in the invitation banner
+         */
         public PendingInvite(String eventId, String eventName) {
             this.eventId = eventId;
             this.eventName = eventName;
         }
     }
 
+    /**
+     * Callback that delivers a list of {@link PendingInvite} objects for events
+     * where the user has an outstanding invitation.
+     */
     public interface PendingInvitesCallback {
         void onResult(List<PendingInvite> invites);
     }
@@ -166,6 +178,13 @@ public class EventRepository {
                 });
     }
 
+    /**
+     * Alias for {@link #getSelected(String, DeviceIdListCallback)}.
+     * Kept for backward compatibility with callers that use the "winners" terminology.
+     *
+     * @param eventId  Firestore event document ID
+     * @param callback receives the list of selected/winner device IDs
+     */
     public void getWinners(@NonNull String eventId,
                            @NonNull DeviceIdListCallback callback) {
         getSelected(eventId, callback);
@@ -175,6 +194,9 @@ public class EventRepository {
      * Fetches events where the user (deviceId) has a pending invitation: either in
      * {@code selected} (lottery winner pending enrollment) or {@code inviteeList}
      * (private-event invite pending response). Used for the invitation banner on the home screen.
+     *
+     * @param deviceId the entrant's device identifier
+     * @param callback receives the list of {@link PendingInvite} objects
      */
     public void getEventsWhereUserIsSelected(@NonNull String deviceId,
                                              @NonNull PendingInvitesCallback callback) {
@@ -235,6 +257,12 @@ public class EventRepository {
                 });
     }
 
+    /**
+     * Fetches all device IDs from {@code events/{eventId}/enrolled}.
+     *
+     * @param eventId  Firestore event document ID
+     * @param callback receives the list of enrolled device IDs
+     */
     public void getEnrolled(@NonNull String eventId,
                             @NonNull DeviceIdListCallback callback) {
         db.collection("events")
@@ -259,6 +287,9 @@ public class EventRepository {
     /**
      * Fetches deviceIds from {@code events/{eventId}/cancelled}.
      * US 02.07.03 — notify cancelled entrants.
+     *
+     * @param eventId  Firestore event document ID
+     * @param callback receives the list of cancelled device IDs
      */
     public void getCancelled(@NonNull String eventId,
                              @NonNull DeviceIdListCallback callback) {
@@ -284,6 +315,9 @@ public class EventRepository {
     /**
      * Moves every entrant in {@code selected} who is not in {@code enrolled} into {@code cancelled}
      * (invited via lottery but never completed enrollment). US 02.06.04.
+     *
+     * @param eventId  Firestore event document ID
+     * @param callback receives the list of moved device IDs on success, or an error message
      */
     public void cancelSelectedWithoutEnrollment(@NonNull String eventId,
                                                 @NonNull CancelNonEnrollmentCallback callback) {
@@ -361,6 +395,10 @@ public class EventRepository {
      * Writes the user into events/{eventId}/enrolled/{deviceId} and removes them from
      * {@code selected}. Used when a lottery winner (in {@code selected}) accepts.
      * Private-event invites use {@link #acceptInviteToWaitingList} instead.
+     *
+     * @param eventId  Firestore event document ID
+     * @param deviceId device identifier of the entrant to enroll
+     * @param callback notified on success or failure
      */
     public void enrollUser(@NonNull String eventId,
                            @NonNull String deviceId,
@@ -412,6 +450,10 @@ public class EventRepository {
     /**
      * Accepts a private-event invitation: moves the user from {@code inviteeList} to
      * {@code waitingList}.
+     *
+     * @param eventId  Firestore event document ID
+     * @param deviceId device identifier of the entrant accepting the invite
+     * @param callback notified on success or failure
      */
     public void acceptInviteToWaitingList(@NonNull String eventId,
                                           @NonNull String deviceId,
@@ -469,6 +511,12 @@ public class EventRepository {
         removeFromSelected(eventId, deviceId);
     }
 
+    /**
+     * Deletes the user's document from {@code events/{eventId}/selected/{deviceId}}.
+     *
+     * @param eventId  Firestore event document ID
+     * @param deviceId device identifier of the entrant to remove
+     */
     public void removeFromSelected(@NonNull String eventId, @NonNull String deviceId) {
         db.collection("events")
                 .document(eventId)
@@ -500,6 +548,15 @@ public class EventRepository {
                         Log.e(TAG, "Failed to remove from waitingList: " + deviceId, e));
     }
 
+    /**
+     * Declines a pending invitation (lottery or private-event). Moves the user from
+     * {@code inviteeList} and/or {@code selected} into {@code cancelled} with a
+     * "declined" status, then deletes the source documents atomically.
+     *
+     * @param eventId  Firestore event document ID
+     * @param deviceId device identifier of the entrant declining
+     * @param callback notified on success or failure
+     */
     public void declineInvitation(@NonNull String eventId,
                                   @NonNull String deviceId,
                                   @NonNull OperationCallback callback) {

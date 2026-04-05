@@ -21,6 +21,10 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+/**
+ * New-user registration screen that collects the entrant's name, email, phone number,
+ * and notification opt-in preference before creating their profile in Firestore.
+ */
 public class EntrantSignUpActivity extends AppCompatActivity {
 
     private TextInputLayout nameInputLayout, emailInputLayout;

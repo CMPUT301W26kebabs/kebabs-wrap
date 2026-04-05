@@ -26,6 +26,14 @@ import com.google.firebase.firestore.GeoPoint;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Google Maps view that plots the geographic locations of entrants who joined
+ * the waiting list for a geolocation-enabled event. Markers are placed at each
+ * entrant's recorded {@link com.google.firebase.firestore.GeoPoint}, and the
+ * camera auto-zooms to fit all markers.
+ *
+ * <p>Covers US 02.02.02 (view entrant locations on a map).
+ */
 public class EntrantMapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private String eventId;

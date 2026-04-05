@@ -22,9 +22,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Admin-facing RecyclerView adapter for the event management list.
+ * Binds Firestore {@link DocumentSnapshot}s to event cards that display the
+ * poster, name, date range, and a soft-delete status badge.
+ * Supports click-to-view and remove actions via {@link OnEventClickListener}.
+ */
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
+    /**
+     * Callback for user interactions on an admin event card.
+     */
     public interface OnEventClickListener {
+        /** Called when the user taps the event card to view details. */
         void onEventClick(DocumentSnapshot eventDoc);
+        /** Called when the user taps the remove button on an event card. */
         void onEventRemoveClick(DocumentSnapshot eventDoc);
     }
 
@@ -82,6 +93,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     @Override public int getItemCount() { return events.size(); }
 
+    /**
+     * Extracts a {@link Timestamp} from the document, falling back through
+     * {@code Date} and {@code Long} representations to handle inconsistent
+     * Firestore field types written by different app versions.
+     */
     private Timestamp safeTimestamp(DocumentSnapshot doc, String field) {
         try {
             Timestamp ts = doc.getTimestamp(field);

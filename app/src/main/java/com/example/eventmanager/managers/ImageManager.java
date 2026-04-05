@@ -10,11 +10,22 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 
+/**
+ * Manages upload and deletion of event poster images in Firebase Storage.
+ * Poster images are stored under the {@code event_posters/} path, keyed by
+ * event ID.
+ */
 public class ImageManager {
     private FirebaseStorage storage = FirebaseStorage.getInstance();
 
     /**
-     * Uploads an image to Firebase Storage and returns the download URL.
+     * Uploads an event poster image to Firebase Storage and delivers the
+     * resulting download URL on success.
+     *
+     * @param imageUri  the local URI of the image to upload
+     * @param eventId   the event ID used to derive the storage path
+     * @param onSuccess callback invoked with the download {@link Uri} on success
+     * @param onFailure callback invoked if the upload or URL retrieval fails
      */
     public void uploadEventPoster(Uri imageUri, String eventId,
                                   OnSuccessListener<Uri> onSuccess,
@@ -35,7 +46,11 @@ public class ImageManager {
     }
 
     /**
-     * Deletes the event poster from Firebase Storage.
+     * Deletes the event poster image from Firebase Storage.
+     *
+     * @param eventId   the event ID whose poster should be removed
+     * @param onSuccess callback invoked when the deletion succeeds
+     * @param onFailure callback invoked if the deletion fails
      */
     public void deleteEventPoster(String eventId,
                                   OnSuccessListener<Void> onSuccess,

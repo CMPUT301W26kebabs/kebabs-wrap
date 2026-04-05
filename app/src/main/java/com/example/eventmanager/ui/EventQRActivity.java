@@ -30,6 +30,10 @@ import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * Displays a generated QR code for a specific event, allowing organizers to share it.
+ * Supports saving the QR image locally and sharing it via Android's share sheet.
+ */
 public class EventQRActivity extends AppCompatActivity {
 
     private static final String QR_SCHEME = "eventmanager://event/";

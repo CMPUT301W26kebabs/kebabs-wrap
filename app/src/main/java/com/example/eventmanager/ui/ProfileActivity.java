@@ -14,6 +14,10 @@ import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.repository.FirebaseRepository;
 
+/**
+ * Read-only profile view that displays the current user's name, email, and avatar.
+ * Provides navigation to {@link EditProfileActivity} for editing.
+ */
 public class ProfileActivity extends AppCompatActivity {
 
     public static final String EXTRA_EDIT_PROFILE = "edit_profile";

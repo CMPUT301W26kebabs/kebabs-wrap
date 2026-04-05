@@ -17,10 +17,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Admin-facing RecyclerView adapter that displays user profiles grouped under
+ * alphabetical section headers. Profiles are sorted by name and each card shows
+ * initials, name, and disable/remove controls.
+ */
 public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int TYPE_HEADER = 0, TYPE_PROFILE = 1;
+    /**
+     * Callback for user interactions on an admin profile card.
+     */
     public interface OnProfileClickListener {
+        /** Called when the user taps a profile card to view details. */
         void onProfileClick(DocumentSnapshot profileDoc);
+        /** Called when the user taps the remove/disable button on a profile card. */
         void onProfileRemoveClick(DocumentSnapshot profileDoc);
     }
 

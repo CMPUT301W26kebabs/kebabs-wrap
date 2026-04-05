@@ -39,6 +39,13 @@ import java.util.Map;
 
 /**
  * Central repository for reading and writing entrant and event data in Firestore.
+ *
+ * Serves as the data layer for entrant profile management, event CRUD,
+ * registration history, admin operations (soft delete/restore), and waitlist
+ * enrollment. Also propagates profile updates into event sub-collections to
+ * keep organizer-facing lists in sync.
+ *
+ * Accessed as a singleton via {@link #getInstance()}.
  */
 public class FirebaseRepository {
 
@@ -51,6 +58,11 @@ public class FirebaseRepository {
         db = FirebaseFirestore.getInstance();
     }
 
+    /**
+     * Generic async callback used throughout this repository.
+     *
+     * @param <T> the type of value delivered on success
+     */
     public interface RepoCallback<T> {
         void onSuccess(T result);
         void onError(@NonNull Exception e);
@@ -373,6 +385,11 @@ public class FirebaseRepository {
     private static FirebaseRepository instance;
     private static final String TAG = "FirebaseRepository";
 
+    /**
+     * Returns the singleton instance, creating it on first access.
+     *
+     * @return the shared {@link FirebaseRepository} instance
+     */
     public static synchronized FirebaseRepository getInstance() {
         if (instance == null) instance = new FirebaseRepository();
         return instance;
@@ -385,16 +402,25 @@ public class FirebaseRepository {
     //  CALLBACK INTERFACES
     // ══════════════════════════════════════════════════════════════
 
+    /**
+     * Callback for queries that return multiple Firestore documents (e.g. admin list screens).
+     */
     public interface OnDocumentsLoadedListener {
         void onLoaded(List<DocumentSnapshot> documents);
         void onError(Exception e);
     }
 
+    /**
+     * Callback for queries that return a single Firestore document.
+     */
     public interface OnDocumentLoadedListener {
         void onLoaded(DocumentSnapshot document);
         void onError(Exception e);
     }
 
+    /**
+     * Callback for write/delete operations with no return value.
+     */
     public interface OnOperationCompleteListener {
         void onSuccess();
         void onError(Exception e);
@@ -404,6 +430,13 @@ public class FirebaseRepository {
     //  USER MANAGEMENT (Anas)
     // ══════════════════════════════════════════════════════════════
 
+    /**
+     * Creates or merges a minimal user profile for the given device. Assigns a
+     * hardcoded organizer role for a specific test device; all others default to
+     * a regular user. Used during first-launch bootstrapping.
+     *
+     * @param deviceId unique device identifier used as the user document ID
+     */
     public void saveUser(@NonNull String deviceId) {
         Map<String, Object> userData = new HashMap<>();
         userData.put("deviceId", deviceId);
@@ -429,23 +462,52 @@ public class FirebaseRepository {
     //  EVENTS, QR, POSTERS (Huzaifa)
     // ══════════════════════════════════════════════════════════════
 
+    /**
+     * Writes a new event document to Firestore using the event's own ID.
+     *
+     * @param event   the event to persist
+     * @param success listener invoked on successful write
+     * @param failure listener invoked on error
+     */
     public void createEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
         db.collection("events").document(event.getEventId()).set(event)
                 .addOnSuccessListener(success).addOnFailureListener(failure);
     }
 
-    /** Merge-updates an existing event (organizer edit flow). */
+    /**
+     * Merge-updates an existing event document (organizer edit flow).
+     * Only fields present in the object are overwritten; others are preserved.
+     *
+     * @param event   the event with updated fields
+     * @param success listener invoked on successful write
+     * @param failure listener invoked on error
+     */
     public void updateEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
         db.collection("events").document(event.getEventId()).set(event, SetOptions.merge())
                 .addOnSuccessListener(success).addOnFailureListener(failure);
     }
 
+    /**
+     * Updates only the {@code posterUrl} field of an event document.
+     *
+     * @param eventId   Firestore event document ID
+     * @param posterUrl new poster image URL (Cloud Storage or remote)
+     * @param onSuccess listener invoked on successful update
+     * @param onFailure listener invoked on error
+     */
     public void updateEventPosterUrl(String eventId, String posterUrl,
                                      OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
         db.collection("events").document(eventId).update("posterUrl", posterUrl)
                 .addOnSuccessListener(onSuccess).addOnFailureListener(onFailure);
     }
 
+    /**
+     * Queries all events where {@code organizerId} matches the given value.
+     *
+     * @param organizerId device ID of the organizer
+     * @param onSuccess   receives the query snapshot of matching events
+     * @param onFailure   listener invoked on error
+     */
     public void getEventsByOrganizer(String organizerId,
                                      OnSuccessListener<QuerySnapshot> onSuccess, OnFailureListener onFailure) {
         db.collection("events").whereEqualTo("organizerId", organizerId).get()
@@ -455,6 +517,10 @@ public class FirebaseRepository {
     /**
      * Events the user can manage: primary organizer ({@code organizerId}) or co-organizer ({@code coOrganizers}).
      * Merges two queries and de-duplicates by document id.
+     *
+     * @param deviceId  device ID of the organizer or co-organizer
+     * @param onSuccess receives the de-duplicated list of event document snapshots
+     * @param onFailure listener invoked on error
      */
     public void getEventsForOrganizerDashboard(@NonNull String deviceId,
                                               @NonNull OnSuccessListener<List<DocumentSnapshot>> onSuccess,
@@ -485,6 +551,14 @@ public class FirebaseRepository {
     //  WAITLIST & ENROLLED (Umar - Lottery)
     // ══════════════════════════════════════════════════════════════
 
+    /**
+     * Adds an entrant to the event's waiting list after verifying that the
+     * maximum waitlist capacity (if set) has not been reached.
+     *
+     * @param eventId  Firestore event document ID
+     * @param entrant  the entrant to add
+     * @param callback notified on success or with a descriptive failure message
+     */
     public void joinWaitingList(String eventId, Entrant entrant, WaitlistCallback callback) {
         DocumentReference eventRef = db.collection("events").document(eventId);
         CollectionReference waitlistRef = eventRef.collection("waitingList");
@@ -515,6 +589,12 @@ public class FirebaseRepository {
                 .addOnFailureListener(e -> callback.onFailure("Failed to join waitlist: " + e.getMessage()));
     }
 
+    /**
+     * Fetches all entrants from the {@code enrolled} sub-collection of an event.
+     *
+     * @param eventId  Firestore event document ID
+     * @param callback receives the list of enrolled {@link Entrant} objects
+     */
     public void getEnrolledEntrants(String eventId, EntrantListCallback callback) {
         db.collection("events").document(eventId).collection("enrolled").get()
                 .addOnSuccessListener(qs -> {
@@ -532,6 +612,12 @@ public class FirebaseRepository {
     //  ADMIN — EVENTS (Ibrahim - US 03.01, 03.04)
     // ══════════════════════════════════════════════════════════════
 
+    /**
+     * Fetches all events that are neither soft-deleted nor private.
+     * Used by the admin browse-events screen.
+     *
+     * @param listener receives the filtered list of active event snapshots
+     */
     public void fetchAllActiveEvents(OnDocumentsLoadedListener listener) {
         db.collection("events").get().addOnSuccessListener(qs -> {
             List<DocumentSnapshot> active = new ArrayList<>();
@@ -545,18 +631,37 @@ public class FirebaseRepository {
         }).addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Fetches every event document regardless of status or visibility.
+     *
+     * @param listener receives the full list of event snapshots
+     */
     public void fetchAllEvents(OnDocumentsLoadedListener listener) {
         db.collection("events").get()
                 .addOnSuccessListener(qs -> listener.onLoaded(qs.getDocuments()))
                 .addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Fetches a single event document by its Firestore ID.
+     *
+     * @param eventId  Firestore event document ID
+     * @param listener receives the document snapshot (may not exist)
+     */
     public void fetchEventById(String eventId, OnDocumentLoadedListener listener) {
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(listener::onLoaded)
                 .addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Marks an event as soft-deleted by setting {@code isDeleted=true} and recording
+     * the admin who performed the action along with a server timestamp.
+     *
+     * @param eventId  Firestore event document ID
+     * @param adminId  device ID of the admin performing the deletion
+     * @param listener notified on success or failure
+     */
     public void softDeleteEvent(String eventId, String adminId, OnOperationCompleteListener listener) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("isDeleted", true);
@@ -566,6 +671,13 @@ public class FirebaseRepository {
                 .addOnSuccessListener(v -> listener.onSuccess()).addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Reverses a soft-delete on an event by clearing {@code isDeleted}, {@code removedBy},
+     * and {@code removedAt} fields.
+     *
+     * @param eventId  Firestore event document ID
+     * @param listener notified on success or failure
+     */
     public void restoreEvent(String eventId, OnOperationCompleteListener listener) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("isDeleted", false);
@@ -579,6 +691,12 @@ public class FirebaseRepository {
     //  ADMIN — PROFILES (Ibrahim - US 03.02, 03.05)
     // ══════════════════════════════════════════════════════════════
 
+    /**
+     * Fetches all user profiles that are not soft-disabled.
+     * Used by the admin manage-profiles screen.
+     *
+     * @param listener receives the filtered list of active user snapshots
+     */
     public void fetchAllActiveProfiles(OnDocumentsLoadedListener listener) {
         db.collection("users").get().addOnSuccessListener(qs -> {
             List<DocumentSnapshot> active = new ArrayList<>();
@@ -590,18 +708,37 @@ public class FirebaseRepository {
         }).addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Fetches every user profile document regardless of disabled status.
+     *
+     * @param listener receives the full list of user snapshots
+     */
     public void fetchAllProfiles(OnDocumentsLoadedListener listener) {
         db.collection("users").get()
                 .addOnSuccessListener(qs -> listener.onLoaded(qs.getDocuments()))
                 .addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Fetches a single user profile document by device ID.
+     *
+     * @param deviceId device identifier used as the user document ID
+     * @param listener receives the document snapshot (may not exist)
+     */
     public void fetchProfileById(String deviceId, OnDocumentLoadedListener listener) {
         db.collection("users").document(deviceId).get()
                 .addOnSuccessListener(listener::onLoaded)
                 .addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Marks a user profile as soft-disabled by setting {@code isDisabled=true} and
+     * recording the admin who performed the action along with a server timestamp.
+     *
+     * @param deviceId device identifier of the profile to disable
+     * @param adminId  device ID of the admin performing the action
+     * @param listener notified on success or failure
+     */
     public void softDeleteProfile(String deviceId, String adminId, OnOperationCompleteListener listener) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("isDisabled", true);
@@ -611,6 +748,13 @@ public class FirebaseRepository {
                 .addOnSuccessListener(v -> listener.onSuccess()).addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Reverses a soft-disable on a user profile by clearing {@code isDisabled},
+     * {@code removedBy}, and {@code removedAt} fields.
+     *
+     * @param deviceId device identifier of the profile to restore
+     * @param listener notified on success or failure
+     */
     public void restoreProfile(String deviceId, OnOperationCompleteListener listener) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("isDisabled", false);
@@ -624,21 +768,40 @@ public class FirebaseRepository {
     //  UTILITY
     // ══════════════════════════════════════════════════════════════
 
+    /**
+     * Exposes the underlying Firestore instance for callers that need direct access.
+     *
+     * @return the {@link FirebaseFirestore} instance used by this repository
+     */
     public FirebaseFirestore getDb() { return db; }
 
     // ANAS METHODS
 
 
 
+    /**
+     * Callback that delivers a descriptive message string on success or failure.
+     */
     public interface StatusCallback {
         void onSuccess(String message);
         void onFailure(String error);
     }
 
+    /**
+     * Listener for real-time event document changes.
+     */
     public interface EventListener {
         void onEvent(Event event);
     }
 
+    /**
+     * Attaches a real-time snapshot listener to a single event document. The listener
+     * fires immediately with current data and again on every server-side change.
+     *
+     * @param eventId  Firestore event document ID
+     * @param listener invoked with the deserialized {@link Event} on each update
+     * @return a {@link ListenerRegistration} the caller must remove to stop listening
+     */
     public ListenerRegistration listenToEvent(String eventId, EventListener listener) {
         return db.collection("events").document(eventId)
                 .addSnapshotListener((snapshot, e) -> {
@@ -648,6 +811,15 @@ public class FirebaseRepository {
                 });
     }
 
+    /**
+     * Adds a device to an event's waiting list with a server timestamp.
+     * Unlike {@link #joinWaitingList(String, Entrant, WaitlistCallback)}, this
+     * variant does not check waitlist capacity and returns a {@link Task}.
+     *
+     * @param eventId  Firestore event document ID
+     * @param deviceId device identifier of the entrant to add
+     * @return a {@link Task} that completes when the write finishes
+     */
     public Task<Void> joinWaitingList(String eventId, String deviceId) {
         Map<String, Object> data = new HashMap<>();
         data.put("deviceId", deviceId);
@@ -656,10 +828,24 @@ public class FirebaseRepository {
                 .collection("waitingList").document(deviceId).set(data);
     }
 
+    /**
+     * Returns a {@link Task} that resolves to the event document snapshot.
+     *
+     * @param eventId Firestore event document ID
+     * @return a {@link Task} containing the document snapshot
+     */
     public Task<DocumentSnapshot> getEvent(String eventId) {
         return db.collection("events").document(eventId).get();
     }
 
+    /**
+     * Accepts a lottery invitation by writing the user to {@code enrolled} and
+     * deleting them from {@code selected} in sequence.
+     *
+     * @param eventId  Firestore event document ID
+     * @param deviceId device identifier of the accepting entrant
+     * @return a {@link Task} that completes when both writes finish
+     */
     public Task<Void> acceptInvitation(String eventId, String deviceId) {
         DocumentReference eventRef = db.collection("events").document(eventId);
         Map<String, Object> data = new HashMap<>();
@@ -669,6 +855,14 @@ public class FirebaseRepository {
                 .continueWithTask(task -> eventRef.collection("selected").document(deviceId).delete());
     }
 
+    /**
+     * Declines a lottery invitation by writing the user to {@code cancelled},
+     * then removing them from both {@code selected} and {@code inviteeList}.
+     *
+     * @param eventId  Firestore event document ID
+     * @param deviceId device identifier of the declining entrant
+     * @return a {@link Task} that completes when all writes finish
+     */
     public Task<Void> declineInvitation(String eventId, String deviceId) {
         DocumentReference eventRef = db.collection("events").document(eventId);
         Map<String, Object> data = new HashMap<>();
@@ -679,12 +873,24 @@ public class FirebaseRepository {
                 .continueWithTask(task -> eventRef.collection("inviteeList").document(deviceId).delete());
     }
 
+    /**
+     * Loads the waiting list for an event and reports the count via a status message.
+     *
+     * @param eventId  Firestore event document ID
+     * @param callback receives a success message with the entrant count, or an error
+     */
     public void getWaitingList(String eventId, StatusCallback callback) {
         db.collection("events").document(eventId).collection("waitingList").get()
                 .addOnSuccessListener(qs -> callback.onSuccess("Loaded " + qs.size() + " entrants"))
                 .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 
+    /**
+     * Loads the selected (chosen) entrants for an event and reports the count via a status message.
+     *
+     * @param eventId  Firestore event document ID
+     * @param callback receives a success message with the chosen count, or an error
+     */
     public void getChosenEntrants(String eventId, StatusCallback callback) {
         db.collection("events").document(eventId).collection("selected").get()
                 .addOnSuccessListener(qs -> callback.onSuccess("Loaded " + qs.size() + " chosen"))

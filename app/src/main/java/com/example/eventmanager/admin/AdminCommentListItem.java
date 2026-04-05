@@ -14,7 +14,10 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.Locale;
 
 /**
- * One row in the admin comment log, backed by {@code events/{eventId}/comments/{commentId}}.
+ * Immutable view-model representing one row in the admin comment-moderation list.
+ * Built from a Firestore document at {@code events/{eventId}/comments/{commentId}}
+ * via the {@link #fromSnapshot} factory method, which extracts and formats all
+ * display-ready fields (author initials, relative timestamp, avatar colour, etc.).
  */
 public final class AdminCommentListItem {
 
@@ -47,6 +50,14 @@ public final class AdminCommentListItem {
         this.avatarColor = avatarColor;
     }
 
+    /**
+     * Factory that converts a Firestore comment {@link DocumentSnapshot} into a
+     * display-ready list item. Returns {@code null} when the document is missing,
+     * deleted, or has no text content.
+     *
+     * @param doc the raw Firestore snapshot from a comments sub-collection.
+     * @return the formatted item, or {@code null} if the snapshot is unusable.
+     */
     @Nullable
     public static AdminCommentListItem fromSnapshot(@Nullable DocumentSnapshot doc) {
         if (doc == null || !doc.exists()) return null;

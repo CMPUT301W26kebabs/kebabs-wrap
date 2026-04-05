@@ -19,6 +19,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+/**
+ * Allows an organizer to upload, replace, or remove the poster image for an event.
+ * Uses {@link com.example.eventmanager.managers.ImageManager} for image storage operations.
+ */
 public class ManagePosterActivity extends AppCompatActivity {
 
     private ImageView posterPreview;

@@ -21,6 +21,10 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 
+/**
+ * Bottom-sheet dialog displayed when an admin taps a profile card.
+ * Shows user details (name, email, device ID) and provides soft-delete and restore actions.
+ */
 public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
 
     private static final String ARG_DEVICE_ID = "device_id";

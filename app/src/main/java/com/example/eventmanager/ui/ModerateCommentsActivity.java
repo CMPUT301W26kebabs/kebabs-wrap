@@ -36,7 +36,11 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Organizer view: lists comments for one event, allows removal, and posting (US 02.08.02).
+ * Organizer comment-moderation screen for a single event. Displays all comments
+ * in real-time, lets the organizer remove inappropriate comments, and provides
+ * an input field for the organizer to post new comments.
+ *
+ * <p>Covers US 02.08.02 (organizer moderate and post comments).
  */
 public class ModerateCommentsActivity extends AppCompatActivity {
 
