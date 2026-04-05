@@ -24,6 +24,8 @@ public class Event {
     private boolean isGeolocationRequired;
     /** Invitation-only / private: hide from public home & browse; not broadcast to followers. */
     private boolean privateEvent;
+    
+    private boolean isDeleted;
 
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
@@ -229,5 +231,21 @@ public class Event {
 
     public void setPrivateEvent(boolean privateEvent) {
         this.privateEvent = privateEvent;
+    }
+
+    /**
+     * Checks whether this event has been soft-deleted by admin.
+     * @return true if deleted/removed from public browsing.
+     */
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    /**
+     * Sets the soft-delete flag for this event.
+     * @param deleted true to mark removed, false to restore.
+     */
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

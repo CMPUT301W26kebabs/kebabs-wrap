@@ -12,7 +12,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.eventmanager.HomeActivity;
+import com.example.eventmanager.ui.HomeActivity;
 import com.example.eventmanager.R;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;

@@ -1,11 +1,15 @@
 package com.example.eventmanager.repository;
 
+import com.example.eventmanager.models.Notification;
+import com.example.eventmanager.models.Entrant;
+import com.example.eventmanager.models.Event;
+
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.eventmanager.Notification;
-import com.example.eventmanager.NotificationRepository;
+import com.example.eventmanager.models.Notification;
+import com.example.eventmanager.repository.NotificationRepository;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;

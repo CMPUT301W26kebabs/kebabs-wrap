@@ -1,6 +1,21 @@
 package com.example.eventmanager.repository;
 
+import com.example.eventmanager.callbacks.EntrantListCallback;
+import com.example.eventmanager.callbacks.WaitlistCallback;
+import com.example.eventmanager.repository.FirebaseRepository;
+
 import androidx.annotation.NonNull;
+
+import android.util.Log;
+import com.example.eventmanager.callbacks.WaitlistCallback;
+import com.example.eventmanager.callbacks.EntrantListCallback;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.AggregateSource;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.FieldValue;
+
 
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.models.Event;
@@ -354,5 +369,326 @@ public class FirebaseRepository {
                     if (callback != null) callback.onError(e);
                 });
     }
-}
 
+    private static FirebaseRepository instance;
+    private static final String TAG = "FirebaseRepository";
+
+    public static synchronized FirebaseRepository getInstance() {
+        if (instance == null) instance = new FirebaseRepository();
+        return instance;
+    }
+
+
+
+
+    // ══════════════════════════════════════════════════════════════
+    //  CALLBACK INTERFACES
+    // ══════════════════════════════════════════════════════════════
+
+    public interface OnDocumentsLoadedListener {
+        void onLoaded(List<DocumentSnapshot> documents);
+        void onError(Exception e);
+    }
+
+    public interface OnDocumentLoadedListener {
+        void onLoaded(DocumentSnapshot document);
+        void onError(Exception e);
+    }
+
+    public interface OnOperationCompleteListener {
+        void onSuccess();
+        void onError(Exception e);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  USER MANAGEMENT (Anas)
+    // ══════════════════════════════════════════════════════════════
+
+    public void saveUser(@NonNull String deviceId) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("deviceId", deviceId);
+        if (deviceId.equals("5c7640b6f0f59181")) {
+            userData.put("name", "OrgName");
+            userData.put("isOrganizer", true);
+        } else {
+            userData.put("name", "UserName");
+            userData.put("isOrganizer", false);
+        }
+        userData.put("email", "");
+        userData.put("phoneNumber", "");
+        userData.put("isAdmin", false);
+
+        db.collection("users")
+                .document(deviceId)
+                .set(userData, SetOptions.merge())
+                .addOnSuccessListener(unused -> Log.d(TAG, "User saved for deviceId: " + deviceId))
+                .addOnFailureListener(e -> Log.e(TAG, "Failed to save user: " + deviceId, e));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  EVENTS, QR, POSTERS (Huzaifa)
+    // ══════════════════════════════════════════════════════════════
+
+    public void createEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
+        db.collection("events").document(event.getEventId()).set(event)
+                .addOnSuccessListener(success).addOnFailureListener(failure);
+    }
+
+    /** Merge-updates an existing event (organizer edit flow). */
+    public void updateEvent(Event event, OnSuccessListener<Void> success, OnFailureListener failure) {
+        db.collection("events").document(event.getEventId()).set(event, SetOptions.merge())
+                .addOnSuccessListener(success).addOnFailureListener(failure);
+    }
+
+    public void updateEventPosterUrl(String eventId, String posterUrl,
+                                     OnSuccessListener<Void> onSuccess, OnFailureListener onFailure) {
+        db.collection("events").document(eventId).update("posterUrl", posterUrl)
+                .addOnSuccessListener(onSuccess).addOnFailureListener(onFailure);
+    }
+
+    public void getEventsByOrganizer(String organizerId,
+                                     OnSuccessListener<QuerySnapshot> onSuccess, OnFailureListener onFailure) {
+        db.collection("events").whereEqualTo("organizerId", organizerId).get()
+                .addOnSuccessListener(onSuccess).addOnFailureListener(onFailure);
+    }
+
+    /**
+     * Events the user can manage: primary organizer ({@code organizerId}) or co-organizer ({@code coOrganizers}).
+     * Merges two queries and de-duplicates by document id.
+     */
+    public void getEventsForOrganizerDashboard(@NonNull String deviceId,
+                                              @NonNull OnSuccessListener<List<DocumentSnapshot>> onSuccess,
+                                              @NonNull OnFailureListener onFailure) {
+        db.collection("events").whereEqualTo("organizerId", deviceId).get()
+                .addOnSuccessListener(qPrimary -> {
+                    db.collection("events").whereArrayContains("coOrganizers", deviceId).get()
+                            .addOnSuccessListener(qCo -> {
+                                Map<String, DocumentSnapshot> byId = new LinkedHashMap<>();
+                                if (qPrimary != null) {
+                                    for (DocumentSnapshot d : qPrimary.getDocuments()) {
+                                        byId.put(d.getId(), d);
+                                    }
+                                }
+                                if (qCo != null) {
+                                    for (DocumentSnapshot d : qCo.getDocuments()) {
+                                        byId.put(d.getId(), d);
+                                    }
+                                }
+                                onSuccess.onSuccess(new ArrayList<>(byId.values()));
+                            })
+                            .addOnFailureListener(onFailure);
+                })
+                .addOnFailureListener(onFailure);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  WAITLIST & ENROLLED (Umar - Lottery)
+    // ══════════════════════════════════════════════════════════════
+
+    public void joinWaitingList(String eventId, Entrant entrant, WaitlistCallback callback) {
+        DocumentReference eventRef = db.collection("events").document(eventId);
+        CollectionReference waitlistRef = eventRef.collection("waitingList");
+
+        eventRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                Event event = documentSnapshot.toObject(Event.class);
+                if (event != null) {
+                    int maxCapacity = event.getMaxWaitlistCapacity();
+                    if (maxCapacity > 0) {
+                        waitlistRef.count().get(AggregateSource.SERVER).addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                long currentSize = task.getResult().getCount();
+                                if (currentSize >= maxCapacity) {
+                                    callback.onFailure("The waiting list is currently full.");
+                                } else { executeAddUser(waitlistRef, entrant, callback); }
+                            } else { callback.onFailure("Failed to verify current waitlist size."); }
+                        });
+                    } else { executeAddUser(waitlistRef, entrant, callback); }
+                }
+            } else { callback.onFailure("Event does not exist."); }
+        }).addOnFailureListener(e -> callback.onFailure("Database error: " + e.getMessage()));
+    }
+
+    private void executeAddUser(CollectionReference waitlistRef, Entrant entrant, WaitlistCallback callback) {
+        waitlistRef.document(entrant.getDeviceId()).set(entrant)
+                .addOnSuccessListener(aVoid -> callback.onSuccess())
+                .addOnFailureListener(e -> callback.onFailure("Failed to join waitlist: " + e.getMessage()));
+    }
+
+    public void getEnrolledEntrants(String eventId, EntrantListCallback callback) {
+        db.collection("events").document(eventId).collection("enrolled").get()
+                .addOnSuccessListener(qs -> {
+                    List<Entrant> enrolledList = new ArrayList<>();
+                    for (DocumentSnapshot doc : qs.getDocuments()) {
+                        Entrant entrant = doc.toObject(Entrant.class);
+                        if (entrant != null) enrolledList.add(entrant);
+                    }
+                    callback.onSuccess(enrolledList);
+                })
+                .addOnFailureListener(e -> callback.onFailure("Failed to load enrolled list: " + e.getMessage()));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  ADMIN — EVENTS (Ibrahim - US 03.01, 03.04)
+    // ══════════════════════════════════════════════════════════════
+
+    public void fetchAllActiveEvents(OnDocumentsLoadedListener listener) {
+        db.collection("events").get().addOnSuccessListener(qs -> {
+            List<DocumentSnapshot> active = new ArrayList<>();
+            for (DocumentSnapshot doc : qs.getDocuments()) {
+                Boolean isDeleted = doc.getBoolean("isDeleted");
+                if (isDeleted != null && isDeleted) continue;
+                if (Boolean.TRUE.equals(doc.getBoolean("privateEvent"))) continue;
+                active.add(doc);
+            }
+            listener.onLoaded(active);
+        }).addOnFailureListener(listener::onError);
+    }
+
+    public void fetchAllEvents(OnDocumentsLoadedListener listener) {
+        db.collection("events").get()
+                .addOnSuccessListener(qs -> listener.onLoaded(qs.getDocuments()))
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void fetchEventById(String eventId, OnDocumentLoadedListener listener) {
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(listener::onLoaded)
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void softDeleteEvent(String eventId, String adminId, OnOperationCompleteListener listener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isDeleted", true);
+        updates.put("removedBy", adminId);
+        updates.put("removedAt", FieldValue.serverTimestamp());
+        db.collection("events").document(eventId).update(updates)
+                .addOnSuccessListener(v -> listener.onSuccess()).addOnFailureListener(listener::onError);
+    }
+
+    public void restoreEvent(String eventId, OnOperationCompleteListener listener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isDeleted", false);
+        updates.put("removedBy", FieldValue.delete());
+        updates.put("removedAt", FieldValue.delete());
+        db.collection("events").document(eventId).update(updates)
+                .addOnSuccessListener(v -> listener.onSuccess()).addOnFailureListener(listener::onError);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  ADMIN — PROFILES (Ibrahim - US 03.02, 03.05)
+    // ══════════════════════════════════════════════════════════════
+
+    public void fetchAllActiveProfiles(OnDocumentsLoadedListener listener) {
+        db.collection("users").get().addOnSuccessListener(qs -> {
+            List<DocumentSnapshot> active = new ArrayList<>();
+            for (DocumentSnapshot doc : qs.getDocuments()) {
+                Boolean isDisabled = doc.getBoolean("isDisabled");
+                if (isDisabled == null || !isDisabled) active.add(doc);
+            }
+            listener.onLoaded(active);
+        }).addOnFailureListener(listener::onError);
+    }
+
+    public void fetchAllProfiles(OnDocumentsLoadedListener listener) {
+        db.collection("users").get()
+                .addOnSuccessListener(qs -> listener.onLoaded(qs.getDocuments()))
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void fetchProfileById(String deviceId, OnDocumentLoadedListener listener) {
+        db.collection("users").document(deviceId).get()
+                .addOnSuccessListener(listener::onLoaded)
+                .addOnFailureListener(listener::onError);
+    }
+
+    public void softDeleteProfile(String deviceId, String adminId, OnOperationCompleteListener listener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isDisabled", true);
+        updates.put("removedBy", adminId);
+        updates.put("removedAt", FieldValue.serverTimestamp());
+        db.collection("users").document(deviceId).update(updates)
+                .addOnSuccessListener(v -> listener.onSuccess()).addOnFailureListener(listener::onError);
+    }
+
+    public void restoreProfile(String deviceId, OnOperationCompleteListener listener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isDisabled", false);
+        updates.put("removedBy", FieldValue.delete());
+        updates.put("removedAt", FieldValue.delete());
+        db.collection("users").document(deviceId).update(updates)
+                .addOnSuccessListener(v -> listener.onSuccess()).addOnFailureListener(listener::onError);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  UTILITY
+    // ══════════════════════════════════════════════════════════════
+
+    public FirebaseFirestore getDb() { return db; }
+
+    // ANAS METHODS
+
+
+
+    public interface StatusCallback {
+        void onSuccess(String message);
+        void onFailure(String error);
+    }
+
+    public interface EventListener {
+        void onEvent(Event event);
+    }
+
+    public ListenerRegistration listenToEvent(String eventId, EventListener listener) {
+        return db.collection("events").document(eventId)
+                .addSnapshotListener((snapshot, e) -> {
+                    if (e != null || snapshot == null || !snapshot.exists()) return;
+                    Event event = snapshot.toObject(Event.class);
+                    if (event != null) listener.onEvent(event);
+                });
+    }
+
+    public Task<Void> joinWaitingList(String eventId, String deviceId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("deviceId", deviceId);
+        data.put("timestamp", FieldValue.serverTimestamp());
+        return db.collection("events").document(eventId)
+                .collection("waitingList").document(deviceId).set(data);
+    }
+
+    public Task<DocumentSnapshot> getEvent(String eventId) {
+        return db.collection("events").document(eventId).get();
+    }
+
+    public Task<Void> acceptInvitation(String eventId, String deviceId) {
+        DocumentReference eventRef = db.collection("events").document(eventId);
+        Map<String, Object> data = new HashMap<>();
+        data.put("deviceId", deviceId);
+        data.put("acceptedAt", FieldValue.serverTimestamp());
+        return eventRef.collection("enrolled").document(deviceId).set(data)
+                .continueWithTask(task -> eventRef.collection("selected").document(deviceId).delete());
+    }
+
+    public Task<Void> declineInvitation(String eventId, String deviceId) {
+        DocumentReference eventRef = db.collection("events").document(eventId);
+        Map<String, Object> data = new HashMap<>();
+        data.put("deviceId", deviceId);
+        data.put("declinedAt", FieldValue.serverTimestamp());
+        return eventRef.collection("cancelled").document(deviceId).set(data)
+                .continueWithTask(task -> eventRef.collection("selected").document(deviceId).delete())
+                .continueWithTask(task -> eventRef.collection("inviteeList").document(deviceId).delete());
+    }
+
+    public void getWaitingList(String eventId, StatusCallback callback) {
+        db.collection("events").document(eventId).collection("waitingList").get()
+                .addOnSuccessListener(qs -> callback.onSuccess("Loaded " + qs.size() + " entrants"))
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+    public void getChosenEntrants(String eventId, StatusCallback callback) {
+        db.collection("events").document(eventId).collection("selected").get()
+                .addOnSuccessListener(qs -> callback.onSuccess("Loaded " + qs.size() + " chosen"))
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+    }
+
+}

@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.eventmanager.FirebaseRepository;
+import com.example.eventmanager.repository.FirebaseRepository;
 import com.example.eventmanager.R;
 import com.example.eventmanager.adapter.ProfileAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;

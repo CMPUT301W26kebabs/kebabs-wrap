@@ -6,7 +6,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.eventmanager.HomeActivity;
+import com.example.eventmanager.ui.HomeActivity;
 import com.example.eventmanager.R;
 
 public class QrAccessActivity extends AppCompatActivity {
