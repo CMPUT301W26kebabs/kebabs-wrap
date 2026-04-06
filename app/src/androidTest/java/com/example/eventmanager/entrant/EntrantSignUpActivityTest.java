@@ -1,4 +1,4 @@
-package com.example.eventmanager;
+package com.example.eventmanager.entrant;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.clearText;
@@ -10,64 +10,78 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static org.junit.Assert.assertNotNull;
 
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import android.content.Context;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.example.eventmanager.R;
+import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.ui.EntrantSignUpActivity;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.firestore.FirebaseFirestore;
 
-import org.junit.Rule;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.ExecutionException;
+
 /**
- * Instrumented UI tests for EntrantSignUpActivity.
+ * Entrant — US 01.02.01 (name & email on sign-up; layout has no password field).
+ *
+ * <p>Clears {@code users/{deviceId}} before launch so {@link EntrantSignUpActivity} does not
+ * redirect existing users away from this screen.
  */
 @RunWith(AndroidJUnit4.class)
 public class EntrantSignUpActivityTest {
 
-    @Rule
-    public ActivityScenarioRule<EntrantSignUpActivity> rule =
-            new ActivityScenarioRule<>(EntrantSignUpActivity.class);
+    private ActivityScenario<EntrantSignUpActivity> scenario;
 
-    /**
-     * Verifies that the core UI elements appear on the polished sign up screen.
-     */
+    @Before
+    public void launchFreshSignUp() throws ExecutionException, InterruptedException {
+        Context ctx = ApplicationProvider.getApplicationContext();
+        String deviceId = new DeviceAuthManager().getDeviceId(ctx);
+        Tasks.await(FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(deviceId)
+                .delete());
+        scenario = ActivityScenario.launch(EntrantSignUpActivity.class);
+    }
+
+    @After
+    public void tearDown() {
+        if (scenario != null) {
+            scenario.close();
+        }
+    }
+
     @Test
     public void signUpScreen_coreElementsAreDisplayed() {
         onView(withId(R.id.signUpTitle)).check(matches(isDisplayed()));
         onView(withId(R.id.nameInput)).check(matches(isDisplayed()));
         onView(withId(R.id.emailInput)).check(matches(isDisplayed()));
-        onView(withId(R.id.passwordInput)).check(matches(isDisplayed()));
         onView(withId(R.id.signUpButton)).check(matches(isDisplayed()));
         onView(withId(R.id.loginLink)).check(matches(isDisplayed()));
     }
 
-    /**
-     * Verifies that a short password triggers validation error.
-     */
     @Test
-    public void signUpButton_shortPassword_showsPasswordValidationError() {
-        onView(withId(R.id.nameInput))
-                .perform(clearText(), replaceText("Fahad"), closeSoftKeyboard());
-
+    public void signUpButton_emptyName_showsNameValidationError() {
+        onView(withId(R.id.nameInput)).perform(clearText(), closeSoftKeyboard());
         onView(withId(R.id.emailInput))
-                .perform(clearText(), replaceText("fahad@example.com"), closeSoftKeyboard());
-
-        onView(withId(R.id.passwordInput))
-                .perform(clearText(), replaceText("123"), closeSoftKeyboard());
+                .perform(clearText(), replaceText("a@b.com"), closeSoftKeyboard());
 
         onView(withId(R.id.signUpButton)).perform(click());
 
-        rule.getScenario().onActivity(activity -> {
-            TextInputLayout passwordLayout = activity.findViewById(R.id.passwordInputLayout);
-            assertNotNull(passwordLayout.getError());
+        scenario.onActivity(activity -> {
+            TextInputLayout nameLayout = activity.findViewById(R.id.nameInputLayout);
+            assertNotNull(nameLayout.getError());
         });
     }
 
-    /**
-     * Verifies that an invalid email triggers validation error.
-     */
     @Test
     public void signUpButton_invalidEmail_showsEmailValidationError() {
         onView(withId(R.id.nameInput))
@@ -76,12 +90,9 @@ public class EntrantSignUpActivityTest {
         onView(withId(R.id.emailInput))
                 .perform(clearText(), replaceText("not-an-email"), closeSoftKeyboard());
 
-        onView(withId(R.id.passwordInput))
-                .perform(clearText(), replaceText("Kebabs123$"), closeSoftKeyboard());
-
         onView(withId(R.id.signUpButton)).perform(click());
 
-        rule.getScenario().onActivity(activity -> {
+        scenario.onActivity(activity -> {
             TextInputLayout emailLayout = activity.findViewById(R.id.emailInputLayout);
             assertNotNull(emailLayout.getError());
         });

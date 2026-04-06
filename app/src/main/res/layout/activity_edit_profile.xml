@@ -41,15 +41,32 @@
 
             </RelativeLayout>
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/ivAvatar"
+            <FrameLayout
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="20dp"
-                android:scaleType="centerCrop"
-                android:background="@drawable/bg_detail_icon_circle"
-                app:shapeAppearanceOverlay="@style/CircleImageView" />
+                android:layout_marginTop="20dp">
+
+                <TextView
+                    android:id="@+id/tv_edit_profile_initial"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_detail_icon_circle"
+                    android:gravity="center"
+                    android:text="?"
+                    android:textColor="#4A43EC"
+                    android:textSize="38sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivAvatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone"
+                    app:shapeAppearanceOverlay="@style/CircleImageView"
+                    app:strokeWidth="0dp" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvChangePhoto"

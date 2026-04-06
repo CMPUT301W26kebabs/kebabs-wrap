@@ -1,11 +1,12 @@
-package com.example.eventmanager;
+package com.example.eventmanager.organizer;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.example.eventmanager.managers.OrganizerNotificationManager;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -22,6 +23,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Organizer — US 02.05.01, 02.07.01 (notify winners / waiting list). Firestore integration.
+ */
 @RunWith(AndroidJUnit4.class)
 public class OrganizerNotificationManagerTest {
 
@@ -41,8 +45,9 @@ public class OrganizerNotificationManagerTest {
         Map<String, Object> data = new HashMap<>();
         data.put("deviceId", TEST_DEVICE_ID);
 
+        // notifyWinners() → getSelected() reads events/{id}/selected (not winnersList).
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
-                .collection("winnersList").document(TEST_DEVICE_ID).set(data));
+                .collection("selected").document(TEST_DEVICE_ID).set(data));
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
                 .collection("waitingList").document(TEST_DEVICE_ID).set(data));
         Tasks.await(db.collection("users").document(TEST_DEVICE_ID).set(data));
@@ -51,7 +56,7 @@ public class OrganizerNotificationManagerTest {
     @After
     public void tearDown() throws ExecutionException, InterruptedException {
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
-                .collection("winnersList").document(TEST_DEVICE_ID).delete());
+                .collection("selected").document(TEST_DEVICE_ID).delete());
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
                 .collection("waitingList").document(TEST_DEVICE_ID).delete());
 
@@ -65,8 +70,6 @@ public class OrganizerNotificationManagerTest {
         Tasks.await(db.collection("users").document(TEST_DEVICE_ID).delete());
     }
 
-    // ── US 02.05.01 ───────────────────────────────────────────────────────────
-
     @Test
     public void testNotifyWinners_writesNotificationToWinner()
             throws InterruptedException {
@@ -76,7 +79,6 @@ public class OrganizerNotificationManagerTest {
 
         manager.notifyWinners(TEST_EVENT_ID, TEST_EVENT_NAME);
 
-        // Give Firestore time to complete the write, then query
         db.collection("users").document(TEST_DEVICE_ID)
                 .collection("notifications")
                 .addSnapshotListener((snapshots, error) -> {
@@ -87,7 +89,7 @@ public class OrganizerNotificationManagerTest {
                 });
 
         latch.await(TIMEOUT_SEC, TimeUnit.SECONDS);
-        assertFalse("Winner should have received a notification", !hasNotification[0]);
+        assertTrue("Winner should have received a notification", hasNotification[0]);
     }
 
     @Test
@@ -102,10 +104,16 @@ public class OrganizerNotificationManagerTest {
         db.collection("users").document(TEST_DEVICE_ID)
                 .collection("notifications")
                 .addSnapshotListener((snapshots, error) -> {
-                    if (snapshots != null && !snapshots.isEmpty()) {
-                        eventId[0] = snapshots.getDocuments()
-                                .get(0).getString("eventId");
-                        latch.countDown();
+                    if (snapshots == null || snapshots.isEmpty()) {
+                        return;
+                    }
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        String eid = doc.getString("eventId");
+                        if (TEST_EVENT_ID.equals(eid)) {
+                            eventId[0] = eid;
+                            latch.countDown();
+                            return;
+                        }
                     }
                 });
 
@@ -113,8 +121,6 @@ public class OrganizerNotificationManagerTest {
         assertNotNull("Winner notification must contain eventId", eventId[0]);
         assertEquals("eventId should match test event", TEST_EVENT_ID, eventId[0]);
     }
-
-    // ── US 02.07.01 ───────────────────────────────────────────────────────────
 
     @Test
     public void testNotifyWaitingList_writesNotificationToEntrant()
@@ -135,8 +141,7 @@ public class OrganizerNotificationManagerTest {
                 });
 
         latch.await(TIMEOUT_SEC, TimeUnit.SECONDS);
-        assertFalse("Waitlist entrant should have received a notification",
-                !hasNotification[0]);
+        assertTrue("Waitlist entrant should have received a notification", hasNotification[0]);
     }
 
     @Test

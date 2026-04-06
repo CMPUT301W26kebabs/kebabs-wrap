@@ -4,7 +4,11 @@ import com.example.eventmanager.models.Event;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Patterns;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -16,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.eventmanager.R;
 import com.example.eventmanager.adapter.RegistrationHistoryAdapter;
 import com.example.eventmanager.managers.DeviceAuthManager;
@@ -37,6 +42,7 @@ import java.util.List;
  */
 public class EditProfileActivity extends AppCompatActivity {
 
+    private TextView tvEditProfileInitial;
     private ShapeableImageView ivAvatar;
     private TextInputLayout nameInputLayout, emailInputLayout, phoneInputLayout;
     private TextInputEditText nameInput, emailInput, phoneInput;
@@ -69,10 +75,10 @@ public class EditProfileActivity extends AppCompatActivity {
                 new ActivityResultContracts.PickVisualMedia(), uri -> {
                     if (uri == null) return;
                     pendingAvatarUri = uri;
-                    // Show the new photo immediately using Glide
+                    showPhotoAvatar();
                     Glide.with(this)
                             .load(uri)
-                            .centerCrop()
+                            .apply(RequestOptions.circleCropTransform())
                             .into(ivAvatar);
                 });
 
@@ -82,6 +88,7 @@ public class EditProfileActivity extends AppCompatActivity {
         repository = new FirebaseRepository();
         deviceId   = new DeviceAuthManager().getDeviceId(this);
 
+        tvEditProfileInitial       = findViewById(R.id.tv_edit_profile_initial);
         ivAvatar                   = findViewById(R.id.ivAvatar);
         nameInputLayout            = findViewById(R.id.nameInputLayout);
         emailInputLayout           = findViewById(R.id.emailInputLayout);
@@ -102,6 +109,17 @@ public class EditProfileActivity extends AppCompatActivity {
         findViewById(R.id.btnSaveProfile).setOnClickListener(v -> saveProfile());
         findViewById(R.id.btnDeleteProfile).setOnClickListener(v -> confirmDeleteProfile());
 
+        nameInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (tvEditProfileInitial.getVisibility() == View.VISIBLE) {
+                    tvEditProfileInitial.setText(initialLetterFromNameField());
+                }
+            }
+        });
+
         loadUserData();
         loadRegistrationHistory();
     }
@@ -120,6 +138,7 @@ public class EditProfileActivity extends AppCompatActivity {
                 loadedEntrant = result;
                 if (result == null) {
                     switchReceiveNotifications.setChecked(true);
+                    loadAvatar(null);
                     return;
                 }
                 if (result.getName() != null)        nameInput.setText(result.getName());
@@ -140,19 +159,48 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads the avatar image safely using Glide.
-     * Falls back to the default icon if the URL is null, empty, or expired.
+     * Loads the avatar from the server URL, or shows the same initials-on-circle placeholder
+     * as {@link ProfileActivity} when there is no photo. Keeps a pending gallery pick visible
+     * if {@link #pendingAvatarUri} is set.
      */
     private void loadAvatar(@Nullable String photoUrl) {
-        if (photoUrl == null || photoUrl.isEmpty()) {
-            // No photo saved — just show the default avatar drawable
-            ivAvatar.setImageResource(android.R.drawable.ic_menu_gallery);
+        if (pendingAvatarUri != null) {
+            showPhotoAvatar();
+            Glide.with(this)
+                    .load(pendingAvatarUri)
+                    .apply(RequestOptions.circleCropTransform())
+                    .into(ivAvatar);
             return;
         }
+        if (photoUrl == null || photoUrl.isEmpty()) {
+            showInitialAvatarPlaceholder();
+            return;
+        }
+        showPhotoAvatar();
         Glide.with(this)
                 .load(photoUrl)
-                .centerCrop()
+                .apply(RequestOptions.circleCropTransform())
                 .into(ivAvatar);
+    }
+
+    private void showInitialAvatarPlaceholder() {
+        Glide.with(this).clear(ivAvatar);
+        ivAvatar.setImageDrawable(null);
+        ivAvatar.setVisibility(View.GONE);
+        tvEditProfileInitial.setVisibility(View.VISIBLE);
+        tvEditProfileInitial.setText(initialLetterFromNameField());
+    }
+
+    private void showPhotoAvatar() {
+        ivAvatar.setVisibility(View.VISIBLE);
+        tvEditProfileInitial.setVisibility(View.INVISIBLE);
+    }
+
+    private String initialLetterFromNameField() {
+        CharSequence t = nameInput.getText();
+        String name = t != null ? t.toString().trim() : "";
+        if (name.isEmpty()) return "?";
+        return String.valueOf(name.charAt(0)).toUpperCase();
     }
 
     private void loadRegistrationHistory() {
