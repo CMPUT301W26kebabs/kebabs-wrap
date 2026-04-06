@@ -3,16 +3,17 @@ package com.example.eventmanager.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.eventmanager.R;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.repository.FirebaseRepository;
+import com.google.android.material.imageview.ShapeableImageView;
 
 /**
  * Read-only profile view that displays the current user's name, email, and avatar.
@@ -23,7 +24,7 @@ public class ProfileActivity extends AppCompatActivity {
     public static final String EXTRA_EDIT_PROFILE = "edit_profile";
 
     private TextView tvName, tvEmail, tvInitial;
-    private ImageView ivProfileAvatar;
+    private ShapeableImageView ivProfileAvatar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +72,7 @@ public class ProfileActivity extends AppCompatActivity {
                             tvInitial.setVisibility(View.INVISIBLE);
                             Glide.with(ProfileActivity.this)
                                     .load(photoUrl)
-                                    .centerCrop()
+                                    .apply(RequestOptions.circleCropTransform())
                                     .into(ivProfileAvatar);
                         } else {
                             showFallback(initial);
