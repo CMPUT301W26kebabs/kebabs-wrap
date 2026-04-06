@@ -1,4 +1,4 @@
-package com.example.eventmanager;
+package com.example.eventmanager.organizer;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
@@ -10,10 +10,14 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
+import com.example.eventmanager.R;
+import com.example.eventmanager.ui.MyEventsActivity;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/** Organizer — US 02.01.01 (organizer event list, create flow entry). */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class MyEventsUITest {

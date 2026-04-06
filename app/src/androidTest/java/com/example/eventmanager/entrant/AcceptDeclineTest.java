@@ -1,9 +1,10 @@
-package com.example.eventmanager;
+package com.example.eventmanager.entrant;
 
 import static org.junit.Assert.assertFalse;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.example.eventmanager.repository.EventRepository;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -19,6 +20,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Entrant — US 01.05.03 (decline invitation). Firestore integration.
+ */
 @RunWith(AndroidJUnit4.class)
 public class AcceptDeclineTest {
 
@@ -37,8 +41,9 @@ public class AcceptDeclineTest {
         Map<String, Object> data = new HashMap<>();
         data.put("deviceId", TEST_DEVICE_ID);
 
+        // removeFromWinners() deletes events/{id}/selected/{deviceId}
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
-                .collection("winnersList").document(TEST_DEVICE_ID).set(data));
+                .collection("selected").document(TEST_DEVICE_ID).set(data));
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
                 .collection("waitingList").document(TEST_DEVICE_ID).set(data));
     }
@@ -46,7 +51,7 @@ public class AcceptDeclineTest {
     @After
     public void tearDown() throws ExecutionException, InterruptedException {
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
-                .collection("winnersList").document(TEST_DEVICE_ID).delete());
+                .collection("selected").document(TEST_DEVICE_ID).delete());
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
                 .collection("waitingList").document(TEST_DEVICE_ID).delete());
         Tasks.await(db.collection("events").document(TEST_EVENT_ID)
@@ -54,24 +59,23 @@ public class AcceptDeclineTest {
     }
 
     @Test
-    public void testDecline_removesFromWinnersList() throws InterruptedException {
+    public void testDecline_removesFromSelected() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         final boolean[] exists = {true};
 
         eventRepository.removeFromWinners(TEST_EVENT_ID, TEST_DEVICE_ID);
 
-        // Wait then verify
         db.collection("events").document(TEST_EVENT_ID)
-                .collection("winnersList").document(TEST_DEVICE_ID)
+                .collection("selected").document(TEST_DEVICE_ID)
                 .get()
                 .addOnSuccessListener(doc -> {
                     exists[0] = doc.exists();
-                    latch.countDown();      // signal that we're done
+                    latch.countDown();
                 })
                 .addOnFailureListener(e -> latch.countDown());
 
         latch.await(TIMEOUT_SEC, TimeUnit.SECONDS);
-        assertFalse("User should be removed from winnersList", exists[0]);
+        assertFalse("User should be removed from selected (chosen list)", exists[0]);
     }
 
     @Test
