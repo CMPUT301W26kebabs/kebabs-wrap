@@ -764,6 +764,20 @@ public class FirebaseRepository {
                 .addOnSuccessListener(v -> listener.onSuccess()).addOnFailureListener(listener::onError);
     }
 
+    /**
+     * Promotes a user to admin by setting {@code isAdmin} to {@code true}.
+     * This is a one-way operation; demoting is not supported from the app.
+     *
+     * @param deviceId device identifier of the user to promote
+     * @param listener notified on success or failure
+     */
+    public void promoteToAdmin(String deviceId, OnOperationCompleteListener listener) {
+        db.collection("users").document(deviceId)
+                .update("isAdmin", true)
+                .addOnSuccessListener(v -> listener.onSuccess())
+                .addOnFailureListener(listener::onError);
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  UTILITY
     // ══════════════════════════════════════════════════════════════

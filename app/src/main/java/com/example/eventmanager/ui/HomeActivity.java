@@ -71,6 +71,7 @@ public class HomeActivity extends AppCompatActivity {
     private FollowRepository followRepo;
     private Set<String> followingOrganizerIds = new HashSet<>();
     private TextView chipAllEvents, chipFollowing, tvNoFollowing;
+    private View btnAdminHome;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,10 +122,10 @@ public class HomeActivity extends AppCompatActivity {
         // Lottery banner
         lotteryBanner.setOnClickListener(v -> openPendingInvite());
 
-        // Admin shortcut in top-left
-        findViewById(R.id.btn_admin_home).setOnClickListener(v -> {
-            startActivity(new Intent(this, MainActivity.class));
-        });
+        btnAdminHome = findViewById(R.id.btn_admin_home);
+        btnAdminHome.setOnClickListener(v ->
+            startActivity(new Intent(this, MainActivity.class))
+        );
 
         // Bottom nav
         findViewById(R.id.nav_explore).setOnClickListener(v -> { /* already here */ });
@@ -259,10 +260,12 @@ public class HomeActivity extends AppCompatActivity {
                 } else {
                     tvWelcome.setText("Welcome \uD83D\uDC4B,");
                 }
+                btnAdminHome.setVisibility(result.isAdmin() ? View.VISIBLE : View.GONE);
             }
             @Override
             public void onError(Exception e) {
                 tvWelcome.setText("Welcome \uD83D\uDC4B,");
+                btnAdminHome.setVisibility(View.GONE);
             }
         });
     }

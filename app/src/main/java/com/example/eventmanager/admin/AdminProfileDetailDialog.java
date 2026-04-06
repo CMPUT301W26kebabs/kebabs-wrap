@@ -36,7 +36,7 @@ public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
 
     private TextView tvInitials, tvName, tvEmail, tvPhone, tvDeviceId, tvRoleBadge, tvStatus;
     private LinearLayout statusBadge;
-    private Button btnDisable, btnRestore;
+    private Button btnDisable, btnRestore, btnPromoteAdmin;
 
     public static AdminProfileDetailDialog newInstance(String deviceId) {
         AdminProfileDetailDialog d = new AdminProfileDetailDialog();
@@ -68,8 +68,10 @@ public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
         statusBadge = view.findViewById(R.id.status_badge);
         btnDisable = view.findViewById(R.id.btn_disable_profile);
         btnRestore = view.findViewById(R.id.btn_restore_profile);
+        btnPromoteAdmin = view.findViewById(R.id.btn_promote_admin);
         btnDisable.setOnClickListener(v -> confirmDeleteProfile());
         btnRestore.setOnClickListener(v -> restoreProfile());
+        btnPromoteAdmin.setOnClickListener(v -> confirmPromoteToAdmin());
         loadProfileData();
     }
 
@@ -99,6 +101,9 @@ public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
         else { tvRoleBadge.setText("ENTRANT"); tvRoleBadge.setBackgroundResource(R.drawable.bg_chip); }
         tvRoleBadge.setVisibility(View.VISIBLE);
 
+        boolean alreadyAdmin = isAdmin != null && isAdmin;
+        btnPromoteAdmin.setVisibility(alreadyAdmin ? View.GONE : View.VISIBLE);
+
         Boolean isDis = doc.getBoolean("isDisabled"); boolean dis = (isDis != null && isDis);
         if (dis) {
             tvStatus.setText("DISABLED"); statusBadge.setBackgroundResource(R.drawable.bg_chip_danger);
@@ -107,6 +112,34 @@ public class AdminProfileDetailDialog extends BottomSheetDialogFragment {
             tvStatus.setText("ACTIVE"); statusBadge.setBackgroundResource(R.drawable.bg_chip_active);
             btnDisable.setVisibility(View.VISIBLE); btnRestore.setVisibility(View.GONE);
         }
+    }
+
+    private void confirmPromoteToAdmin() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.admin_promote_title)
+                .setMessage(R.string.admin_promote_message)
+                .setPositiveButton(R.string.admin_promote_confirm, (d, w) ->
+                        repository.promoteToAdmin(deviceId, new FirebaseRepository.OnOperationCompleteListener() {
+                            @Override
+                            public void onSuccess() {
+                                if (isAdded()) {
+                                    Toast.makeText(getContext(), R.string.admin_promote_success, Toast.LENGTH_SHORT).show();
+                                    loadProfileData();
+                                }
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                if (isAdded()) {
+                                    Toast.makeText(getContext(),
+                                            getString(R.string.admin_promote_failed,
+                                                    e.getMessage() != null ? e.getMessage() : "Unknown error"),
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        }))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void confirmDeleteProfile() {

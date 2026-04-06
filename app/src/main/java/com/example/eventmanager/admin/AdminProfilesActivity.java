@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventmanager.repository.FirebaseRepository;
 import com.example.eventmanager.R;
+import com.example.eventmanager.utils.AdminGuard;
 import com.example.eventmanager.adapter.ProfileAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -46,6 +47,7 @@ public class AdminProfilesActivity extends AppCompatActivity implements ProfileA
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_profiles);
+        AdminGuard.guardActivity(this);
         repository = FirebaseRepository.getInstance();
 
         recyclerView = findViewById(R.id.rv_profiles);

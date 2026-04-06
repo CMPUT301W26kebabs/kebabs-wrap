@@ -12,6 +12,7 @@ import com.example.eventmanager.admin.AdminEventsActivity;
 import com.example.eventmanager.admin.AdminImagesActivity;
 import com.example.eventmanager.admin.AdminNotificationLogsActivity;
 import com.example.eventmanager.admin.AdminProfilesActivity;
+import com.example.eventmanager.utils.AdminGuard;
 
 /**
  * Admin dashboard screen providing navigation to all administrative functions.
@@ -23,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        AdminGuard.guardActivity(this);
 
         // Back button to Home Screen
         findViewById(R.id.btn_back_home).setOnClickListener(v -> finish());
