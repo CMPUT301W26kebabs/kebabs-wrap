@@ -1,24 +1,25 @@
 package com.example.eventmanager.repository;
 
 import com.example.eventmanager.models.Notification;
-import com.example.eventmanager.models.Entrant;
-import com.example.eventmanager.models.Event;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.example.eventmanager.models.Notification;
-import com.example.eventmanager.repository.NotificationRepository;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Handles all follow/unfollow logic between entrants and organizers.
@@ -269,52 +270,152 @@ public class FollowRepository {
     }
 
     /**
-     * Mass-invite all followers to a specific event's waiting list.
-     * Writes are batched (up to 450 per batch) to stay within Firestore limits.
+     * Mass-invite all followers to {@code events/{eventId}/inviteeList} with the same notification
+     * and accept/decline flow as private organizer invites. Skips followers already on the
+     * invitee list, waiting list, selected, or enrolled.
      *
-     * @param eventId     Firestore event document ID to add followers to
+     * @param eventId     Firestore event document ID
      * @param organizerId device ID of the organizer whose followers are being invited
      * @param callback    notified on success or failure
      */
     public void inviteAllFollowersToWaitlist(@NonNull String eventId,
                                              @NonNull String organizerId,
                                              @NonNull FollowCallback callback) {
-        db.collection("users").document(organizerId)
-                .collection("followers").get()
-                .addOnSuccessListener(qs -> {
-                    if (qs.isEmpty()) {
-                        callback.onFailure("You have no followers to invite.");
+        db.collection("events").document(eventId).get()
+                .addOnSuccessListener(eventDoc -> {
+                    if (!eventDoc.exists()) {
+                        callback.onFailure("Event not found.");
                         return;
                     }
-                    WriteBatch batch = db.batch();
-                    int count = 0;
-                    for (DocumentSnapshot doc : qs.getDocuments()) {
-                        String followerId = doc.getString("deviceId");
-                        if (followerId == null) followerId = doc.getId();
-                        String name = doc.getString("name");
+                    String rawName = eventDoc.getString("name");
+                    final String safeEventName = (rawName != null && !rawName.trim().isEmpty())
+                            ? rawName.trim() : "Event";
 
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("deviceId", followerId);
-                        data.put("joinedAt", FieldValue.serverTimestamp());
-                        if (name != null) data.put("name", name);
-                        data.put("invitedByOrganizer", true);
+                    db.collection("users").document(organizerId).collection("followers").get()
+                            .addOnSuccessListener(followersSnap -> {
+                                if (followersSnap.isEmpty()) {
+                                    callback.onFailure("You have no followers to invite.");
+                                    return;
+                                }
 
-                        batch.set(db.collection("events").document(eventId)
-                                .collection("waitingList").document(followerId), data);
-                        count++;
+                                Task<QuerySnapshot> tInv = db.collection("events").document(eventId)
+                                        .collection("inviteeList").get();
+                                Task<QuerySnapshot> tWait = db.collection("events").document(eventId)
+                                        .collection("waitingList").get();
+                                Task<QuerySnapshot> tSel = db.collection("events").document(eventId)
+                                        .collection("selected").get();
+                                Task<QuerySnapshot> tEnr = db.collection("events").document(eventId)
+                                        .collection("enrolled").get();
 
-                        if (count % 450 == 0) {
-                            batch.commit();
-                            batch = db.batch();
-                        }
-                    }
-                    batch.commit()
-                            .addOnSuccessListener(v -> callback.onSuccess())
+                                Tasks.whenAllComplete(tInv, tWait, tSel, tEnr)
+                                        .addOnCompleteListener(done -> {
+                                            if (!tInv.isSuccessful() || !tWait.isSuccessful()
+                                                    || !tSel.isSuccessful() || !tEnr.isSuccessful()) {
+                                                callback.onFailure("Could not load event lists.");
+                                                return;
+                                            }
+                                            Set<String> excluded = new HashSet<>();
+                                            addDeviceIdsFromSnapshot(tInv.getResult(), excluded);
+                                            addDeviceIdsFromSnapshot(tWait.getResult(), excluded);
+                                            addDeviceIdsFromSnapshot(tSel.getResult(), excluded);
+                                            addDeviceIdsFromSnapshot(tEnr.getResult(), excluded);
+
+                                            List<FollowerInvitee> eligible = new ArrayList<>();
+                                            for (DocumentSnapshot doc : followersSnap.getDocuments()) {
+                                                String followerId = doc.getString("deviceId");
+                                                if (followerId == null || followerId.isEmpty()) {
+                                                    followerId = doc.getId();
+                                                }
+                                                if (excluded.contains(followerId)) {
+                                                    continue;
+                                                }
+                                                eligible.add(new FollowerInvitee(
+                                                        followerId, doc.getString("name")));
+                                            }
+
+                                            if (eligible.isEmpty()) {
+                                                callback.onFailure(
+                                                        "All followers are already invited or registered for this event.");
+                                                return;
+                                            }
+
+                                            commitInviteeListChunks(eligible, 0, eventId, safeEventName, callback);
+                                        });
+                            })
                             .addOnFailureListener(e -> callback.onFailure(
-                                    e.getMessage() != null ? e.getMessage() : "Invite failed"));
+                                    e.getMessage() != null ? e.getMessage() : "Could not load followers"));
                 })
                 .addOnFailureListener(e -> callback.onFailure(
-                        e.getMessage() != null ? e.getMessage() : "Could not load followers"));
+                        e.getMessage() != null ? e.getMessage() : "Could not load event"));
+    }
+
+    private static void addDeviceIdsFromSnapshot(QuerySnapshot snap, Set<String> out) {
+        if (snap == null) {
+            return;
+        }
+        for (DocumentSnapshot d : snap.getDocuments()) {
+            String id = d.getString("deviceId");
+            if (id == null || id.trim().isEmpty()) {
+                id = d.getId();
+            }
+            out.add(id);
+        }
+    }
+
+    /**
+     * Two writes per follower (invitee set + cancelled delete). Chunk to stay under 500/batch.
+     */
+    private void commitInviteeListChunks(@NonNull List<FollowerInvitee> eligible, int startIndex,
+                                       @NonNull String eventId, @NonNull String safeEventName,
+                                       @NonNull FollowCallback callback) {
+        final int maxPairsPerBatch = 200;
+        if (startIndex >= eligible.size()) {
+            callback.onSuccess();
+            return;
+        }
+        int end = Math.min(startIndex + maxPairsPerBatch, eligible.size());
+        WriteBatch batch = db.batch();
+        for (int i = startIndex; i < end; i++) {
+            FollowerInvitee fe = eligible.get(i);
+            Map<String, Object> data = new HashMap<>();
+            data.put("deviceId", fe.deviceId);
+            if (fe.name != null) {
+                data.put("name", fe.name);
+            }
+            data.put("invitedAt", FieldValue.serverTimestamp());
+            data.put("inviteSource", "organizer");
+
+            batch.set(db.collection("events").document(eventId)
+                    .collection("inviteeList").document(fe.deviceId), data);
+            batch.delete(db.collection("events").document(eventId)
+                    .collection("cancelled").document(fe.deviceId));
+        }
+        batch.commit()
+                .addOnSuccessListener(v -> {
+                    for (int i = startIndex; i < end; i++) {
+                        FollowerInvitee fe = eligible.get(i);
+                        Notification notification = new Notification(
+                                "You are invited!",
+                                "Tap to accept or decline your invitation to " + safeEventName + ".",
+                                safeEventName,
+                                eventId
+                        );
+                        notificationRepo.addNotification(fe.deviceId, notification);
+                    }
+                    commitInviteeListChunks(eligible, end, eventId, safeEventName, callback);
+                })
+                .addOnFailureListener(e -> callback.onFailure(
+                        e.getMessage() != null ? e.getMessage() : "Invite failed"));
+    }
+
+    private static final class FollowerInvitee {
+        final String deviceId;
+        final String name;
+
+        FollowerInvitee(String deviceId, String name) {
+            this.deviceId = deviceId;
+            this.name = name;
+        }
     }
 
     private void sendIfOptedIn(String deviceId, String title, String body,
