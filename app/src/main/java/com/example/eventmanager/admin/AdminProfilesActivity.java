@@ -15,8 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.eventmanager.FirebaseRepository;
+import com.example.eventmanager.repository.FirebaseRepository;
 import com.example.eventmanager.R;
+import com.example.eventmanager.utils.AdminGuard;
 import com.example.eventmanager.adapter.ProfileAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -24,6 +25,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Admin screen for browsing, searching, and soft-deleting user profiles.
+ * Displays a searchable list of all registered entrants.
+ *
+ * <p>Covers user stories US 03.02 and US 03.05.</p>
+ */
 public class AdminProfilesActivity extends AppCompatActivity implements ProfileAdapter.OnProfileClickListener {
 
     private RecyclerView recyclerView;
@@ -40,6 +47,7 @@ public class AdminProfilesActivity extends AppCompatActivity implements ProfileA
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_profiles);
+        AdminGuard.guardActivity(this);
         repository = FirebaseRepository.getInstance();
 
         recyclerView = findViewById(R.id.rv_profiles);

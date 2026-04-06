@@ -1,4 +1,5 @@
 package com.example.eventmanager.admin;
+import com.example.eventmanager.models.Event;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,7 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.bumptech.glide.Glide;
-import com.example.eventmanager.FirebaseRepository;
+import com.example.eventmanager.repository.FirebaseRepository;
 import com.example.eventmanager.R;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.firebase.Timestamp;
@@ -24,6 +25,10 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+/**
+ * Bottom-sheet dialog displayed when an admin taps an event card.
+ * Shows event details (title, date, poster) and provides soft-delete and restore actions.
+ */
 public class AdminEventDetailDialog extends BottomSheetDialogFragment {
 
     private static final String ARG_EVENT_ID = "event_id";

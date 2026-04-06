@@ -15,8 +15,17 @@ import com.example.eventmanager.R;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * RecyclerView adapter for the admin comment-moderation screen.
+ * Renders each comment with the author's avatar initials, name,
+ * event context, relative timestamp, and a delete button that
+ * lets the admin remove inappropriate comments.
+ */
 public class AdminCommentsAdapter extends RecyclerView.Adapter<AdminCommentsAdapter.CommentVH> {
 
+    /**
+     * Callback invoked when the admin taps the delete button on a comment row.
+     */
     public interface OnDeleteClickListener {
         void onDeleteClick(@NonNull AdminCommentListItem item);
     }
@@ -28,6 +37,11 @@ public class AdminCommentsAdapter extends RecyclerView.Adapter<AdminCommentsAdap
         this.deleteClickListener = deleteClickListener;
     }
 
+    /**
+     * Replaces the displayed comment list and refreshes the RecyclerView.
+     *
+     * @param newItems the new list of comment view-models; {@code null} clears the list.
+     */
     public void setItems(List<AdminCommentListItem> newItems) {
         items.clear();
         if (newItems != null) {

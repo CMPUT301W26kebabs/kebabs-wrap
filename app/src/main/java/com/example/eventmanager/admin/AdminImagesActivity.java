@@ -11,14 +11,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.eventmanager.FirebaseRepository;
+import com.example.eventmanager.repository.FirebaseRepository;
 import com.example.eventmanager.R;
+import com.example.eventmanager.utils.AdminGuard;
 import com.example.eventmanager.adapter.ImageAdapter;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Admin screen for viewing and removing event poster images displayed in a grid.
+ * Fetches poster URLs from Firestore and allows deletion with confirmation.
+ *
+ * <p>Covers user story US 03.03.</p>
+ */
 public class AdminImagesActivity extends AppCompatActivity implements ImageAdapter.OnImageActionListener {
 
     private RecyclerView recyclerView;
@@ -31,6 +38,7 @@ public class AdminImagesActivity extends AppCompatActivity implements ImageAdapt
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_images);
+        AdminGuard.guardActivity(this);
         repository = FirebaseRepository.getInstance();
 
         recyclerView = findViewById(R.id.rv_images);

@@ -85,8 +85,18 @@
     <string name="broadcast_sent">Broadcast sent to your followers!</string>
     <string name="broadcast_empty_fields">Please fill in both title and message</string>
     <string name="invite_followers">Invite Followers</string>
-    <string name="invite_followers_confirm">Invite all %1$d followers to this event\'s waiting list?</string>
+    <string name="invite_followers_confirm">Send an invitation to all %1$d followers? They can accept or decline before joining the waiting list.</string>
     <string name="invite_followers_success">All followers have been invited!</string>
     <string name="invite_followers_empty">You have no followers to invite.</string>
     <string name="view_organizer_profile">View profile</string>
+
+    <!-- Admin role separation -->
+    <string name="admin_access_required">Admin access required</string>
+    <string name="admin_promote_button">Promote to Admin</string>
+    <string name="admin_promote_title">Promote to admin?</string>
+    <string name="admin_promote_message">This will grant full admin privileges to this user. This action cannot be undone from the app.</string>
+    <string name="admin_promote_confirm">Promote</string>
+    <string name="admin_promote_success">User promoted to admin</string>
+    <string name="admin_promote_failed">Failed to promote user: %1$s</string>
+    <string name="admin_already_admin">This user is already an admin</string>
 </resources>

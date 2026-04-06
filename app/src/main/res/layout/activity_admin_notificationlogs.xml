@@ -84,39 +84,12 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/bg_search_grey"
-            android:hint="Search by Organizer name..."
+            android:hint="Search by Organizer name or Recipient..."
             android:paddingStart="16dp"
             android:textSize="14sp"
             android:inputType="text"
             android:drawableStart="@android:drawable/ic_menu_sort_by_size"
             android:drawablePadding="8dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_filter_date"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Date"
-                app:backgroundTint="#EDE7F6"
-                app:icon="@android:drawable/ic_menu_today" />
-
-            <Space android:layout_width="8dp" android:layout_height="wrap_content" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_export"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Export"
-                app:backgroundTint="#EDE7F6"
-                app:icon="@android:drawable/ic_menu_share" />
-        </LinearLayout>
     </LinearLayout>
 
     <FrameLayout

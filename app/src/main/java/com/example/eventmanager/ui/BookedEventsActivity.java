@@ -8,6 +8,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventmanager.R;
 
+/**
+ * Displays the list of events the current user is enrolled in.
+ * Provides skip/next navigation to {@link QrAccessActivity}.
+ */
 public class BookedEventsActivity extends AppCompatActivity {
 
     @Override

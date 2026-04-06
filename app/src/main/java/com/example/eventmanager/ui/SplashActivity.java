@@ -15,13 +15,18 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.eventmanager.HomeActivity;
+import com.example.eventmanager.ui.HomeActivity;
 import com.example.eventmanager.R;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
 import com.example.eventmanager.repository.FirebaseRepository;
 import com.google.android.material.button.MaterialButton;
 
+/**
+ * App entry point and splash screen displayed on launch.
+ * Checks whether a user profile already exists for the current device and routes
+ * to either the sign-up flow or the home screen accordingly.
+ */
 public class SplashActivity extends AppCompatActivity {
 
     private static final long SPLASH_DELAY_MS = 1700L;

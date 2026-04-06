@@ -41,9 +41,8 @@
         </LinearLayout>
 
         <!--
-            Avatar area: FrameLayout stacks the initials TextView behind
-            the ShapeableImageView. When a photo exists the ImageView is
-            VISIBLE and covers the initials; otherwise it stays GONE.
+            Avatar area: initials sit on a circular plate; when a photo exists,
+            a circular ShapeableImageView on top replaces the visible initials.
         -->
         <FrameLayout
             android:layout_width="96dp"
@@ -63,14 +62,16 @@
                 android:textSize="36sp"
                 android:textStyle="bold" />
 
-            <!-- Profile photo (shown when photo URL exists) -->
-            <ImageView
+            <!-- Profile photo — circular, same footprint as initials -->
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/iv_profile_avatar"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
                 android:visibility="gone"
-                android:contentDescription="Profile photo" />
+                android:contentDescription="Profile photo"
+                app:shapeAppearanceOverlay="@style/CircleImageView"
+                app:strokeWidth="0dp" />
 
         </FrameLayout>
 

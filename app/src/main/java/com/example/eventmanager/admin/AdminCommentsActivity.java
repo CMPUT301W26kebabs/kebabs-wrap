@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventmanager.R;
+import com.example.eventmanager.utils.AdminGuard;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -21,8 +22,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Admin: all comments across events ({@code collectionGroup("comments")}), with delete.
- * Uses client-side sort (no orderBy) so Firestore does not require a collection-group index.
+ * Admin screen for moderating comments across all events.
+ * Loads comments via a Firestore {@code collectionGroup("comments")} query and allows
+ * deletion with confirmation. Uses client-side sorting to avoid requiring a
+ * collection-group index.
  */
 public class AdminCommentsActivity extends AppCompatActivity {
 
@@ -35,6 +38,7 @@ public class AdminCommentsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_comments);
+        AdminGuard.guardActivity(this);
 
         db = FirebaseFirestore.getInstance();
 
