@@ -87,12 +87,6 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
             }
         });
 
-        // Filter buttons (placeholder – can be extended later)
-        findViewById(R.id.btn_filter_date).setOnClickListener(v ->
-                Toast.makeText(this, "Date filter coming soon.", Toast.LENGTH_SHORT).show());
-        findViewById(R.id.btn_export).setOnClickListener(v ->
-                Toast.makeText(this, "Export coming soon.", Toast.LENGTH_SHORT).show());
-
         // Load-more pagination
         btnLoadMore = findViewById(R.id.btn_load_more);
         btnLoadMore.setOnClickListener(v -> loadMoreLogs());

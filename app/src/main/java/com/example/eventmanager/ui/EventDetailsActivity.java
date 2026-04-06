@@ -288,12 +288,11 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (isFollowing) {
             followButton.setText(R.string.following);
             followButton.setBackgroundResource(R.drawable.bg_following_button);
-            followButton.setTextColor(getResources().getColor(R.color.following_button_text, null));
         } else {
             followButton.setText(R.string.follow);
             followButton.setBackgroundResource(R.drawable.bg_follow_button_active);
-            followButton.setTextColor(getResources().getColor(android.R.color.white, null));
         }
+        followButton.setTextColor(getResources().getColor(android.R.color.white, null));
     }
 
     private void toggleFollow() {

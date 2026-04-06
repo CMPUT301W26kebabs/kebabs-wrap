@@ -1,4 +1,4 @@
-package com.example.eventmanager;
+package com.example.eventmanager.entrant;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -13,6 +13,7 @@ import com.example.eventmanager.managers.DeviceAuthManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/** Entrant — US 01.07.01 (device identification). */
 @RunWith(AndroidJUnit4.class)
 public class DeviceAuthManagerTest {
 
