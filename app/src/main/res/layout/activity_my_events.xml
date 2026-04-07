@@ -67,7 +67,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="24dp"
-        android:backgroundTint="#4A43EC"
+        android:backgroundTint="@color/brand_accent"
         android:src="@android:drawable/ic_input_add"
         app:tint="#FFFFFF" />
 

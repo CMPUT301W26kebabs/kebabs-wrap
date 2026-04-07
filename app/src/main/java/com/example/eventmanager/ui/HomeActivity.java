@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -196,16 +197,18 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void updateChipUI() {
+        int white = ContextCompat.getColor(this, R.color.white);
+        int brand = ContextCompat.getColor(this, R.color.brand_accent);
         if (filterFollowing) {
             chipFollowing.setBackgroundResource(R.drawable.bg_chip_selected);
-            chipFollowing.setTextColor(0xFFFFFFFF);
+            chipFollowing.setTextColor(white);
             chipAllEvents.setBackgroundResource(R.drawable.bg_chip_unselected);
-            chipAllEvents.setTextColor(0xFF4A43EC);
+            chipAllEvents.setTextColor(brand);
         } else {
             chipAllEvents.setBackgroundResource(R.drawable.bg_chip_selected);
-            chipAllEvents.setTextColor(0xFFFFFFFF);
+            chipAllEvents.setTextColor(white);
             chipFollowing.setBackgroundResource(R.drawable.bg_chip_unselected);
-            chipFollowing.setTextColor(0xFF4A43EC);
+            chipFollowing.setTextColor(brand);
         }
     }
 

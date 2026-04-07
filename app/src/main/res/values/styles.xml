@@ -45,4 +45,25 @@
     <style name="QrCellFinder" parent="QrCellBase">
         <item name="android:background">@drawable/bg_qr_finder</item>
     </style>
+
+    <style name="QrCellDarkBrand" parent="QrCellBase">
+        <item name="android:background">@color/brand_accent</item>
+    </style>
+
+    <style name="QrCellFinderBrand" parent="QrCellBase">
+        <item name="android:background">@drawable/bg_qr_finder_brand</item>
+    </style>
+
+    <!-- Premium rounded variants for the redesigned QR page -->
+    <style name="QrPremiumDark" parent="QrCellBase">
+        <item name="android:background">@drawable/bg_qr_cell_brand_rounded</item>
+    </style>
+
+    <style name="QrPremiumLight" parent="QrCellBase">
+        <item name="android:background">@drawable/bg_qr_cell_light_rounded</item>
+    </style>
+
+    <style name="QrPremiumFinder" parent="QrCellBase">
+        <item name="android:background">@drawable/bg_qr_finder_brand_rounded</item>
+    </style>
 </resources>

@@ -54,7 +54,7 @@
                     android:background="@drawable/bg_detail_icon_circle"
                     android:gravity="center"
                     android:text="?"
-                    android:textColor="#4A43EC"
+                    android:textColor="@color/brand_accent"
                     android:textSize="38sp"
                     android:textStyle="bold" />
 

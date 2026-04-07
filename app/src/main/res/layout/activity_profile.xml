@@ -58,7 +58,7 @@
                 android:background="@drawable/bg_detail_icon_circle"
                 android:gravity="center"
                 android:text="?"
-                android:textColor="#4A43EC"
+                android:textColor="@color/brand_accent"
                 android:textSize="36sp"
                 android:textStyle="bold" />
 
@@ -107,7 +107,7 @@
             android:textAllCaps="false"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:backgroundTint="#4A43EC"
+            app:backgroundTint="@color/brand_accent"
             app:cornerRadius="12dp" />
 
     </LinearLayout>

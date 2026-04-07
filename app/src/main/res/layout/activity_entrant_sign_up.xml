@@ -5,258 +5,176 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_lavender"
-    tools:context=".ui.MainActivity">
+    android:background="@drawable/bg_signup_top_gradient"
+    tools:context=".ui.EntrantSignUpActivity">
+
+    <!-- Animated characters in the gradient area -->
+    <com.example.eventmanager.ui.SignupCharactersView
+        android:id="@+id/charactersView"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:layout_gravity="top" />
+
+    <!-- Decorative blurred circles in the gradient area -->
+    <View
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="-40dp"
+        android:alpha="0.08"
+        android:background="@drawable/bg_calendar_phone_glow" />
 
     <View
-        android:layout_width="220dp"
-        android:layout_height="220dp"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
         android:layout_gravity="top|start"
-        android:layout_marginStart="-56dp"
-        android:layout_marginTop="-24dp"
-        android:background="@drawable/bg_outline_arch" />
+        android:layout_marginStart="-30dp"
+        android:layout_marginTop="80dp"
+        android:alpha="0.06"
+        android:background="@drawable/bg_calendar_phone_glow" />
 
-    <View
-        android:layout_width="190dp"
-        android:layout_height="190dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="-12dp"
-        android:layout_marginEnd="-48dp"
-        android:background="@drawable/bg_outline_arch" />
-
-    <View
-        android:layout_width="156dp"
-        android:layout_height="156dp"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="116dp"
-        android:layout_marginEnd="-44dp"
-        android:background="@drawable/bg_outline_circle" />
-
+    <!-- Form area that scrolls and overlaps the characters -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:overScrollMode="never">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="24dp"
-            android:paddingTop="72dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="28dp">
+            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/signUpTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:text="@string/sign_up_title"
-                android:textColor="@color/text_primary"
-                android:textSize="34sp"
-                android:textStyle="bold" />
+            <!-- Spacer to push the form card below the characters -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="240dp" />
 
-            <TextView
-                android:id="@+id/signUpSubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dp"
-                android:gravity="center"
-                android:text="@string/sign_up_subtitle"
-                android:textColor="@color/text_muted"
-                android:textSize="15sp" />
-
+            <!-- White form card with rounded top corners -->
             <LinearLayout
+                android:id="@+id/formCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="44dp"
-                android:orientation="vertical">
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/nameInputLayout"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/name_label"
-                    app:boxBackgroundColor="@color/white"
-                    app:boxCornerRadiusBottomEnd="18dp"
-                    app:boxCornerRadiusBottomStart="18dp"
-                    app:boxCornerRadiusTopEnd="18dp"
-                    app:boxCornerRadiusTopStart="18dp"
-                    app:boxStrokeColor="@color/outline_lavender"
-                    app:boxStrokeWidth="1dp"
-                    app:boxStrokeWidthFocused="2dp"
-                    app:startIconDrawable="@android:drawable/ic_menu_myplaces"
-                    app:startIconTint="@color/text_muted">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/nameInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPersonName"
-                        android:paddingTop="18dp"
-                        android:paddingBottom="18dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_muted" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/emailInputLayout"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:hint="@string/email_label"
-                    app:boxBackgroundColor="@color/white"
-                    app:boxCornerRadiusBottomEnd="18dp"
-                    app:boxCornerRadiusBottomStart="18dp"
-                    app:boxCornerRadiusTopEnd="18dp"
-                    app:boxCornerRadiusTopStart="18dp"
-                    app:boxStrokeColor="@color/outline_lavender"
-                    app:boxStrokeWidth="1dp"
-                    app:boxStrokeWidthFocused="2dp"
-                    app:startIconDrawable="@android:drawable/ic_dialog_email"
-                    app:startIconTint="@color/text_muted">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/emailInput"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress"
-                        android:paddingTop="18dp"
-                        android:paddingBottom="18dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_muted" />
-                </com.google.android.material.textfield.TextInputLayout>
+                android:background="@drawable/bg_signup_form_card"
+                android:orientation="vertical"
+                android:paddingStart="26dp"
+                android:paddingTop="32dp"
+                android:paddingEnd="26dp"
+                android:paddingBottom="32dp">
 
                 <TextView
-                    android:id="@+id/termsText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp"
-                    android:gravity="center"
-                    android:text="@string/terms_copy"
-                    android:textColor="@color/text_muted"
-                    android:textSize="12sp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/signUpButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:backgroundTint="@color/primary_purple"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:paddingTop="16dp"
-                    android:paddingBottom="16dp"
-                    android:text="@string/sign_up_cta"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:cornerRadius="18dp" />
-
-                <LinearLayout
-                    android:id="@+id/orSignUpWithDivider"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="@color/outline_lavender" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_marginEnd="12dp"
-                        android:text="@string/or_sign_up_with"
-                        android:textColor="@color/text_muted"
-                        android:textSize="13sp" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="@color/outline_lavender" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/socialButtonsContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/googleButton"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:background="@drawable/bg_social_button"
-                        android:gravity="center"
-                        android:text="@string/google_label"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/facebookButton"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:layout_marginStart="18dp"
-                        android:background="@drawable/bg_social_button"
-                        android:gravity="center"
-                        android:text="@string/facebook_label"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/appleButton"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:layout_marginStart="18dp"
-                        android:background="@drawable/bg_social_button"
-                        android:gravity="center"
-                        android:text="@string/apple_label"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/loginLinkContainer"
+                    android:id="@+id/signUpTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="28dp"
+                    android:text="@string/sign_up_title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/signUpSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:orientation="horizontal">
+                    android:text="@string/sign_up_subtitle"
+                    android:textColor="@color/text_muted"
+                    android:textSize="14sp" />
+
+                <!-- Form fields -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="28dp"
+                    android:orientation="vertical">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/nameInputLayout"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/name_label"
+                        app:boxBackgroundColor="@color/white"
+                        app:boxCornerRadiusBottomEnd="14dp"
+                        app:boxCornerRadiusBottomStart="14dp"
+                        app:boxCornerRadiusTopEnd="14dp"
+                        app:boxCornerRadiusTopStart="14dp"
+                        app:boxStrokeColor="@color/outline_lavender"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:startIconDrawable="@android:drawable/ic_menu_myplaces"
+                        app:startIconTint="@color/text_muted">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/nameInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName"
+                            android:paddingTop="16dp"
+                            android:paddingBottom="16dp"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_muted" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/emailInputLayout"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="@string/email_label"
+                        app:boxBackgroundColor="@color/white"
+                        app:boxCornerRadiusBottomEnd="14dp"
+                        app:boxCornerRadiusBottomStart="14dp"
+                        app:boxCornerRadiusTopEnd="14dp"
+                        app:boxCornerRadiusTopStart="14dp"
+                        app:boxStrokeColor="@color/outline_lavender"
+                        app:boxStrokeWidth="1dp"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:startIconDrawable="@android:drawable/ic_dialog_email"
+                        app:startIconTint="@color/text_muted">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/emailInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textEmailAddress"
+                            android:paddingTop="16dp"
+                            android:paddingBottom="16dp"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_muted" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/termsText"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/already_have_account"
+                        android:layout_marginTop="24dp"
+                        android:gravity="center"
+                        android:text="@string/terms_copy"
                         android:textColor="@color/text_muted"
-                        android:textSize="13sp" />
+                        android:textSize="12sp" />
 
-                    <TextView
-                        android:id="@+id/loginLink"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/signUpButton"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:text="@string/log_in_link"
-                        android:textColor="@color/text_link"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                        android:layout_marginTop="16dp"
+                        android:backgroundTint="@color/primary_purple"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp"
+                        android:text="@string/sign_up_cta"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="14dp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

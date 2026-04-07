@@ -19,6 +19,7 @@
     <string name="skip">Skip</string>
     <string name="next">Next</string>
     <string name="qr_message">Unlock fair access to limited events.</string>
+    <string name="qr_subtitle">Scan to join. Fair lottery decides.</string>
     <string name="calendar_month">March 2026</string>
     <string name="calendar_event_one">10:30 am - 12:00 pm\nGala Music Festival</string>
     <string name="calendar_event_two">1:00 pm - 1:30 pm\nWomens Leadership</string>

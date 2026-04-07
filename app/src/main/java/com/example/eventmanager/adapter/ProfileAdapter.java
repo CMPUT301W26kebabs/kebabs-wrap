@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventmanager.R;
@@ -37,9 +38,17 @@ public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private final Context context;
     private final OnProfileClickListener listener;
     private List<Object> items = new ArrayList<>();
-    private final int[] avatarColors = {0xFF4A43EC,0xFF8B5CF6,0xFFEC4899,0xFFF59E0B,0xFF10B981,0xFF3B82F6,0xFFFF445D,0xFF14B8A6};
+    private final int[] avatarColors;
 
-    public ProfileAdapter(Context ctx, List<DocumentSnapshot> profiles, OnProfileClickListener l) { this.context=ctx; this.listener=l; buildSectionedList(profiles); }
+    public ProfileAdapter(Context ctx, List<DocumentSnapshot> profiles, OnProfileClickListener l) {
+        this.context = ctx;
+        this.listener = l;
+        this.avatarColors = new int[] {
+                ContextCompat.getColor(ctx, R.color.brand_accent),
+                0xFF8B5CF6, 0xFFEC4899, 0xFFF59E0B, 0xFF10B981, 0xFF3B82F6, 0xFFFF445D, 0xFF14B8A6
+        };
+        buildSectionedList(profiles);
+    }
     public void updateList(List<DocumentSnapshot> nl) { buildSectionedList(nl); notifyDataSetChanged(); }
 
     private void buildSectionedList(List<DocumentSnapshot> profiles) {

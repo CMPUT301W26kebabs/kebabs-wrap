@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Radial-ish centre fade: dark edges, transparent centre lets grid through -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:centerColor="@color/splash_overlay_gradient_center"
+                android:endColor="@color/splash_overlay_gradient_end"
+                android:startColor="@color/splash_overlay_gradient_start"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

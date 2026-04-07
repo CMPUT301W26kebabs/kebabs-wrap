@@ -13,7 +13,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:padding="16dp"
-        android:background="#4A43EC">
+        android:background="@color/brand_accent">
 
         <FrameLayout
             android:id="@+id/btn_back"

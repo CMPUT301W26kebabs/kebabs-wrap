@@ -181,7 +181,7 @@
                     android:layout_height="28dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_lock_scan"
-                    app:tint="#4A43EC" />
+                    app:tint="@color/brand_accent" />
             </FrameLayout>
 
             <ImageView
