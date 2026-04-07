@@ -4,7 +4,7 @@
     android:id="@+id/splash_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0D0B2E">
+    android:background="@color/splash_background_dark">
 
     <!-- Animated grid background -->
     <com.example.eventmanager.ui.AnimatedGridView
@@ -59,7 +59,7 @@
                 android:layout_marginTop="24dp"
                 android:gravity="center"
                 android:text="@string/splash_checking_device"
-                android:textColor="#9E97E0"
+                android:textColor="@color/text_muted_lavender"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -83,7 +83,7 @@
                 android:layout_height="58dp"
                 android:text="@string/splash_get_started"
                 android:textAllCaps="false"
-                android:textColor="#0D0B2E"
+                android:textColor="@color/splash_background_dark"
                 android:textSize="17sp"
                 android:textStyle="bold"
                 app:backgroundTint="@android:color/white"
@@ -102,7 +102,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/already_have_account"
-                    android:textColor="#A09ABF"
+                    android:textColor="@color/text_secondary_muted"
                     android:textSize="14sp" />
 
                 <TextView

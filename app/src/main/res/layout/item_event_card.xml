@@ -49,7 +49,7 @@
                 android:id="@+id/text_item_event_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#4E55E6"
+                android:textColor="@color/brand_accent"
                 android:textSize="12sp"
                 android:layout_marginTop="2dp"/>
 

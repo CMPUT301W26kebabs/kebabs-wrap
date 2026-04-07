@@ -8,6 +8,9 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+
+import com.example.eventmanager.R;
 
 /**
  * Custom View that renders an animated grid of pulsing cells.
@@ -24,7 +27,7 @@ public class AnimatedGridView extends View {
 
     private final Paint cellPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float[] delays;
-    private int color = 0xFF4A43EC;
+    private int color;
     private long startTime;
     private boolean running = true;
 
@@ -44,6 +47,7 @@ public class AnimatedGridView extends View {
     }
 
     private void init() {
+        color = ContextCompat.getColor(getContext(), R.color.brand_accent);
         startTime = System.currentTimeMillis();
         int total = ROWS * COLS;
         delays = new float[total];

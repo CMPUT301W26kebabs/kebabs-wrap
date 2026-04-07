@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.graphics.Color;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -59,7 +60,8 @@ public class MyEventsAdapter extends RecyclerView.Adapter<MyEventsAdapter.EventV
             holder.itemView.setAlpha(0.55f);
         } else {
             holder.eventStatus.setText("Open");
-            holder.eventStatus.setTextColor(Color.parseColor("#4E55E6"));
+            holder.eventStatus.setTextColor(
+                    ContextCompat.getColor(holder.itemView.getContext(), R.color.brand_accent));
             holder.itemView.setAlpha(1.0f);
         }
 

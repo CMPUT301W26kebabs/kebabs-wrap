@@ -82,7 +82,7 @@
                 android:id="@+id/tv_going_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#4A43EC"
+                android:textColor="@color/brand_accent"
                 android:textSize="11sp"
                 android:layout_marginTop="4dp" />
 

@@ -21,7 +21,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#4A43EC"
+                android:background="@color/brand_accent"
                 android:paddingTop="44dp"
                 android:paddingBottom="20dp"
                 android:paddingHorizontal="20dp">
@@ -95,7 +95,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_search"
-                        app:tint="#4A43EC" />
+                        app:tint="@color/brand_accent" />
 
                     <EditText
                         android:id="@+id/et_home_search"
@@ -164,7 +164,7 @@
                     android:gravity="center"
                     android:paddingHorizontal="20dp"
                     android:text="@string/following_feed"
-                    android:textColor="#4A43EC"
+                    android:textColor="@color/brand_accent"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     android:background="@drawable/bg_chip_unselected" />
@@ -206,7 +206,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:text="See All ▸"
-                    android:textColor="#4A43EC"
+                    android:textColor="@color/brand_accent"
                     android:textSize="13sp" />
             </RelativeLayout>
 
@@ -284,7 +284,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:text="See All ▸"
-                    android:textColor="#4A43EC"
+                    android:textColor="@color/brand_accent"
                     android:textSize="13sp" />
             </RelativeLayout>
 
@@ -313,7 +313,7 @@
         android:textColor="#FFFFFF"
         android:textSize="12sp"
         android:textStyle="bold"
-        app:backgroundTint="#4A43EC"
+        app:backgroundTint="@color/brand_accent"
         app:cornerRadius="24dp" />
 
     <!-- Bottom Navigation -->
@@ -329,9 +329,9 @@
 
         <LinearLayout android:id="@+id/nav_explore" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
             android:gravity="center" android:orientation="vertical">
-            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_explore" app:tint="#4A43EC" />
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_explore" app:tint="@color/brand_accent" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Explore"
-                android:textColor="#4A43EC" android:textSize="10sp" android:layout_marginTop="2dp" />
+                android:textColor="@color/brand_accent" android:textSize="10sp" android:layout_marginTop="2dp" />
         </LinearLayout>
 
         <LinearLayout android:id="@+id/nav_events" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"

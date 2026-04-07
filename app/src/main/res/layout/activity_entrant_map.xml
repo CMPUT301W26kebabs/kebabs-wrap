@@ -24,7 +24,7 @@
         android:id="@+id/headerSection"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#4A43EC"
+        android:background="@color/brand_accent"
         android:orientation="vertical"
         android:paddingStart="20dp"
         android:paddingTop="50dp"
@@ -99,7 +99,7 @@
                 android:id="@+id/progressBar"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:indeterminateTint="#4A43EC" />
+                android:indeterminateTint="@color/brand_accent" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -107,7 +107,7 @@
                 android:layout_marginTop="12dp"
                 android:fontFamily="@font/poppins_regular"
                 android:text="Loading entrant locations…"
-                android:textColor="#4A43EC"
+                android:textColor="@color/brand_accent"
                 android:textSize="14sp" />
 
         </LinearLayout>
@@ -145,7 +145,7 @@
                 android:layout_height="32dp"
                 android:contentDescription="Entrant pin icon"
                 android:src="@drawable/ic_schedule"
-                app:tint="#4A43EC" />
+                app:tint="@color/brand_accent" />
 
             <!-- Count + label -->
             <LinearLayout
