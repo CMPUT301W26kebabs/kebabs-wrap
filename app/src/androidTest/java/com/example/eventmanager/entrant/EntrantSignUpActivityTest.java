@@ -65,7 +65,6 @@ public class EntrantSignUpActivityTest {
         onView(withId(R.id.nameInput)).check(matches(isDisplayed()));
         onView(withId(R.id.emailInput)).check(matches(isDisplayed()));
         onView(withId(R.id.signUpButton)).check(matches(isDisplayed()));
-        onView(withId(R.id.loginLink)).check(matches(isDisplayed()));
     }
 
     @Test

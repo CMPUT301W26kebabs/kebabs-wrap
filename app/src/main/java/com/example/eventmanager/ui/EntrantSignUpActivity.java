@@ -3,6 +3,9 @@ package com.example.eventmanager.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
+import android.view.View;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,7 +57,6 @@ public class EntrantSignUpActivity extends AppCompatActivity {
         emailInput = findViewById(R.id.emailInput);
 
         MaterialButton signUpButton = findViewById(R.id.signUpButton);
-        TextView loginLink = findViewById(R.id.loginLink);
         TextView signUpTitle = findViewById(R.id.signUpTitle);
         TextView signUpSubtitle = findViewById(R.id.signUpSubtitle);
 
@@ -67,16 +69,44 @@ public class EntrantSignUpActivity extends AppCompatActivity {
             signUpSubtitle.setText(R.string.edit_profile_subtitle);
             signUpButton.setText(R.string.save_profile);
             findViewById(R.id.termsText).setVisibility(android.view.View.GONE);
-            findViewById(R.id.orSignUpWithDivider).setVisibility(android.view.View.GONE);
-            findViewById(R.id.socialButtonsContainer).setVisibility(android.view.View.GONE);
-            findViewById(R.id.loginLinkContainer).setVisibility(android.view.View.GONE);
             loadExistingProfile();
         } else {
             checkExistingUser();
         }
 
         signUpButton.setOnClickListener(v -> saveEntrantProfile());
-        loginLink.setOnClickListener(v -> continueWithSavedProfile());
+
+        animateEntrance();
+    }
+
+    private void animateEntrance() {
+        View characters = findViewById(R.id.charactersView);
+        View formCard = findViewById(R.id.formCard);
+
+        OvershootInterpolator overshoot = new OvershootInterpolator(1.0f);
+        DecelerateInterpolator decelerate = new DecelerateInterpolator(2f);
+
+        characters.setAlpha(0f);
+        characters.setScaleX(0.9f);
+        characters.setScaleY(0.9f);
+        characters.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(700)
+                .setStartDelay(150)
+                .setInterpolator(overshoot)
+                .start();
+
+        formCard.setAlpha(0f);
+        formCard.setTranslationY(60f);
+        formCard.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(600)
+                .setStartDelay(400)
+                .setInterpolator(decelerate)
+                .start();
     }
 
     private void checkExistingUser() {
