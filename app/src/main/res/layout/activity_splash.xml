@@ -1,109 +1,149 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/splash_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_splash_background">
+    android:background="#0D0B2E">
 
+    <!-- Animated grid background -->
+    <com.example.eventmanager.ui.AnimatedGridView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Dark gradient overlay so content is readable -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_splash_gradient_overlay" />
+
+    <!-- Content layer -->
     <LinearLayout
-        android:id="@+id/logo_panel"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="36dp"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="36dp"
-        android:layout_marginBottom="28dp"
-        android:background="@drawable/bg_splash_panel"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="28dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_actions"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.62"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <FrameLayout
-            android:layout_width="220dp"
-            android:layout_height="220dp"
-            android:background="@drawable/bg_splash_logo_card"
-            android:padding="20dp">
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:adjustViewBounds="true"
-                android:contentDescription="@string/splash_logo_content_description"
-                android:scaleType="fitCenter"
-                android:src="@drawable/spotly_logo" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/tv_checking_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="22dp"
-            android:gravity="center"
-            android:text="@string/splash_checking_device"
-            android:textColor="#F2EFFF"
-            android:textSize="15sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/bottom_actions"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="28dp"
-        android:layout_marginEnd="28dp"
-        android:layout_marginBottom="34dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:paddingHorizontal="32dp"
+        android:paddingBottom="40dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_get_started"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:text="@string/splash_get_started"
-            android:textAllCaps="false"
-            android:textColor="@color/primary_purple"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:backgroundTint="@android:color/white"
-            app:cornerRadius="29dp"
-            app:strokeWidth="0dp" />
+        <!-- Top spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1.0" />
 
+        <!-- Logo + text panel (keeps id for SplashActivity animations) -->
         <LinearLayout
-            android:id="@+id/login_row"
-            android:layout_width="wrap_content"
+            android:id="@+id/logo_panel"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
+            <!-- Logo card with soft glow -->
+            <FrameLayout
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:background="@drawable/bg_splash_logo_glow"
+                android:padding="16dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:adjustViewBounds="true"
+                    android:contentDescription="@string/splash_logo_content_description"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/spotly_logo" />
+            </FrameLayout>
+
+            <!-- App name -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/already_have_account"
-                android:textColor="#D8D3FF"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/btn_log_in"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackgroundBorderless"
-                android:text="@string/log_in_link"
+                android:layout_marginTop="28dp"
+                android:letterSpacing="0.08"
+                android:text="SPOTLY"
                 android:textColor="@android:color/white"
-                android:textSize="14sp"
+                android:textSize="36sp"
                 android:textStyle="bold" />
+
+            <!-- Tagline -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:letterSpacing="0.04"
+                android:text="Fair draw for every event."
+                android:textColor="#B8B3FF"
+                android:textSize="15sp" />
+
+            <!-- Status text (existing id) -->
+            <TextView
+                android:id="@+id/tv_checking_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:gravity="center"
+                android:text="@string/splash_checking_device"
+                android:textColor="#9E97E0"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Bottom spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1.2" />
+
+        <!-- Bottom actions (keeps existing ids) -->
+        <LinearLayout
+            android:id="@+id/bottom_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_get_started"
+                android:layout_width="match_parent"
+                android:layout_height="58dp"
+                android:text="@string/splash_get_started"
+                android:textAllCaps="false"
+                android:textColor="#0D0B2E"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                app:backgroundTint="@android:color/white"
+                app:cornerRadius="29dp"
+                app:strokeWidth="0dp" />
+
+            <LinearLayout
+                android:id="@+id/login_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/already_have_account"
+                    android:textColor="#A09ABF"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/btn_log_in"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:text="@string/log_in_link"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>
