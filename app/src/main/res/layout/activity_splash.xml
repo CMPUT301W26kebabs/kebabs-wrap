@@ -56,33 +56,12 @@
                     android:src="@drawable/spotly_logo" />
             </FrameLayout>
 
-            <!-- App name -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:letterSpacing="0.08"
-                android:text="SPOTLY"
-                android:textColor="@android:color/white"
-                android:textSize="36sp"
-                android:textStyle="bold" />
-
-            <!-- Tagline -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:letterSpacing="0.04"
-                android:text="Fair draw for every event."
-                android:textColor="#B8B3FF"
-                android:textSize="15sp" />
-
             <!-- Status text (existing id) -->
             <TextView
                 android:id="@+id/tv_checking_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 android:gravity="center"
                 android:text="@string/splash_checking_device"
                 android:textColor="#9E97E0"
