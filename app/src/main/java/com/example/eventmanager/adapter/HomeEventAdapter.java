@@ -1,4 +1,5 @@
 package com.example.eventmanager.adapter;
+import com.example.eventmanager.models.Event;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -19,12 +20,20 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * RecyclerView adapter that renders event cards on the home screen.
+ * Each card displays the event poster, name, registration-start date,
+ * and location, backed by Firestore {@link DocumentSnapshot}s.
+ */
 public class HomeEventAdapter extends RecyclerView.Adapter<HomeEventAdapter.HomeEventVH> {
 
     private final Context context;
     private List<DocumentSnapshot> events;
     private OnEventClickListener onEventClickListener;
 
+    /**
+     * Callback invoked when a user taps an event card on the home screen.
+     */
     public interface OnEventClickListener {
         void onEventClick(DocumentSnapshot eventDoc);
     }
@@ -34,11 +43,21 @@ public class HomeEventAdapter extends RecyclerView.Adapter<HomeEventAdapter.Home
         this.events = events;
     }
 
+    /**
+     * Replaces the backing dataset and refreshes all visible cards.
+     *
+     * @param newList fresh list of event snapshots from Firestore.
+     */
     public void updateList(List<DocumentSnapshot> newList) {
         this.events = newList;
         notifyDataSetChanged();
     }
 
+    /**
+     * Registers the listener that will be notified when an event card is tapped.
+     *
+     * @param onEventClickListener callback to receive click events.
+     */
     public void setOnEventClickListener(OnEventClickListener onEventClickListener) {
         this.onEventClickListener = onEventClickListener;
     }

@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventmanager.R;
+import com.example.eventmanager.utils.AdminGuard;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -58,6 +59,7 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_notificationlogs);
+        AdminGuard.guardActivity(this);
 
         db = FirebaseFirestore.getInstance();
 
@@ -84,12 +86,6 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
                 applyFilter(currentSearchQuery);
             }
         });
-
-        // Filter buttons (placeholder – can be extended later)
-        findViewById(R.id.btn_filter_date).setOnClickListener(v ->
-                Toast.makeText(this, "Date filter coming soon.", Toast.LENGTH_SHORT).show());
-        findViewById(R.id.btn_export).setOnClickListener(v ->
-                Toast.makeText(this, "Export coming soon.", Toast.LENGTH_SHORT).show());
 
         // Load-more pagination
         btnLoadMore = findViewById(R.id.btn_load_more);

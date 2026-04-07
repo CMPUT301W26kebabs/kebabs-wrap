@@ -12,7 +12,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.eventmanager.HomeActivity;
+import com.example.eventmanager.ui.HomeActivity;
 import com.example.eventmanager.R;
 import com.example.eventmanager.managers.DeviceAuthManager;
 import com.example.eventmanager.models.Entrant;
@@ -21,6 +21,10 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
+/**
+ * New-user registration screen that collects the entrant's name, email, phone number,
+ * and notification opt-in preference before creating their profile in Firestore.
+ */
 public class EntrantSignUpActivity extends AppCompatActivity {
 
     private TextInputLayout nameInputLayout, emailInputLayout;

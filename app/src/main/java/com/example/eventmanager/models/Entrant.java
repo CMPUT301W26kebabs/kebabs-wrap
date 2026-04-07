@@ -1,5 +1,7 @@
 package com.example.eventmanager.models;
 
+import com.example.eventmanager.ui.ManageEventActivity;
+
 /**
  * Represents a user of the application, encompassing both standard entrants and organizers/admins.
  * This class serves as a pure data model (POJO) to be serialized and deserialized by Firestore.
@@ -24,6 +26,10 @@ public class Entrant {
      */
     private Boolean isDisabled;
 
+    // Transient UI properties used by ManageEventActivity adapters
+    private transient String statusTabLabel;
+    private transient boolean isSectionHeader;
+
     /**
      * Empty constructor required by Firebase Firestore for automatic data mapping.
      */
@@ -40,6 +46,53 @@ public class Entrant {
         this.isAdmin = false;
         this.isOrganizer = false;
     }
+
+    /**
+     * Constructs an Entrant with profile info and a status tab label for UI display
+     * in {@link ManageEventActivity}.
+     *
+     * @param deviceId       the unique hardware ID of the user's device.
+     * @param name           the user's display name.
+     * @param email          the user's email address.
+     * @param statusTabLabel label indicating which lottery tab this entrant belongs to
+     *                       (e.g. "Waiting", "Selected", "Enrolled", "Cancelled").
+     */
+    public Entrant(String deviceId, String name, String email, String statusTabLabel) {
+        this();
+        this.deviceId = deviceId;
+        this.name = name;
+        this.email = email;
+        this.statusTabLabel = statusTabLabel;
+    }
+
+    /**
+     * Returns the lottery-status tab label used by the manage-event UI to group entrants.
+     *
+     * @return the tab label string (e.g. "Waiting", "Selected"), or {@code null} if unset.
+     */
+    public String getStatusTabLabel() { return statusTabLabel; }
+
+    /**
+     * Sets the lottery-status tab label for UI grouping in the manage-event screen.
+     *
+     * @param statusTabLabel the tab label to assign.
+     */
+    public void setStatusTabLabel(String statusTabLabel) { this.statusTabLabel = statusTabLabel; }
+
+    /**
+     * Indicates whether this instance is a section-header placeholder rather than a real entrant,
+     * used by adapters in the manage-event list to render group dividers.
+     *
+     * @return {@code true} if this is a section header, {@code false} for a real entrant.
+     */
+    public boolean isSectionHeader() { return isSectionHeader; }
+
+    /**
+     * Marks this instance as a section-header placeholder for adapter rendering.
+     *
+     * @param sectionHeader {@code true} to treat as a section header.
+     */
+    public void setSectionHeader(boolean sectionHeader) { this.isSectionHeader = sectionHeader; }
 
     /**
      * Gets the user's unique device ID.
@@ -124,6 +177,11 @@ public class Entrant {
         return receiveNotifications == null || receiveNotifications;
     }
 
+    /**
+     * Sets the user's notification preference.
+     *
+     * @param receiveNotifications {@code true} to opt in, {@code false} to opt out.
+     */
     public void setReceiveNotifications(boolean receiveNotifications) {
         this.receiveNotifications = receiveNotifications;
     }
@@ -160,15 +218,31 @@ public class Entrant {
         isOrganizer = organizer;
     }
 
+    /**
+     * Returns the raw disabled flag as stored in Firestore. May be {@code null} for
+     * users created before the field existed.
+     *
+     * @return {@code Boolean.TRUE} if admin-disabled, {@code Boolean.FALSE} or {@code null} otherwise.
+     */
     public Boolean getIsDisabled() {
         return isDisabled;
     }
 
+    /**
+     * Sets the admin soft-disable flag for this user profile.
+     *
+     * @param disabled {@code true} to disable, {@code false} to enable.
+     */
     public void setIsDisabled(Boolean disabled) {
         this.isDisabled = disabled;
     }
 
-    /** True when admin soft-disabled this profile (still in Firestore). */
+    /**
+     * Convenience check that resolves the nullable {@code isDisabled} flag.
+     * Returns {@code true} only when the admin has explicitly soft-disabled this profile.
+     *
+     * @return {@code true} if this profile is disabled, {@code false} otherwise.
+     */
     public boolean isProfileDisabled() {
         return isDisabled != null && isDisabled;
     }

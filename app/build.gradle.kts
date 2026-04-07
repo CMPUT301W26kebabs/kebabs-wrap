@@ -70,3 +70,28 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.google.android.gms:play-services-maps:19.0.0")
 }
+
+tasks.register<Javadoc>("generateJavadoc") {
+    description = "Generates Javadoc HTML for all main source files."
+    group = "documentation"
+
+    dependsOn("compileDebugJavaWithJavac")
+
+    source = fileTree("src/main/java")
+
+    doFirst {
+        val compileTask = tasks.getByName("compileDebugJavaWithJavac") as JavaCompile
+        classpath = compileTask.classpath + files(compileTask.destinationDirectory)
+    }
+
+    setDestinationDir(layout.buildDirectory.dir("javadoc").get().asFile)
+
+    options {
+        this as StandardJavadocDocletOptions
+        encoding = "UTF-8"
+        charSet = "UTF-8"
+        addBooleanOption("Xdoclint:none", true)
+    }
+
+    isFailOnError = false
+}

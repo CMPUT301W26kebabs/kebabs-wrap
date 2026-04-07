@@ -49,33 +49,33 @@
         <activity android:name=".ui.QrAccessActivity" android:exported="false" />
 
         <!-- Admin Dashboard (Ibrahim) -->
-        <activity android:name=".HomeActivity" android:exported="false" />
-        <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".ui.HomeActivity" android:exported="false" />
+        <activity android:name=".ui.MainActivity" android:exported="false" />
 
         <!-- Ammaar's activities -->
-        <activity android:name=".NotificationsActivity" android:exported="false" />
-        <activity android:name=".AcceptDeclineActivity" android:exported="false" />
+        <activity android:name=".ui.NotificationsActivity" android:exported="false" />
+        <activity android:name=".ui.AcceptDeclineActivity" android:exported="false" />
 
         <!-- Huzaifa's activities -->
-        <activity android:name=".BrowseEventsActivity" android:exported="false" />
-        <activity android:name=".EventDetailsActivity" android:exported="false" />
-        <activity android:name=".InviteGuestsActivity" android:exported="false" />
-        <activity android:name=".QRScannerActivity" android:exported="false" />
-        <activity android:name=".CreateEventActivity" android:exported="false" />
-        <activity android:name=".ManageEventActivity" android:exported="false" />
-        <activity android:name=".EntrantMapActivity" android:exported="false" />
-        <activity android:name=".ModerateCommentsActivity" android:exported="false" />
-        <activity android:name=".ManagePosterActivity" android:exported="false" />
-        <activity android:name=".EventQRActivity" android:exported="false" />
-        <activity android:name=".MyEventsActivity" android:exported="false" />
+        <activity android:name=".ui.BrowseEventsActivity" android:exported="false" />
+        <activity android:name=".ui.EventDetailsActivity" android:exported="false" />
+        <activity android:name=".ui.InviteGuestsActivity" android:exported="false" />
+        <activity android:name=".ui.QRScannerActivity" android:exported="false" />
+        <activity android:name=".ui.CreateEventActivity" android:exported="false" />
+        <activity android:name=".ui.ManageEventActivity" android:exported="false" />
+        <activity android:name=".ui.EntrantMapActivity" android:exported="false" />
+        <activity android:name=".ui.ModerateCommentsActivity" android:exported="false" />
+        <activity android:name=".ui.ManagePosterActivity" android:exported="false" />
+        <activity android:name=".ui.EventQRActivity" android:exported="false" />
+        <activity android:name=".ui.MyEventsActivity" android:exported="false" />
 
         <!-- Follow System -->
-        <activity android:name=".OrganizerProfileActivity" android:exported="false" />
-        <activity android:name=".FollowerBroadcastActivity" android:exported="false" />
+        <activity android:name=".ui.OrganizerProfileActivity" android:exported="false" />
+        <activity android:name=".ui.FollowerBroadcastActivity" android:exported="false" />
 
         <!-- Umar's activities -->
-        <activity android:name=".EnrolledListActivity" android:exported="false" />
-        <activity android:name=".RunLotteryActivity" android:exported="false" />
+        <activity android:name=".ui.EnrolledListActivity" android:exported="false" />
+        <activity android:name=".ui.RunLotteryActivity" android:exported="false" />
 
         <!-- Anas's activities -->
         <activity android:name=".ui.EditProfileActivity" android:exported="false" android:screenOrientation="portrait"/>

@@ -6,9 +6,13 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.eventmanager.HomeActivity;
+import com.example.eventmanager.ui.HomeActivity;
 import com.example.eventmanager.R;
 
+/**
+ * QR scanner onboarding entry point that introduces QR-based event access.
+ * Provides skip/next navigation that routes the user to the home screen.
+ */
 public class QrAccessActivity extends AppCompatActivity {
 
     @Override
