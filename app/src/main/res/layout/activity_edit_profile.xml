@@ -68,15 +68,38 @@
                     app:strokeWidth="0dp" />
             </FrameLayout>
 
-            <TextView
-                android:id="@+id/tvChangePhoto"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:padding="8dp"
-                android:text="Change Photo"
-                android:textColor="#5E5CE6"
-                android:textSize="14sp" />
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvChangePhoto"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="Change Photo"
+                    android:textColor="@color/brand_accent"
+                    android:textSize="14sp" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@color/outline_lavender" />
+
+                <TextView
+                    android:id="@+id/tvChooseAvatar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:text="Choose Avatar"
+                    android:textColor="@color/brand_accent"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/nameInputLayout"

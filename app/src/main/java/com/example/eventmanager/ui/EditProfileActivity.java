@@ -1,6 +1,7 @@
 package com.example.eventmanager.ui;
 import com.example.eventmanager.models.Event;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -68,6 +69,13 @@ public class EditProfileActivity extends AppCompatActivity {
     @Nullable
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
 
+    @Nullable
+    private ActivityResultLauncher<Intent> avatarPickerLauncher;
+
+    /** URL from DiceBear that the user selected (non-null replaces the photo). */
+    @Nullable
+    private String pendingDiceBearUrl;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // Must register before super.onCreate per Activity Result API contract
@@ -75,9 +83,24 @@ public class EditProfileActivity extends AppCompatActivity {
                 new ActivityResultContracts.PickVisualMedia(), uri -> {
                     if (uri == null) return;
                     pendingAvatarUri = uri;
+                    pendingDiceBearUrl = null;
                     showPhotoAvatar();
                     Glide.with(this)
                             .load(uri)
+                            .apply(RequestOptions.circleCropTransform())
+                            .into(ivAvatar);
+                });
+
+        avatarPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+                    if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
+                    String url = result.getData().getStringExtra(AvatarPickerActivity.EXTRA_AVATAR_URL);
+                    if (url == null || url.isEmpty()) return;
+                    pendingDiceBearUrl = url;
+                    pendingAvatarUri = null;
+                    showPhotoAvatar();
+                    Glide.with(this)
+                            .load(url)
                             .apply(RequestOptions.circleCropTransform())
                             .into(ivAvatar);
                 });
@@ -106,6 +129,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         findViewById(R.id.tvChangePhoto).setOnClickListener(v -> openGallery());
+        findViewById(R.id.tvChooseAvatar).setOnClickListener(v -> openAvatarPicker());
         findViewById(R.id.btnSaveProfile).setOnClickListener(v -> saveProfile());
         findViewById(R.id.btnDeleteProfile).setOnClickListener(v -> confirmDeleteProfile());
 
@@ -129,6 +153,15 @@ public class EditProfileActivity extends AppCompatActivity {
         pickMedia.launch(new PickVisualMediaRequest.Builder()
                 .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                 .build());
+    }
+
+    private void openAvatarPicker() {
+        if (avatarPickerLauncher == null) return;
+        CharSequence t = nameInput.getText();
+        String name = (t != null) ? t.toString().trim() : "";
+        Intent intent = new Intent(this, AvatarPickerActivity.class);
+        intent.putExtra(AvatarPickerActivity.EXTRA_USER_NAME, name);
+        avatarPickerLauncher.launch(intent);
     }
 
     private void loadUserData() {
@@ -164,6 +197,14 @@ public class EditProfileActivity extends AppCompatActivity {
      * if {@link #pendingAvatarUri} is set.
      */
     private void loadAvatar(@Nullable String photoUrl) {
+        if (pendingDiceBearUrl != null) {
+            showPhotoAvatar();
+            Glide.with(this)
+                    .load(pendingDiceBearUrl)
+                    .apply(RequestOptions.circleCropTransform())
+                    .into(ivAvatar);
+            return;
+        }
         if (pendingAvatarUri != null) {
             showPhotoAvatar();
             Glide.with(this)
@@ -257,11 +298,12 @@ public class EditProfileActivity extends AppCompatActivity {
         entrant.setPhoneNumber(phone.isEmpty() ? null : phone);
         entrant.setReceiveNotifications(switchReceiveNotifications.isChecked());
 
-        if (pendingAvatarUri != null) {
-            // Upload to Firebase Storage then save the download URL
+        if (pendingDiceBearUrl != null) {
+            entrant.setPhotoUrl(pendingDiceBearUrl);
+            persistEntrant(entrant);
+        } else if (pendingAvatarUri != null) {
             uploadAvatarAndSave(entrant);
         } else {
-            // No photo change — save profile directly
             persistEntrant(entrant);
         }
     }
@@ -305,6 +347,7 @@ public class EditProfileActivity extends AppCompatActivity {
             public void onSuccess(Void result) {
                 loadedEntrant = entrant;
                 pendingAvatarUri = null;
+                pendingDiceBearUrl = null;
 
                 // Propagate updated name/email/phone to all event sub-collections
                 // so organizers see the latest info (fire-and-forget)

@@ -79,6 +79,7 @@
 
         <!-- Anas's activities -->
         <activity android:name=".ui.EditProfileActivity" android:exported="false" android:screenOrientation="portrait"/>
+        <activity android:name=".ui.AvatarPickerActivity" android:exported="false" android:screenOrientation="portrait"/>
         <activity android:name=".admin.AdminNotificationLogsActivity" android:exported="false" android:theme="@style/Theme.EventManager" />
 
         <!-- Ibrahim's admin screens -->
